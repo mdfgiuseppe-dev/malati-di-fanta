@@ -1,4 +1,4 @@
-﻿<!-- build:20261010_1004 -->
+﻿<!-- build:20261010_1013 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -14887,6 +14887,13 @@ function doLogin(){
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+  var splash = document.getElementById('page-splash');
+  var dashboard = document.getElementById('page-dashboard');
+  if (splash) splash.classList.remove('active');
+  if (dashboard) dashboard.classList.add('active');
+});
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js', { scope: '/malati-di-fanta/' })
     .then(reg => console.log('✅ Service Worker registrato', reg))
