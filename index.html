@@ -1,4 +1,4 @@
-﻿<!-- build:20260506_120000 -->
+﻿<!-- build:20261004_1601 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -3713,50 +3713,7 @@ function toggleTheme(){
   if(btn) btn.textContent=newTheme==='dark'?'☀️':'🌙';
 }
 // Dati leghe per torneo
-var LEAGUES_DATA = {
-  slim: {
-    color: '#10b981',
-    leghe: [
-      {key:'it', label:'Italia', flag:'🇮🇹', clubs:10},
-      {key:'en', label:'Inghilterra', flag:'🏴', clubs:10},
-      {key:'es', label:'Spagna', flag:'🇪🇸', clubs:10},
-      {key:'de', label:'Germania', flag:'🇩🇪', clubs:10},
-      {key:'fr', label:'Francia', flag:'🇫🇷', clubs:10},
-      {key:'pt', label:'Portogallo', flag:'🇵🇹', clubs:10},
-      {key:'nl', label:'Olanda', flag:'🇳🇱', clubs:10},
-      {key:'tr', label:'Turchia', flag:'🇹🇷', clubs:10},
-    ]
-  },
-  tdm: {
-    color: '#3b82f6',
-    leghe: [
-      {key:'tdm_it', label:'Italia', flag:'🇮🇹', clubs:null},
-      {key:'tdm_en', label:'Inghilterra', flag:'🏴', clubs:null},
-      {key:'tdm_de', label:'Germania', flag:'🇩🇪', clubs:null},
-      {key:'tdm_fr', label:'Francia', flag:'🇫🇷', clubs:null},
-      {key:'tdm_es', label:'Spagna', flag:'🇪🇸', clubs:null},
-    ]
-  },
-  tsm: {
-    color: '#f59e0b',
-    leghe: [
-      {key:'tsm_it', label:'Italia', flag:'🇮🇹', clubs:10},
-    ]
-  },
-  ilm: {
-    color: '#8b5cf6',
-    leghe: [
-      {key:'ilm_a', label:'Girone A', flag:'🅰', clubs:null},
-      {key:'ilm_b', label:'Girone B', flag:'🅱', clubs:null},
-    ]
-  },
-  ilc: {
-    color: '#ef4444',
-    leghe: [
-      {key:'ilc_a', label:'Girone A', flag:'🅰', clubs:null},
-    ]
-  },
-};
+var LEAGUES_DATA = {};
 
 var currentTournament = null;
 
@@ -9763,50 +9720,7 @@ function toggleTheme(){
   if(btn) btn.textContent=newTheme==='dark'?'☀️':'🌙';
 }
 // Dati leghe per torneo
-var LEAGUES_DATA = {
-  slim: {
-    color: '#10b981',
-    leghe: [
-      {key:'it', label:'Italia', flag:'🇮🇹', clubs:10},
-      {key:'en', label:'Inghilterra', flag:'🏴', clubs:10},
-      {key:'es', label:'Spagna', flag:'🇪🇸', clubs:10},
-      {key:'de', label:'Germania', flag:'🇩🇪', clubs:10},
-      {key:'fr', label:'Francia', flag:'🇫🇷', clubs:10},
-      {key:'pt', label:'Portogallo', flag:'🇵🇹', clubs:10},
-      {key:'nl', label:'Olanda', flag:'🇳🇱', clubs:10},
-      {key:'tr', label:'Turchia', flag:'🇹🇷', clubs:10},
-    ]
-  },
-  tdm: {
-    color: '#3b82f6',
-    leghe: [
-      {key:'tdm_it', label:'Italia', flag:'🇮🇹', clubs:null},
-      {key:'tdm_en', label:'Inghilterra', flag:'🏴', clubs:null},
-      {key:'tdm_de', label:'Germania', flag:'🇩🇪', clubs:null},
-      {key:'tdm_fr', label:'Francia', flag:'🇫🇷', clubs:null},
-      {key:'tdm_es', label:'Spagna', flag:'🇪🇸', clubs:null},
-    ]
-  },
-  tsm: {
-    color: '#f59e0b',
-    leghe: [
-      {key:'tsm_it', label:'Italia', flag:'🇮🇹', clubs:10},
-    ]
-  },
-  ilm: {
-    color: '#8b5cf6',
-    leghe: [
-      {key:'ilm_a', label:'Girone A', flag:'🅰', clubs:null},
-      {key:'ilm_b', label:'Girone B', flag:'🅱', clubs:null},
-    ]
-  },
-  ilc: {
-    color: '#ef4444',
-    leghe: [
-      {key:'ilc_a', label:'Girone A', flag:'🅰', clubs:null},
-    ]
-  },
-};
+var LEAGUES_DATA = {};
 
 var currentTournament = null;
 
