@@ -10,13 +10,13 @@
   "theme_color": "#10b981",
   "icons": [
     {
-      "src": "https://lh3.googleusercontent.com/d/1KTDVuBrY8DTvva0RlyGknFaCCZmHOul1=w192",
+      "src": "/malati-di-fanta/logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://lh3.googleusercontent.com/d/1KTDVuBrY8DTvva0RlyGknFaCCZmHOul1=w192",
+      "src": "/malati-di-fanta/logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
