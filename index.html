@@ -1,4 +1,4 @@
-﻿<!-- build:20261010_0835 -->
+﻿<!-- build:20261010_0840 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -9112,8 +9112,8 @@ document.addEventListener('DOMContentLoaded',function(){
   gsPing();
   // Genera card tornei dinamicamente
   renderTournamentCards();
-  // Carica logo principale app da localStorage/GSheets/default
-  var _logoMain = localStorage.getItem('adm_logo_main') || 'https://drive.google.com/uc?export=view&id=1KTDVuBrY8DTvva0RlyGknFaCCZmHOul1';
+  // Carica logo principale app da localStorage/GSheets
+  var _logoMain = localStorage.getItem('adm_logo_main');
   if (_logoMain) _applyLogoMain(_logoMain);
   // Carica loghi tornei statici (TDM, ILM, ILC) da localStorage
   ['tdm','ilm','ilc'].forEach(function(k) {
@@ -14263,8 +14263,8 @@ document.addEventListener('DOMContentLoaded',function(){
   gsPing();
   // Genera card tornei dinamicamente
   renderTournamentCards();
-  // Carica logo principale app da localStorage/GSheets/default
-  var _logoMain = localStorage.getItem('adm_logo_main') || 'https://drive.google.com/uc?export=view&id=1KTDVuBrY8DTvva0RlyGknFaCCZmHOul1';
+  // Carica logo principale app da localStorage/GSheets
+  var _logoMain = localStorage.getItem('adm_logo_main');
   if (_logoMain) _applyLogoMain(_logoMain);
   // Carica loghi tornei statici (TDM, ILM, ILC) da localStorage
   ['tdm','ilm','ilc'].forEach(function(k) {
