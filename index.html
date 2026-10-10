@@ -1,4 +1,4 @@
-﻿<!-- build:20261010_1303 -->
+﻿<!-- build:20261010_1313 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -3056,10 +3056,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
         </div>
         <!-- Step indicator -->
         <div id="adm-wizard-steps" style="display:flex;gap:6px;margin-bottom:20px">
-          <div class="wz-step" id="wz-s1" style="flex:1;padding:6px;text-align:center;border-radius:8px;font-size:10px;font-weight:800;background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)">1 · BASE</div>
-          <div class="wz-step" id="wz-s2" style="flex:1;padding:6px;text-align:center;border-radius:8px;font-size:10px;font-weight:800;background:var(--bg2);color:var(--text3);border:1px solid var(--border)">2 · LEGHE</div>
-          <div class="wz-step" id="wz-s3" style="flex:1;padding:6px;text-align:center;border-radius:8px;font-size:10px;font-weight:800;background:var(--bg2);color:var(--text3);border:1px solid var(--border)">3 · SQUADRE</div>
-          <div class="wz-step" id="wz-s4" style="flex:1;padding:6px;text-align:center;border-radius:8px;font-size:10px;font-weight:800;background:var(--bg2);color:var(--text3);border:1px solid var(--border)">4 · CONFERMA</div>
+          <div class="wz-step" id="wz-s1" style="flex:1;padding:6px;text-align:center;border-radius:8px;font-size:10px;font-weight:800;background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)">1 · DATI TORNEO</div>
+          <div class="wz-step" id="wz-s2" style="flex:1;padding:6px;text-align:center;border-radius:8px;font-size:10px;font-weight:800;background:var(--bg2);color:var(--text3);border:1px solid var(--border)">2 · CONFERMA</div>
         </div>
         <!-- Step 1: Dati base -->
         <div id="adm-wz-step1">
@@ -3104,39 +3102,11 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
             <button onclick="admWizardStep(2)" style="padding:8px 20px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">Avanti →</button>
           </div>
         </div>
-        <!-- Step 2: Leghe -->
+        <!-- Step 2: Conferma -->
         <div id="adm-wz-step2" style="display:none">
-          <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Aggiungi una o più leghe per questo torneo.</div>
-          <div id="adm-wz-leghe-list" style="margin-bottom:12px"></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:16px">
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Nome Lega</div>
-              <input id="wz-lega-label" type="text" placeholder="es. Italia" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">
-            </div>
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Chiave</div>
-              <input id="wz-lega-key" type="text" placeholder="es. it" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">
-            </div>
-            <button onclick="admWizardAddLega()" style="padding:8px 14px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:#10b981;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">+ Aggiungi</button>
-          </div>
-          <div style="display:flex;justify-content:space-between">
-            <button onclick="admWizardStep(1)" style="padding:8px 16px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">← Indietro</button>
-            <button onclick="admWizardStep(3)" style="padding:8px 20px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">Avanti →</button>
-          </div>
-        </div>
-        <!-- Step 3: Squadre -->
-        <div id="adm-wz-step3" style="display:none">
-          <div id="adm-wz-squadre-container"></div>
-          <div style="display:flex;justify-content:space-between;margin-top:12px">
-            <button onclick="admWizardStep(2)" style="padding:8px 16px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">← Indietro</button>
-            <button onclick="admWizardStep(4)" style="padding:8px 20px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">Avanti →</button>
-          </div>
-        </div>
-        <!-- Step 4: Conferma -->
-        <div id="adm-wz-step4" style="display:none">
           <div id="adm-wz-riepilogo" style="margin-bottom:16px"></div>
           <div style="display:flex;justify-content:space-between">
-            <button onclick="admWizardStep(3)" style="padding:8px 16px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">← Indietro</button>
+            <button onclick="admWizardStep(1)" style="padding:8px 16px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">← Indietro</button>
             <button onclick="admWizardConfirm()" style="padding:8px 20px;background:#10b981;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">✅ Crea Torneo</button>
           </div>
         </div>
@@ -6433,7 +6403,9 @@ function admInitPage() {
 // ═══════════════════════════════════════════════════════
 function admSaveTornei() {
   localStorage.setItem('admin_tornei', JSON.stringify(ADMIN_TORNEI));
-  gsSaveKey('admin_tornei', JSON.stringify(ADMIN_TORNEI));
+  if (typeof gsPost === 'function' && GS_ONLINE) {
+    gsPost({action:'saveTornei', data: ADMIN_TORNEI}, null);
+  }
 }
 
 function admRenderTornei() {
@@ -6602,69 +6574,25 @@ function admWizardRenderRiepilogo() {
 }
 
 function admWizardConfirm() {
-  // Crea il torneo in ADMIN_TORNEI
-  var torneo = { key: _wzData.key, label: _wzData.label, formato: _wzData.formato, color: _wzData.color, leghe: _wzData.leghe.slice() };
+  // Crea il torneo base (senza leghe)
+  var torneo = { key: _wzData.key, label: _wzData.label, formato: _wzData.formato, color: _wzData.color, leghe: [] };
   ADMIN_TORNEI.push(torneo);
   admSaveTornei();
 
-  // Salva configurazione torneo
-  var config = { giornate: _wzData.giornate, nSquadre: _wzData.nSquadre, crediti: _wzData.crediti };
-  localStorage.setItem('adm_config_'+_wzData.key, JSON.stringify(config));
-
-  // Salva squadre e crediti per ogni lega
-  _wzData.leghe.slice().sort(function(a,b){return a.label.localeCompare(b.label);}).forEach(function(lega) {
-    var squadre = (_wzData.squadrePerLega[lega.key]||[]).filter(function(s){return s.trim();});
-    // Crediti iniziali
-    var cr = {};
-    squadre.forEach(function(s){ cr[s] = _wzData.crediti; });
-    localStorage.setItem('adm_crediti_base_'+_wzData.key+'_'+lega.key, JSON.stringify(cr)); syncCreditiToUser(_wzData.key, lega.key, cr);
-    // Rose vuote
-    var rose = {};
-    squadre.forEach(function(s){ rose[s] = []; });
-    localStorage.setItem('adm_rose_'+_wzData.key+'_'+lega.key, JSON.stringify(rose));
-    // Calendario vuoto
-    var cal = {};
-    for (var g=1; g<=_wzData.giornate; g++) {
-      cal[String(g)] = {};
-      squadre.forEach(function(s){ cal[String(g)][s.toUpperCase()] = ''; });
-    }
-    localStorage.setItem('adm_cal_'+_wzData.key+'_'+lega.key, JSON.stringify(cal));
-  });
+  var torneoLabel = _wzData.label;
 
   // Reset wizard
   _wzData = { key:'', label:'', formato:'classic', giornate:34, nSquadre:10, crediti:250, color:'#3b82f6', leghe:[], squadrePerLega:{} };
   admWizardStep(1);
   document.getElementById('wz-key').value='';
   document.getElementById('wz-label').value='';
+  document.getElementById('wz-color').value='#3b82f6';
+
   admRenderTornei();
   admAggiornaDashboard();
 
-  // Salva configurazione su GSheets
-  var configData = {
-    giornate: _wzData.giornate,
-    nSquadre: _wzData.nSquadre,
-    crediti: _wzData.crediti,
-    formato: _wzData.formato,
-    label: _wzData.label,
-    leghe: _wzData.leghe
-  };
-  if (typeof gsCall === 'function' && GS_ONLINE) {
-    gsCall({action:'saveTorneoConfig', torneo:_wzData.key, data:JSON.stringify(configData)}, null);
-    // Salva rose vuote per ogni lega
-    _wzData.leghe.slice().sort(function(a,b){return a.label.localeCompare(b.label);}).forEach(function(lega) {
-      var rose = {};
-      var sq = (_wzData.squadrePerLega[lega.key]||[]).filter(function(s){return s.trim();});
-      sq.forEach(function(s){ rose[s] = []; });
-      gsCall({action:'saveRose', torneo:_wzData.key, lega:lega.key, data:JSON.stringify(rose)}, null);
-    });
-  }
-
-  // Aggiorna LEAGUES_DATA con il nuovo torneo
-  admWizardUpdateLeaguesData(_wzData.key, _wzData.label, _wzData.leghe);
-
-  var torneoLabel = _wzData.label;
   var msg = document.createElement('div');
-  msg.textContent = '✅ Torneo "'+torneoLabel+'" creato!';
+  msg.textContent = '✅ Torneo "'+torneoLabel+'" creato! Ora crea le leghe.';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},3000);
@@ -11857,7 +11785,9 @@ function admSaveMulteEl(el) {
 // ═══════════════════════════════════════════════════════
 function admSaveTornei() {
   localStorage.setItem('admin_tornei', JSON.stringify(ADMIN_TORNEI));
-  gsSaveKey('admin_tornei', JSON.stringify(ADMIN_TORNEI));
+  if (typeof gsPost === 'function' && GS_ONLINE) {
+    gsPost({action:'saveTornei', data: ADMIN_TORNEI}, null);
+  }
 }
 
 function admRenderTornei() {
@@ -12026,69 +11956,25 @@ function admWizardRenderRiepilogo() {
 }
 
 function admWizardConfirm() {
-  // Crea il torneo in ADMIN_TORNEI
-  var torneo = { key: _wzData.key, label: _wzData.label, formato: _wzData.formato, color: _wzData.color, leghe: _wzData.leghe.slice() };
+  // Crea il torneo base (senza leghe)
+  var torneo = { key: _wzData.key, label: _wzData.label, formato: _wzData.formato, color: _wzData.color, leghe: [] };
   ADMIN_TORNEI.push(torneo);
   admSaveTornei();
 
-  // Salva configurazione torneo
-  var config = { giornate: _wzData.giornate, nSquadre: _wzData.nSquadre, crediti: _wzData.crediti };
-  localStorage.setItem('adm_config_'+_wzData.key, JSON.stringify(config));
-
-  // Salva squadre e crediti per ogni lega
-  _wzData.leghe.slice().sort(function(a,b){return a.label.localeCompare(b.label);}).forEach(function(lega) {
-    var squadre = (_wzData.squadrePerLega[lega.key]||[]).filter(function(s){return s.trim();});
-    // Crediti iniziali
-    var cr = {};
-    squadre.forEach(function(s){ cr[s] = _wzData.crediti; });
-    localStorage.setItem('adm_crediti_base_'+_wzData.key+'_'+lega.key, JSON.stringify(cr)); syncCreditiToUser(_wzData.key, lega.key, cr);
-    // Rose vuote
-    var rose = {};
-    squadre.forEach(function(s){ rose[s] = []; });
-    localStorage.setItem('adm_rose_'+_wzData.key+'_'+lega.key, JSON.stringify(rose));
-    // Calendario vuoto
-    var cal = {};
-    for (var g=1; g<=_wzData.giornate; g++) {
-      cal[String(g)] = {};
-      squadre.forEach(function(s){ cal[String(g)][s.toUpperCase()] = ''; });
-    }
-    localStorage.setItem('adm_cal_'+_wzData.key+'_'+lega.key, JSON.stringify(cal));
-  });
+  var torneoLabel = _wzData.label;
 
   // Reset wizard
   _wzData = { key:'', label:'', formato:'classic', giornate:34, nSquadre:10, crediti:250, color:'#3b82f6', leghe:[], squadrePerLega:{} };
   admWizardStep(1);
   document.getElementById('wz-key').value='';
   document.getElementById('wz-label').value='';
+  document.getElementById('wz-color').value='#3b82f6';
+
   admRenderTornei();
   admAggiornaDashboard();
 
-  // Salva configurazione su GSheets
-  var configData = {
-    giornate: _wzData.giornate,
-    nSquadre: _wzData.nSquadre,
-    crediti: _wzData.crediti,
-    formato: _wzData.formato,
-    label: _wzData.label,
-    leghe: _wzData.leghe
-  };
-  if (typeof gsCall === 'function' && GS_ONLINE) {
-    gsCall({action:'saveTorneoConfig', torneo:_wzData.key, data:JSON.stringify(configData)}, null);
-    // Salva rose vuote per ogni lega
-    _wzData.leghe.slice().sort(function(a,b){return a.label.localeCompare(b.label);}).forEach(function(lega) {
-      var rose = {};
-      var sq = (_wzData.squadrePerLega[lega.key]||[]).filter(function(s){return s.trim();});
-      sq.forEach(function(s){ rose[s] = []; });
-      gsCall({action:'saveRose', torneo:_wzData.key, lega:lega.key, data:JSON.stringify(rose)}, null);
-    });
-  }
-
-  // Aggiorna LEAGUES_DATA con il nuovo torneo
-  admWizardUpdateLeaguesData(_wzData.key, _wzData.label, _wzData.leghe);
-
-  var torneoLabel = _wzData.label;
   var msg = document.createElement('div');
-  msg.textContent = '✅ Torneo "'+torneoLabel+'" creato!';
+  msg.textContent = '✅ Torneo "'+torneoLabel+'" creato! Ora crea le leghe.';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},3000);
