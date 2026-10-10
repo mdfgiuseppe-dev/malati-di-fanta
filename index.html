@@ -1,4 +1,4 @@
-﻿<!-- build:20261010_0753 -->
+﻿<!-- build:20261010_0756 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -2852,78 +2852,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     <div class="page-sub">Seleziona un torneo per visualizzare le leghe disponibili · Solo su invito</div>
   </div>
 
-  <div class="tournaments">
-
-    <div class="t-card" style="--tc:#3b82f6" onclick="selectTournament('tdm',this)">
-      <div class="t-logo-area"><img src="" alt="TDM"></div>
-      <div class="t-body">
-        <div class="t-name">Tana dei Mister</div>
-        <div class="t-mode-row"><span class="t-badge">TDM</span><span class="t-badge mode">Classic</span></div>
-        <div class="t-stats">
-          <div class="t-stat"><span class="t-stat-l">Leghe</span><span class="t-stat-v" id="tdm-n-leghe">—</span></div>
-          <div class="t-stat"><span class="t-stat-l">Club partecipanti</span><span class="t-stat-v" id="tdm-n-club">—</span></div>
-        </div>
-        <div class="t-cta">Visualizza leghe →</div>
-<div style="display:flex;gap:6px;margin-top:6px"><div onclick="event.stopPropagation();openRegModal('tdm','Tana dei Mister')" style="flex:1;padding:5px 6px;border-radius:7px;font-size:8px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;background:rgba(255,255,255,.03);color:var(--text2);border:1px solid var(--border)">📋 Regolamento</div><div onclick="event.stopPropagation();openAlboBtn('tdm','Tana dei Mister')" style="flex:1;padding:5px 6px;border-radius:7px;font-size:8px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;color:#3b82f6;border:1px solid #3b82f633;background:#3b82f611">🏆 Albo d'Oro</div></div>
-      </div>
-    </div>
-
-    <div class="t-card" style="--tc:#10b981" onclick="selectTournament('slim',this)">
-      <div class="t-logo-area"><img src="" alt="Scudetto Slim"></div>
-      <div class="t-body">
-        <div class="t-name">Scudetto Slim</div>
-        <div class="t-mode-row"><span class="t-badge">SLIM</span><span class="t-badge mode">Mantra</span></div>
-        <div class="t-stats">
-          <div class="t-stat"><span class="t-stat-l">Leghe</span><span class="t-stat-v" id="slim-n-leghe">—</span></div>
-          <div class="t-stat"><span class="t-stat-l">Club partecipanti</span><span class="t-stat-v" id="slim-n-club">—</span></div>
-        </div>
-        <div class="t-cta">Visualizza leghe →</div>
-<div style="display:flex;gap:6px;margin-top:6px"><div onclick="event.stopPropagation();openRegModal('slim','Scudetto Slim')" style="flex:1;padding:5px 6px;border-radius:7px;font-size:8px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;background:rgba(255,255,255,.03);color:var(--text2);border:1px solid var(--border)">📋 Regolamento</div><div onclick="event.stopPropagation();openAlboBtn('slim','Scudetto Slim')" style="flex:1;padding:5px 6px;border-radius:7px;font-size:8px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;color:#10b981;border:1px solid #10b98133;background:#10b98111">🏆 Albo d'Oro</div></div>
-      </div>
-    </div>
-
-    <div class="t-card" style="--tc:#f59e0b" onclick="selectTournament('tsm',this)">
-      <div class="t-logo-area"><img src="" alt="TSM"></div>
-      <div class="t-body">
-        <div class="t-name">Torneo Semi Manageriale</div>
-        <div class="t-mode-row"><span class="t-badge">TSM</span><span class="t-badge mode">Classic</span></div>
-        <div class="t-stats">
-          <div class="t-stat"><span class="t-stat-l">Leghe</span><span class="t-stat-v" id="tsm-n-leghe">—</span></div>
-          <div class="t-stat"><span class="t-stat-l">Club partecipanti</span><span class="t-stat-v" id="tsm-n-club">—</span></div>
-        </div>
-        <div class="t-cta">Visualizza leghe →</div>
-<div style="display:flex;gap:6px;margin-top:6px"><div onclick="event.stopPropagation();openRegModal('tsm','Torneo Semi Manageriale')" style="flex:1;padding:5px 6px;border-radius:7px;font-size:8px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;background:rgba(255,255,255,.03);color:var(--text2);border:1px solid var(--border)">📋 Regolamento</div><div onclick="event.stopPropagation();openAlboBtn('tsm','Torneo Semi Manageriale')" style="flex:1;padding:5px 6px;border-radius:7px;font-size:8px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;color:#f59e0b;border:1px solid #f59e0b33;background:#f59e0b11">🏆 Albo d'Oro</div></div>
-      </div>
-    </div>
-
-    <div class="t-card" style="--tc:#8b5cf6" onclick="selectTournament('ilm',this)">
-      <div class="t-logo-area"><img src="" alt="ILM"></div>
-      <div class="t-body">
-        <div class="t-name">International League Mantra</div>
-        <div class="t-mode-row"><span class="t-badge">ILM</span><span class="t-badge mode">Mantra</span></div>
-        <div class="t-stats">
-          <div class="t-stat"><span class="t-stat-l">Leghe</span><span class="t-stat-v" id="ilm-n-leghe">In config.</span></div>
-          <div class="t-stat"><span class="t-stat-l">Club partecipanti</span><span class="t-stat-v" id="ilm-n-club">—</span></div>
-        </div>
-        <div class="t-cta">Visualizza leghe →</div>
-<div style="display:flex;gap:6px;margin-top:6px"><div onclick="event.stopPropagation();openRegModal('ilm','International League Mantra')" style="flex:1;padding:5px 6px;border-radius:7px;font-size:8px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;background:rgba(255,255,255,.03);color:var(--text2);border:1px solid var(--border)">📋 Regolamento</div><div onclick="event.stopPropagation();openAlboBtn('ilm','International League Mantra')" style="flex:1;padding:5px 6px;border-radius:7px;font-size:8px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;color:#8b5cf6;border:1px solid #8b5cf633;background:#8b5cf611">🏆 Albo d'Oro</div></div>
-      </div>
-    </div>
-
-    <div class="t-card" style="--tc:#ec4899" onclick="selectTournament('ilc',this)">
-      <div class="t-logo-area"><img src="" alt="ILC"></div>
-      <div class="t-body">
-        <div class="t-name">International League Classic</div>
-        <div class="t-mode-row"><span class="t-badge">ILC</span><span class="t-badge mode">Classic</span></div>
-        <div class="t-stats">
-          <div class="t-stat"><span class="t-stat-l">Leghe</span><span class="t-stat-v" id="ilc-n-leghe">In config.</span></div>
-          <div class="t-stat"><span class="t-stat-l">Club partecipanti</span><span class="t-stat-v" id="ilc-n-club">—</span></div>
-        </div>
-        <div class="t-cta">Visualizza leghe →</div>
-<div style="display:flex;gap:6px;margin-top:6px"><div onclick="event.stopPropagation();openRegModal('ilc','International League Classic')" style="flex:1;padding:5px 6px;border-radius:7px;font-size:8px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;background:rgba(255,255,255,.03);color:var(--text2);border:1px solid var(--border)">📋 Regolamento</div><div onclick="event.stopPropagation();openAlboBtn('ilc','International League Classic')" style="flex:1;padding:5px 6px;border-radius:7px;font-size:8px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;color:#ef4444;border:1px solid #ef444433;background:#ef444411">🏆 Albo d'Oro</div></div>
-      </div>
-    </div>
-
+  <div class="tournaments" id="tournaments-container">
+    <!-- Cards generate dinamicamente da renderTournamentCards() -->
   </div>
 
   <div id="leagues-container">
@@ -3795,6 +3725,38 @@ try {
     });
   }
 } catch(e) {}
+
+function renderTournamentCards() {
+  var container = document.getElementById('tournaments-container');
+  if (!container) return;
+  var colors = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#6366f1','#f97316'];
+  var tornei = (typeof ADMIN_TORNEI !== 'undefined') ? ADMIN_TORNEI : [];
+  var html = '';
+  tornei.forEach(function(t, idx) {
+    var color = colors[idx % colors.length];
+    var badge = t.key.toUpperCase();
+    var modo = t.formato ? t.formato.charAt(0).toUpperCase() + t.formato.slice(1) : 'Classic';
+    var label = t.label || 'Torneo';
+    html += '<div class="t-card" style="--tc:'+color+'" onclick="selectTournament(\''+t.key+'\',this)">'
+      +'<div class="t-logo-area"><img src="" alt="'+badge+'"></div>'
+      +'<div class="t-body">'
+      +'<div class="t-name">'+label+'</div>'
+      +'<div class="t-mode-row"><span class="t-badge">'+badge+'</span><span class="t-badge mode">'+modo+'</span></div>'
+      +'<div class="t-stats">'
+      +'<div class="t-stat"><span class="t-stat-l">Leghe</span><span class="t-stat-v" id="'+t.key+'-n-leghe">—</span></div>'
+      +'<div class="t-stat"><span class="t-stat-l">Club partecipanti</span><span class="t-stat-v" id="'+t.key+'-n-club">—</span></div>'
+      +'</div>'
+      +'<div class="t-cta">Visualizza leghe →</div>'
+      +'<div style="display:flex;gap:6px;margin-top:6px">'
+      +'<div onclick="event.stopPropagation();openRegModal(\''+t.key+'\',\''+label+'\')" style="flex:1;padding:5px 6px;border-radius:7px;font-size:8px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;background:rgba(255,255,255,.03);color:var(--text2);border:1px solid var(--border)">📋 Regolamento</div>'
+      +'<div onclick="event.stopPropagation();openAlboBtn(\''+t.key+'\',\''+label+'\')" style="flex:1;padding:5px 6px;border-radius:7px;font-size:8px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;color:'+color+';border:1px solid '+color+'33;background:'+color+'11">🏆 Albo d\'Oro</div>'
+      +'</div>'
+      +'</div>'
+      +'</div>';
+  });
+  container.innerHTML = html;
+  updateDashboardCounters();
+}
 
 function selectTournament(key, el) {
   var container = document.getElementById('leagues-container');
@@ -9148,6 +9110,8 @@ document.addEventListener('DOMContentLoaded',function(){
   })();
   // Ping Google Sheets per verificare connessione
   gsPing();
+  // Genera card tornei dinamicamente
+  renderTournamentCards();
   // Carica logo principale app da localStorage/GSheets
   var _logoMain = localStorage.getItem('adm_logo_main');
   if (_logoMain) _applyLogoMain(_logoMain);
@@ -9789,6 +9753,38 @@ try {
     });
   }
 } catch(e) {}
+
+function renderTournamentCards() {
+  var container = document.getElementById('tournaments-container');
+  if (!container) return;
+  var colors = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#6366f1','#f97316'];
+  var tornei = (typeof ADMIN_TORNEI !== 'undefined') ? ADMIN_TORNEI : [];
+  var html = '';
+  tornei.forEach(function(t, idx) {
+    var color = colors[idx % colors.length];
+    var badge = t.key.toUpperCase();
+    var modo = t.formato ? t.formato.charAt(0).toUpperCase() + t.formato.slice(1) : 'Classic';
+    var label = t.label || 'Torneo';
+    html += '<div class="t-card" style="--tc:'+color+'" onclick="selectTournament(\''+t.key+'\',this)">'
+      +'<div class="t-logo-area"><img src="" alt="'+badge+'"></div>'
+      +'<div class="t-body">'
+      +'<div class="t-name">'+label+'</div>'
+      +'<div class="t-mode-row"><span class="t-badge">'+badge+'</span><span class="t-badge mode">'+modo+'</span></div>'
+      +'<div class="t-stats">'
+      +'<div class="t-stat"><span class="t-stat-l">Leghe</span><span class="t-stat-v" id="'+t.key+'-n-leghe">—</span></div>'
+      +'<div class="t-stat"><span class="t-stat-l">Club partecipanti</span><span class="t-stat-v" id="'+t.key+'-n-club">—</span></div>'
+      +'</div>'
+      +'<div class="t-cta">Visualizza leghe →</div>'
+      +'<div style="display:flex;gap:6px;margin-top:6px">'
+      +'<div onclick="event.stopPropagation();openRegModal(\''+t.key+'\',\''+label+'\')" style="flex:1;padding:5px 6px;border-radius:7px;font-size:8px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;background:rgba(255,255,255,.03);color:var(--text2);border:1px solid var(--border)">📋 Regolamento</div>'
+      +'<div onclick="event.stopPropagation();openAlboBtn(\''+t.key+'\',\''+label+'\')" style="flex:1;padding:5px 6px;border-radius:7px;font-size:8px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;color:'+color+';border:1px solid '+color+'33;background:'+color+'11">🏆 Albo d\'Oro</div>'
+      +'</div>'
+      +'</div>'
+      +'</div>';
+  });
+  container.innerHTML = html;
+  updateDashboardCounters();
+}
 
 function selectTournament(key, el) {
   var container = document.getElementById('leagues-container');
@@ -14265,6 +14261,8 @@ document.addEventListener('DOMContentLoaded',function(){
   })();
   // Ping Google Sheets per verificare connessione
   gsPing();
+  // Genera card tornei dinamicamente
+  renderTournamentCards();
   // Carica logo principale app da localStorage/GSheets
   var _logoMain = localStorage.getItem('adm_logo_main');
   if (_logoMain) _applyLogoMain(_logoMain);
