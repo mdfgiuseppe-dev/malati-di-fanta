@@ -1,4 +1,4 @@
-﻿<!-- build:20261010_0840 -->
+﻿<!-- build:20261010_0855 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -21,6 +21,11 @@
 <meta name="apple-mobile-web-app-title" content="Malati di Fanta">
 <link rel="apple-touch-icon" href="">
 <link rel="icon" type="image/png" href="">
+<link rel="manifest" href="manifest.json">
+<meta name="description" content="Fantacalcio Manageriale Continuativo - Since 2019">
+<meta name="keywords" content="fantacalcio, fantasy, sports, calcio">
+<meta name="author" content="Malati di Fanta">
+<link rel="canonical" href="https://mdfgiuseppe-dev.github.io/malati-di-fanta/">
 <title>Malati di Fanta</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,600;0,700;1,300&family=Barlow+Condensed:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <style>* {margin:0;padding:0;box-sizing:border-box;}html,body{width:100%;min-height:100vh;}body{font-family:"Barlow",sans-serif;background:var(--bg,#07090f);color:var(--text,#eef2ff);overflow-x:hidden;}:root[data-theme=dark]{--bg:#07090f;--bg2:#0d1220;--bg3:#131b2e;--card:#101622;--card2:#18213a;--border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.11);--text:#eef2ff;--text2:#6a7d9e;--text3:#2e3e5e;--green:#10b981;}:root[data-theme=light]{--bg:#f0f4fc;--bg2:#e4eaf6;--bg3:#d6dff0;--card:#fff;--card2:#f4f7fe;--border:rgba(0,10,40,.07);--border2:rgba(0,10,40,.13);--text:#08101e;--text2:#4a5a7a;--text3:#9aacc0;--green:#059669;}.page{display:none !important;}.page.active{display:block !important;}#page-splash.active{display:flex !important;align-items:center;justify-content:center;min-height:100vh;position:relative;overflow:hidden;}.fbtn{padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text2);transition:all .15s;border:1px solid var(--border);}.fbtn.active{background:rgba(16,185,129,.15);color:#10b981;border-color:rgba(16,185,129,.3);}.tbtn{padding:8px 4px;background:var(--card);border:1px solid var(--border);border-radius:8px;text-align:center;cursor:pointer;font-size:9px;font-weight:800;color:var(--text2);transition:all .15s;}.tbtn.active{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.4);color:#10b981;}</style>
@@ -14881,5 +14886,12 @@ function doLogin(){
   </div>
 </div>
 
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js', { scope: '/malati-di-fanta/' })
+    .then(reg => console.log('✅ Service Worker registrato', reg))
+    .catch(err => console.log('❌ Service Worker errore:', err));
+}
+</script>
 </body>
 </html>
