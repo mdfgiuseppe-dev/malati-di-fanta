@@ -1,4 +1,4 @@
-﻿<!-- build:20261010_1637 -->
+﻿<!-- build:20261010_1737 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -4481,7 +4481,7 @@ function gsCall(params, callback) {
   var timeout = setTimeout(function() {
     delete window[id];
     if (callback) callback(new Error('timeout'), null);
-  }, 6000);
+  }, 15000);
 
   window[id] = function(data) {
     clearTimeout(timeout);
@@ -4497,7 +4497,7 @@ function gsCall(params, callback) {
     if (callback) callback(new Error('network error'), null);
   };
   document.head.appendChild(script);
-  setTimeout(function(){ if(script.parentNode) script.parentNode.removeChild(script); }, 7000);
+  setTimeout(function(){ if(script.parentNode) script.parentNode.removeChild(script); }, 16000);
 }
 
 // Ping al caricamento per verificare connessione
