@@ -4985,16 +4985,7 @@ function gsLoadMulte(torneo, lega, callback) {
 var ADMIN_PASSWORD = 'admin2026';
 
 // Struttura tornei (estensibile dall'Admin)
-var ADMIN_TORNEI = JSON.parse(localStorage.getItem('admin_tornei') || 'null') || [
-  { key: 'slim', label: 'Scudetto Slim', formato: 'mantra', leghe: [
-    {key:'it',label:'Italia'},{key:'en',label:'Inghilterra'},{key:'de',label:'Germania'},
-    {key:'es',label:'Spagna'},{key:'fr',label:'Francia'},{key:'pt',label:'Portogallo'},
-    {key:'nl',label:'Olanda'},{key:'tr',label:'Turchia'}
-  ]},
-  { key: 'tsm', label: 'TSM', formato: 'classic', leghe: [
-    {key:'it',label:'Italia'}
-  ]}
-];
+var ADMIN_TORNEI = JSON.parse(localStorage.getItem('admin_tornei') || '[]');
 
 // Utenti
 var ADMIN_USERS = JSON.parse(localStorage.getItem('admin_users') || '[]');
@@ -10466,16 +10457,7 @@ function gsLoadMulte(torneo, lega, callback) {
 var ADMIN_PASSWORD = 'admin2026';
 
 // Struttura tornei (estensibile dall'Admin)
-var ADMIN_TORNEI = JSON.parse(localStorage.getItem('admin_tornei') || 'null') || [
-  { key: 'slim', label: 'Scudetto Slim', formato: 'mantra', leghe: [
-    {key:'it',label:'Italia'},{key:'en',label:'Inghilterra'},{key:'de',label:'Germania'},
-    {key:'es',label:'Spagna'},{key:'fr',label:'Francia'},{key:'pt',label:'Portogallo'},
-    {key:'nl',label:'Olanda'},{key:'tr',label:'Turchia'}
-  ]},
-  { key: 'tsm', label: 'TSM', formato: 'classic', leghe: [
-    {key:'it',label:'Italia'}
-  ]}
-];
+var ADMIN_TORNEI = JSON.parse(localStorage.getItem('admin_tornei') || '[]');
 
 // Utenti
 var ADMIN_USERS = JSON.parse(localStorage.getItem('admin_users') || '[]');
