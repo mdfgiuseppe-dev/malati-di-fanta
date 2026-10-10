@@ -1,4 +1,4 @@
-﻿<!-- build:20261010_1149 -->
+﻿<!-- build:20261010_1151 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -14896,7 +14896,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js', { scope: '/malati-di-fanta/' })
-    .then(reg => console.log('✅ Service Worker registrato', reg))
+    .then(reg => {
+      console.log('✅ Service Worker registrato', reg);
+
+      reg.onupdatefound = function() {
+        var newWorker = reg.installing;
+        newWorker.onstatechange = function() {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            var msg = document.createElement('div');
+            msg.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#10b981;color:#fff;padding:16px 20px;border-radius:10px;font-weight:700;z-index:99999;max-width:300px;box-shadow:0 4px 12px rgba(0,0,0,.3)';
+            msg.innerHTML = '🔄 <strong>Nuova versione disponibile</strong><br><small style="display:block;margin-top:8px;opacity:.9">Ricaricare per aggiornare</small><button onclick="location.reload()" style="margin-top:10px;padding:6px 14px;background:#fff;color:#10b981;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px">Ricaricare ora</button>';
+            document.body.appendChild(msg);
+          }
+        };
+      };
+    })
     .catch(err => console.log('❌ Service Worker errore:', err));
 }
 </script>
