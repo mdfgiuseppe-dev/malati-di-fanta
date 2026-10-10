@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <!-- Shield background -->
+  <path d="M96 20 L160 50 L160 100 Q160 140 96 170 Q32 140 32 100 L32 50 Z" fill="#003d82" stroke="#ffffff" stroke-width="4"/>
+
+  <!-- Inner shield -->
+  <path d="M96 28 L152 54 L152 100 Q152 135 96 162 Q40 135 40 100 L40 54 Z" fill="#0052cc"/>
+
+  <!-- Soccer ball -->
+  <circle cx="96" cy="70" r="28" fill="white" stroke="#003d82" stroke-width="1"/>
+  <path d="M96 42 Q112 42 120 60 Q112 68 96 68 Q80 68 72 60 Q80 42 96 42 Z" fill="#003d82"/>
+  <path d="M96 98 Q112 98 120 82 Q112 90 96 90 Q80 90 72 82 Q80 98 96 98 Z" fill="#003d82"/>
+  <path d="M68 55 Q72 45 84 48 Q76 62 68 65 Z" fill="#003d82"/>
+  <path d="M124 55 Q120 45 108 48 Q116 62 124 65 Z" fill="#003d82"/>
+
+  <!-- "MdF" text -->
+  <text x="96" y="145" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="white">MdF</text>
+</svg>
