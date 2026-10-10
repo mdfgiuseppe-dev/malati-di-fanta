@@ -1,4 +1,4 @@
-﻿<!-- build:20261010_1246 -->
+﻿<!-- build:20261010_1252 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -3091,6 +3091,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
               <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Crediti Iniziali</div>
               <input id="wz-crediti" type="number" min="0" value="250" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">
             </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Colore Card</div>
+              <input id="wz-color" type="color" value="#3b82f6" style="width:100%;height:40px;padding:4px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;cursor:pointer">
+            </div>
           <div style="grid-column:1/-1">
             <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">URL Trofeo (opzionale)</div>
             <input id="wz-trofeo" type="text" placeholder="https://..." style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">
@@ -3739,7 +3743,7 @@ function renderTournamentCards() {
   tornei.sort(function(a, b) { return (a.label || '').localeCompare(b.label || ''); });
   var html = '';
   tornei.forEach(function(t, idx) {
-    var color = colors[idx % colors.length];
+    var color = t.color || colors[idx % colors.length];
     var badge = t.key.toUpperCase();
     var modo = t.formato ? t.formato.charAt(0).toUpperCase() + t.formato.slice(1) : 'Classic';
     var label = t.label || 'Torneo';
@@ -6504,6 +6508,7 @@ function admWizardStep(n) {
     _wzData.nSquadre = parseInt(document.getElementById('wz-squadre').value)||10;
     _wzData.crediti = parseInt(document.getElementById('wz-crediti').value)||250;
     _wzData.trofeoUrl = (document.getElementById('wz-trofeo')||{}).value||'';
+    _wzData.color = (document.getElementById('wz-color')||{}).value||'#3b82f6';
     admWizardRenderLeghe();
   }
   if (n===3) {
@@ -6598,7 +6603,7 @@ function admWizardRenderRiepilogo() {
 
 function admWizardConfirm() {
   // Crea il torneo in ADMIN_TORNEI
-  var torneo = { key: _wzData.key, label: _wzData.label, formato: _wzData.formato, leghe: _wzData.leghe.slice() };
+  var torneo = { key: _wzData.key, label: _wzData.label, formato: _wzData.formato, color: _wzData.color, leghe: _wzData.leghe.slice() };
   ADMIN_TORNEI.push(torneo);
   admSaveTornei();
 
@@ -6627,7 +6632,7 @@ function admWizardConfirm() {
   });
 
   // Reset wizard
-  _wzData = { key:'', label:'', formato:'classic', giornate:34, nSquadre:10, crediti:250, leghe:[], squadrePerLega:{} };
+  _wzData = { key:'', label:'', formato:'classic', giornate:34, nSquadre:10, crediti:250, color:'#3b82f6', leghe:[], squadrePerLega:{} };
   admWizardStep(1);
   document.getElementById('wz-key').value='';
   document.getElementById('wz-label').value='';
@@ -9869,7 +9874,7 @@ function renderTournamentCards() {
   tornei.sort(function(a, b) { return (a.label || '').localeCompare(b.label || ''); });
   var html = '';
   tornei.forEach(function(t, idx) {
-    var color = colors[idx % colors.length];
+    var color = t.color || colors[idx % colors.length];
     var badge = t.key.toUpperCase();
     var modo = t.formato ? t.formato.charAt(0).toUpperCase() + t.formato.slice(1) : 'Classic';
     var label = t.label || 'Torneo';
@@ -11927,6 +11932,7 @@ function admWizardStep(n) {
     _wzData.nSquadre = parseInt(document.getElementById('wz-squadre').value)||10;
     _wzData.crediti = parseInt(document.getElementById('wz-crediti').value)||250;
     _wzData.trofeoUrl = (document.getElementById('wz-trofeo')||{}).value||'';
+    _wzData.color = (document.getElementById('wz-color')||{}).value||'#3b82f6';
     admWizardRenderLeghe();
   }
   if (n===3) {
@@ -12021,7 +12027,7 @@ function admWizardRenderRiepilogo() {
 
 function admWizardConfirm() {
   // Crea il torneo in ADMIN_TORNEI
-  var torneo = { key: _wzData.key, label: _wzData.label, formato: _wzData.formato, leghe: _wzData.leghe.slice() };
+  var torneo = { key: _wzData.key, label: _wzData.label, formato: _wzData.formato, color: _wzData.color, leghe: _wzData.leghe.slice() };
   ADMIN_TORNEI.push(torneo);
   admSaveTornei();
 
@@ -12050,7 +12056,7 @@ function admWizardConfirm() {
   });
 
   // Reset wizard
-  _wzData = { key:'', label:'', formato:'classic', giornate:34, nSquadre:10, crediti:250, leghe:[], squadrePerLega:{} };
+  _wzData = { key:'', label:'', formato:'classic', giornate:34, nSquadre:10, crediti:250, color:'#3b82f6', leghe:[], squadrePerLega:{} };
   admWizardStep(1);
   document.getElementById('wz-key').value='';
   document.getElementById('wz-label').value='';
