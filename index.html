@@ -4778,6 +4778,104 @@ function gsPing() {
   });
 }
 
+function syncCriticalData() {
+  if (!GS_ONLINE) return;
+  gsLoadKey('admin_tornei', function(val) {
+    if (val) {
+      var newVal = typeof val === 'string' ? val : JSON.stringify(val);
+      var oldVal = localStorage.getItem('admin_tornei');
+      if (newVal !== oldVal) {
+        localStorage.setItem('admin_tornei', newVal);
+        try { ADMIN_TORNEI.length = 0; JSON.parse(newVal).forEach(function(t){ ADMIN_TORNEI.push(t); }); } catch(e){}
+        renderTournamentCards();
+        updateDashboardCounters();
+      }
+    }
+  });
+  gsLoadKey('adm_logo_main', function(val) {
+    if (val) {
+      var newVal = typeof val === 'string' ? val : JSON.stringify(val);
+      var oldVal = localStorage.getItem('adm_logo_main');
+      if (newVal !== oldVal) {
+        localStorage.setItem('adm_logo_main', newVal);
+        _applyLogoMain(newVal);
+      }
+    }
+  });
+  var _at = JSON.parse(localStorage.getItem('admin_tornei')||'[]');
+  _at.forEach(function(t) {
+    gsLoadKey('adm_logo_torneo_'+t.key, function(val) {
+      if (val) {
+        var newVal = typeof val === 'string' ? val : val;
+        var oldVal = localStorage.getItem('adm_logo_torneo_'+t.key);
+        if (newVal !== oldVal) {
+          localStorage.setItem('adm_logo_torneo_'+t.key, newVal);
+          updateLogosTornei();
+        }
+      }
+    });
+    (t.leghe||[]).forEach(function(l) {
+      var trofKey = 'adm_trofeo_lega_'+t.key+'_'+l.key;
+      gsLoadKey(trofKey, function(val) {
+        if (val) {
+          var newVal = typeof val === 'string' ? val : val;
+          var oldVal = localStorage.getItem(trofKey);
+          if (newVal !== oldVal) {
+            localStorage.setItem(trofKey, newVal);
+          }
+        }
+      });
+    });
+  });
+}
+
+function syncSecondaryData() {
+  if (!GS_ONLINE) return;
+  var _at = JSON.parse(localStorage.getItem('admin_tornei')||'[]');
+  if (!_at.length) _at = [{key:'slim',leghe:[{key:'it'}]},{key:'tsm',leghe:[{key:'it'}]}];
+  _at.forEach(function(t) {
+    (t.leghe||[]).forEach(function(l) {
+      var roseKey = 'adm_rose_'+t.key+'_'+l.key;
+      gsLoadKey(roseKey, function(val) {
+        if (val) {
+          var newVal = typeof val === 'string' ? val : JSON.stringify(val);
+          var oldVal = localStorage.getItem(roseKey);
+          if (newVal !== oldVal) {
+            localStorage.setItem(roseKey, newVal);
+            if (currentTournament === t.key) {
+              if (typeof slimRenderClassifica === 'function') slimRenderClassifica();
+              if (typeof tsmUpdateView === 'function') tsmUpdateView();
+            }
+          }
+        }
+      });
+      var calKey = 'adm_calendario_'+t.key+'_'+l.key;
+      gsLoadKey(calKey, function(val) {
+        if (val) {
+          var newVal = typeof val === 'string' ? val : JSON.stringify(val);
+          var oldVal = localStorage.getItem(calKey);
+          if (newVal !== oldVal) {
+            localStorage.setItem(calKey, newVal);
+            if (currentTournament === t.key) {
+              if (typeof slimRenderCalendario === 'function') slimRenderCalendario();
+            }
+          }
+        }
+      });
+    });
+  });
+  gsLoadKey('adm_stadio_table_global', function(val) {
+    if (val) {
+      var newVal = typeof val === 'string' ? val : JSON.stringify(val);
+      var oldVal = localStorage.getItem('adm_stadio_table_global');
+      if (newVal !== oldVal) {
+        localStorage.setItem('adm_stadio_table_global', newVal);
+        if (typeof slimRenderStadio === 'function') slimRenderStadio();
+      }
+    }
+  });
+}
+
 // Controlla richieste di registrazione pendenti
 var _lastPendingCount = parseInt(localStorage.getItem('_lastPendingCount')||'0');
 function checkPendingRequests() {
@@ -9110,6 +9208,9 @@ document.addEventListener('DOMContentLoaded',function(){
   })();
   // Ping Google Sheets per verificare connessione
   gsPing();
+  // Sincronizzazione real-time
+  syncCriticalData(); setInterval(syncCriticalData, 3000);
+  syncSecondaryData(); setInterval(syncSecondaryData, 15000);
   // Genera card tornei dinamicamente
   renderTournamentCards();
   // Carica logo principale app da localStorage/GSheets
@@ -14261,6 +14362,9 @@ document.addEventListener('DOMContentLoaded',function(){
   })();
   // Ping Google Sheets per verificare connessione
   gsPing();
+  // Sincronizzazione real-time
+  syncCriticalData(); setInterval(syncCriticalData, 3000);
+  syncSecondaryData(); setInterval(syncSecondaryData, 15000);
   // Genera card tornei dinamicamente
   renderTournamentCards();
   // Carica logo principale app da localStorage/GSheets
