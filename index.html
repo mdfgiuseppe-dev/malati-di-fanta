@@ -1,4 +1,4 @@
-﻿<!-- build:20261010_1737 -->
+﻿<!-- build:20261010_1748 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -4445,7 +4445,7 @@ function modSelLegaChange() {
 // ═══════════════════════════════════════════════════════
 // GOOGLE SHEETS — Layer di sincronizzazione
 // ═══════════════════════════════════════════════════════
-var GS_URL = 'https://script.google.com/macros/s/AKfycbzIBnmsLLFzfW3HTDH0ufgg_aFMltfP-d66pS_Hsnrd9x5f6ArtuY7j6DKekfmUPZxK/exec';
+var GS_URL = 'https://script.google.com/macros/s/AKfycbyhFs7KV4CA-5WWFO00Bg3moDVbdmynntXdtPVEoBTEuPXHX9BmPnnH5_tLeIZ8xEY/exec';
 var GS_ONLINE = false; // diventa true dopo il primo ping riuscito
 
 // Chiamata tramite JSONP (necessario per Google Apps Script CORS)
@@ -4481,7 +4481,7 @@ function gsCall(params, callback) {
   var timeout = setTimeout(function() {
     delete window[id];
     if (callback) callback(new Error('timeout'), null);
-  }, 15000);
+  }, 30000);
 
   window[id] = function(data) {
     clearTimeout(timeout);
@@ -4497,7 +4497,7 @@ function gsCall(params, callback) {
     if (callback) callback(new Error('network error'), null);
   };
   document.head.appendChild(script);
-  setTimeout(function(){ if(script.parentNode) script.parentNode.removeChild(script); }, 16000);
+  setTimeout(function(){ if(script.parentNode) script.parentNode.removeChild(script); }, 31000);
 }
 
 // Ping al caricamento per verificare connessione
