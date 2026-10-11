@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1200 -->
+﻿<!-- build:20261011_1204 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -4524,9 +4524,10 @@ function gsCall(params, callback) {
 }
 
 // Ping al caricamento per verificare connessione Firebase
+// Disabilitato: usiamo Firebase, non Google Apps Script
 function gsPing() {
-  fbDB.ref('.info/connected').once('value', snapshot => {
-    GS_ONLINE = snapshot.val() === true;
+  // Firebase è sempre online, niente da pingare
+  return;
     if (GS_ONLINE) {
       // Controlla richieste pendenti (solo se admin) + sync trofei locali → GSheets
       var cu = localStorage.getItem('current_user');
