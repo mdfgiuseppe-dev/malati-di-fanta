@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1427 -->
+﻿<!-- build:20261011_1514 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -6861,42 +6861,61 @@ function admRenderUtenti() {
     }).join('')
     +'</tbody></table>';
 
-  // Sezione richieste pendenti
-  var pending = JSON.parse(localStorage.getItem('_pendingRequests') || '[]');
+  // Sezione richieste pendenti - Carica da Firebase
   var pendingEl = document.getElementById('adm-pending-list');
   var countEl = document.getElementById('adm-pending-count');
-  if (pendingEl) {
-    if (!pending.length) {
-      pendingEl.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12px;padding:10px">Nessuna richiesta pendente.</div>';
-      if (countEl) countEl.textContent = '0';
-    } else {
-      if (countEl) countEl.textContent = pending.length;
-      pendingEl.innerHTML = pending.map(function(r, i) {
-        var nomeCompleto = (r.cognome||'') + ' ' + (r.nome||'');
-        var wa = r.whatsapp || '—';
-        var squadra = r.squadra || '—';
-        var dn = r.dataNascita || '';
-        var ts = r.timestamp || '—';
-        return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px">'
-          +'<div style="display:flex;justify-content:space-between;align-items:start;gap:10px">'
-          +'<div style="flex:1;min-width:500px">'
-          +'<div style="font-weight:700;font-size:13px;color:var(--text)">'+nomeCompleto.trim()+'</div>'
-          +'<div style="font-size:11px;color:var(--text2);margin-top:3px">📱 '+wa+' · 🗓 '+ts+'</div>'
-          +(dn?'<div style="font-size:11px;color:var(--text2)">🎂 '+dn+'</div>':'')
-          +(squadra!=='—'?'<div style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⚽ '+squadra+'</div>':'')
-          +'</div>'
-          +'<button onclick="admPreFillFromRequest('+i+')" style="flex-shrink:0;padding:6px 10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#10b981;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer">+ Registra</button>'
-          +'</div></div>';
-      }).join('');
+
+  fbLoadKey('pending_requests', function(val) {
+    var pending = [];
+    if (val) {
+      var data = typeof val === 'string' ? JSON.parse(val) : val;
+      // Converte da oggetto annidato (come salvato da webhook) a array
+      for (var key in data) {
+        if (data.hasOwnProperty(key) && typeof data[key] === 'object') {
+          var req = data[key];
+          if (req.cognome || req.nome) {
+            pending.push(req);
+          }
+        }
+      }
     }
-  }
-  // Aggiorna anche campanella
-  var dot = document.querySelector('.notif-dot');
-  if (dot) dot.style.display = pending.length > 0 ? 'block' : 'none';
+
+    // Salva in variabile globale per admPreFillFromRequest()
+    window.GLOBAL_PENDING_REQUESTS = pending;
+
+    if (pendingEl) {
+      if (!pending.length) {
+        pendingEl.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12px;padding:10px">Nessuna richiesta pendente.</div>';
+        if (countEl) countEl.textContent = '0';
+      } else {
+        if (countEl) countEl.textContent = pending.length;
+        pendingEl.innerHTML = pending.map(function(r, i) {
+          var nomeCompleto = (r.cognome||'') + ' ' + (r.nome||'');
+          var wa = r.whatsapp || '—';
+          var squadra = r.squadra || '—';
+          var dn = r.data_nascita || '';
+          var ts = r.timestamp || '—';
+          return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px">'
+            +'<div style="display:flex;justify-content:space-between;align-items:start;gap:10px">'
+            +'<div style="flex:1;min-width:500px">'
+            +'<div style="font-weight:700;font-size:13px;color:var(--text)">'+nomeCompleto.trim()+'</div>'
+            +'<div style="font-size:11px;color:var(--text2);margin-top:3px">📱 '+wa+' · 🗓 '+ts+'</div>'
+            +(dn?'<div style="font-size:11px;color:var(--text2)">🎂 '+dn+'</div>':'')
+            +(squadra!=='—'?'<div style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⚽ '+squadra+'</div>':'')
+            +'</div>'
+            +'<button onclick="admPreFillFromRequest('+i+')" style="flex-shrink:0;padding:6px 10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#10b981;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer">+ Registra</button>'
+            +'</div></div>';
+        }).join('');
+      }
+    }
+    // Aggiorna anche campanella
+    var dot = document.querySelector('.notif-dot');
+    if (dot) dot.style.display = pending.length > 0 ? 'block' : 'none';
+  });
 }
 
 function admPreFillFromRequest(idx) {
-  var pending = JSON.parse(localStorage.getItem('_pendingRequests') || '[]');
+  var pending = window.GLOBAL_PENDING_REQUESTS || [];
   var r = pending[idx];
   if (!r) return;
   var nomeCompleto = ((r.cognome||'') + ' ' + (r.nome||'')).trim();
@@ -6921,15 +6940,22 @@ function admAddUser() {
   var newUser = { nome:nome, username:username, password:password, lega:lega, attivo:true };
   ADMIN_USERS.push(newUser);
   admSaveUsers();
-  // Rimuovi dalle richieste pendenti se il nome corrisponde
-  var pending = JSON.parse(localStorage.getItem('_pendingRequests') || '[]');
+  // Rimuovi dalle richieste pendenti su Firebase se il nome corrisponde
   var nomeLower = nome.toLowerCase().trim();
-  pending = pending.filter(function(r) {
-    var nc = ((r.cognome||'') + ' ' + (r.nome||'')).toLowerCase().trim();
-    var ni = ((r.nome||'') + ' ' + (r.cognome||'')).toLowerCase().trim();
-    return nc !== nomeLower && ni !== nomeLower;
+  fbLoadKey('pending_requests', function(val) {
+    if (!val) return;
+    var data = typeof val === 'string' ? JSON.parse(val) : val;
+    for (var key in data) {
+      if (data.hasOwnProperty(key) && typeof data[key] === 'object') {
+        var req = data[key];
+        var nc = ((req.cognome||'') + ' ' + (req.nome||'')).toLowerCase().trim();
+        var ni = ((req.nome||'') + ' ' + (req.cognome||'')).toLowerCase().trim();
+        if (nc === nomeLower || ni === nomeLower) {
+          fbSaveKey('pending_requests/' + key, null);
+        }
+      }
+    }
   });
-  localStorage.setItem('_pendingRequests', JSON.stringify(pending));
   document.getElementById('adm-new-user-nome').value='';
   document.getElementById('adm-new-user-username').value='';
   document.getElementById('adm-new-user-psw').value='';
@@ -12058,42 +12084,61 @@ function admRenderUtenti() {
     }).join('')
     +'</tbody></table>';
 
-  // Sezione richieste pendenti
-  var pending = JSON.parse(localStorage.getItem('_pendingRequests') || '[]');
+  // Sezione richieste pendenti - Carica da Firebase
   var pendingEl = document.getElementById('adm-pending-list');
   var countEl = document.getElementById('adm-pending-count');
-  if (pendingEl) {
-    if (!pending.length) {
-      pendingEl.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12px;padding:10px">Nessuna richiesta pendente.</div>';
-      if (countEl) countEl.textContent = '0';
-    } else {
-      if (countEl) countEl.textContent = pending.length;
-      pendingEl.innerHTML = pending.map(function(r, i) {
-        var nomeCompleto = (r.cognome||'') + ' ' + (r.nome||'');
-        var wa = r.whatsapp || '—';
-        var squadra = r.squadra || '—';
-        var dn = r.dataNascita || '';
-        var ts = r.timestamp || '—';
-        return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px">'
-          +'<div style="display:flex;justify-content:space-between;align-items:start;gap:10px">'
-          +'<div style="flex:1;min-width:500px">'
-          +'<div style="font-weight:700;font-size:13px;color:var(--text)">'+nomeCompleto.trim()+'</div>'
-          +'<div style="font-size:11px;color:var(--text2);margin-top:3px">📱 '+wa+' · 🗓 '+ts+'</div>'
-          +(dn?'<div style="font-size:11px;color:var(--text2)">🎂 '+dn+'</div>':'')
-          +(squadra!=='—'?'<div style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⚽ '+squadra+'</div>':'')
-          +'</div>'
-          +'<button onclick="admPreFillFromRequest('+i+')" style="flex-shrink:0;padding:6px 10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#10b981;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer">+ Registra</button>'
-          +'</div></div>';
-      }).join('');
+
+  fbLoadKey('pending_requests', function(val) {
+    var pending = [];
+    if (val) {
+      var data = typeof val === 'string' ? JSON.parse(val) : val;
+      // Converte da oggetto annidato (come salvato da webhook) a array
+      for (var key in data) {
+        if (data.hasOwnProperty(key) && typeof data[key] === 'object') {
+          var req = data[key];
+          if (req.cognome || req.nome) {
+            pending.push(req);
+          }
+        }
+      }
     }
-  }
-  // Aggiorna anche campanella
-  var dot = document.querySelector('.notif-dot');
-  if (dot) dot.style.display = pending.length > 0 ? 'block' : 'none';
+
+    // Salva in variabile globale per admPreFillFromRequest()
+    window.GLOBAL_PENDING_REQUESTS = pending;
+
+    if (pendingEl) {
+      if (!pending.length) {
+        pendingEl.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12px;padding:10px">Nessuna richiesta pendente.</div>';
+        if (countEl) countEl.textContent = '0';
+      } else {
+        if (countEl) countEl.textContent = pending.length;
+        pendingEl.innerHTML = pending.map(function(r, i) {
+          var nomeCompleto = (r.cognome||'') + ' ' + (r.nome||'');
+          var wa = r.whatsapp || '—';
+          var squadra = r.squadra || '—';
+          var dn = r.data_nascita || '';
+          var ts = r.timestamp || '—';
+          return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px">'
+            +'<div style="display:flex;justify-content:space-between;align-items:start;gap:10px">'
+            +'<div style="flex:1;min-width:500px">'
+            +'<div style="font-weight:700;font-size:13px;color:var(--text)">'+nomeCompleto.trim()+'</div>'
+            +'<div style="font-size:11px;color:var(--text2);margin-top:3px">📱 '+wa+' · 🗓 '+ts+'</div>'
+            +(dn?'<div style="font-size:11px;color:var(--text2)">🎂 '+dn+'</div>':'')
+            +(squadra!=='—'?'<div style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⚽ '+squadra+'</div>':'')
+            +'</div>'
+            +'<button onclick="admPreFillFromRequest('+i+')" style="flex-shrink:0;padding:6px 10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#10b981;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer">+ Registra</button>'
+            +'</div></div>';
+        }).join('');
+      }
+    }
+    // Aggiorna anche campanella
+    var dot = document.querySelector('.notif-dot');
+    if (dot) dot.style.display = pending.length > 0 ? 'block' : 'none';
+  });
 }
 
 function admPreFillFromRequest(idx) {
-  var pending = JSON.parse(localStorage.getItem('_pendingRequests') || '[]');
+  var pending = window.GLOBAL_PENDING_REQUESTS || [];
   var r = pending[idx];
   if (!r) return;
   var nomeCompleto = ((r.cognome||'') + ' ' + (r.nome||'')).trim();
@@ -12118,15 +12163,22 @@ function admAddUser() {
   var newUser = { nome:nome, username:username, password:password, lega:lega, attivo:true };
   ADMIN_USERS.push(newUser);
   admSaveUsers();
-  // Rimuovi dalle richieste pendenti se il nome corrisponde
-  var pending = JSON.parse(localStorage.getItem('_pendingRequests') || '[]');
+  // Rimuovi dalle richieste pendenti su Firebase se il nome corrisponde
   var nomeLower = nome.toLowerCase().trim();
-  pending = pending.filter(function(r) {
-    var nc = ((r.cognome||'') + ' ' + (r.nome||'')).toLowerCase().trim();
-    var ni = ((r.nome||'') + ' ' + (r.cognome||'')).toLowerCase().trim();
-    return nc !== nomeLower && ni !== nomeLower;
+  fbLoadKey('pending_requests', function(val) {
+    if (!val) return;
+    var data = typeof val === 'string' ? JSON.parse(val) : val;
+    for (var key in data) {
+      if (data.hasOwnProperty(key) && typeof data[key] === 'object') {
+        var req = data[key];
+        var nc = ((req.cognome||'') + ' ' + (req.nome||'')).toLowerCase().trim();
+        var ni = ((req.nome||'') + ' ' + (req.cognome||'')).toLowerCase().trim();
+        if (nc === nomeLower || ni === nomeLower) {
+          fbSaveKey('pending_requests/' + key, null);
+        }
+      }
+    }
   });
-  localStorage.setItem('_pendingRequests', JSON.stringify(pending));
   document.getElementById('adm-new-user-nome').value='';
   document.getElementById('adm-new-user-username').value='';
   document.getElementById('adm-new-user-psw').value='';
