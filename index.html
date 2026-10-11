@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1421 -->
+﻿<!-- build:20261011_1425 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -4540,7 +4540,7 @@ function loadDataFromFirebase() {
   });
 
   // Carica logo principale
-  fbLoadKey('adm_logo_main', function(val) {
+  fbLoadKey('images/loghi/main', function(val) {
     if (val) {
       localStorage.setItem('adm_logo_main', val);
       if (typeof _applyLogoMain === 'function') _applyLogoMain(val);
@@ -6610,8 +6610,8 @@ function admEditLogoMain() {
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  if (url) { localStorage.setItem('adm_logo_main', url); gsSaveKey('adm_logo_main', url); }
-  else { localStorage.removeItem('adm_logo_main'); gsSaveKey('adm_logo_main', ''); }
+  if (url) { localStorage.setItem('adm_logo_main', url); gsSaveKey('images/loghi/main', url); }
+  else { localStorage.removeItem('adm_logo_main'); gsSaveKey('images/loghi/main', ''); }
   _applyLogoMain(url);
   var prev = document.getElementById('adm-logo-main-preview');
   if (prev) prev.src = url || '';
@@ -11807,8 +11807,8 @@ function admEditLogoMain() {
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  if (url) { localStorage.setItem('adm_logo_main', url); gsSaveKey('adm_logo_main', url); }
-  else { localStorage.removeItem('adm_logo_main'); gsSaveKey('adm_logo_main', ''); }
+  if (url) { localStorage.setItem('adm_logo_main', url); gsSaveKey('images/loghi/main', url); }
+  else { localStorage.removeItem('adm_logo_main'); gsSaveKey('images/loghi/main', ''); }
   _applyLogoMain(url);
   var prev = document.getElementById('adm-logo-main-preview');
   if (prev) prev.src = url || '';
