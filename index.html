@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1624 -->
+﻿<!-- build:20261011_1641 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -6884,11 +6884,12 @@ function admRenderUtenti() {
   console.log('📋 pendingEl:', pendingEl, 'countEl:', countEl);
 
   console.log('📋 Chiamo fbLoadKey...');
-  fbLoadKey('pending_requests', function(val) {
-    console.log('fbLoadKey pending_requests:', val);
+  fbDB.ref('data/pending_requests').once('value', function(snapshot) {
+    console.log('fbLoadKey pending_requests snapshot:', snapshot.val());
     var pending = [];
-    if (val) {
-      var data = typeof val === 'string' ? JSON.parse(val) : val;
+    var data = snapshot.val();
+
+    if (data) {
       console.log('Dati convertiti:', data);
       // Converte da oggetto annidato (come salvato da webhook) a array
       for (var key in data) {
@@ -12116,11 +12117,12 @@ function admRenderUtenti() {
   console.log('📋 pendingEl:', pendingEl, 'countEl:', countEl);
 
   console.log('📋 Chiamo fbLoadKey...');
-  fbLoadKey('pending_requests', function(val) {
-    console.log('fbLoadKey pending_requests:', val);
+  fbDB.ref('data/pending_requests').once('value', function(snapshot) {
+    console.log('fbLoadKey pending_requests snapshot:', snapshot.val());
     var pending = [];
-    if (val) {
-      var data = typeof val === 'string' ? JSON.parse(val) : val;
+    var data = snapshot.val();
+
+    if (data) {
       console.log('Dati convertiti:', data);
       // Converte da oggetto annidato (come salvato da webhook) a array
       for (var key in data) {
