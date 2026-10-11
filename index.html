@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_0903 -->
+﻿<!-- build:20261011_0909 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -4950,7 +4950,6 @@ function gsPost(params, callback) {
 }
 
 function gsSaveKey(key, data) {
-  if (!GS_ONLINE) return;
   gsPost({action:'saveKey', key:key, data: typeof data === 'string' ? data : JSON.stringify(data)}, null);
 }
 function gsLoadKey(key, callback) {
