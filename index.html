@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1425 -->
+﻿<!-- build:20261011_1427 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -4525,6 +4525,9 @@ function fbLoadKey(key, callback) {
 
 // Carica dati critici da Firebase all'avvio
 function loadDataFromFirebase() {
+  // Inizializza password admin al primo caricamento
+  initializeAdminPassword();
+
   // Carica admin_tornei
   fbLoadKey('admin_tornei', function(val) {
     if (val) {
