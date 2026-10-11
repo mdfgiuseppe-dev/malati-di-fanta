@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1219 -->
+﻿<!-- build:20261011_1220 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -4467,10 +4467,10 @@ function modSelLegaChange() {
 // ═══════════════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════════════
-// GOOGLE SHEETS — Layer di sincronizzazione
+// GOOGLE SHEETS — Layer di sincronizzazione (DISABILITATO: uso Firebase)
 // ═══════════════════════════════════════════════════════
 var GS_URL = 'https://script.google.com/macros/s/AKfycbyX0OA-fkK5iuBOd1MNzq8y_9iJJhzzIuo4BR7Rh-7yORuJWWGdI9NVAtShPsb7RCGf/exec';
-var GS_ONLINE = false; // diventa true dopo il primo ping riuscito
+var GS_ONLINE = true; // Firebase è sempre online
 
 // Chiamata tramite JSONP (necessario per Google Apps Script CORS)
 var _gsCallbacks = {};
