@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1514 -->
+﻿<!-- build:20261011_1525 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -6815,7 +6815,8 @@ function admSaveUsers() {
 }
 
 function admRenderUtenti() {
-  var el = document.getElementById('adm-users-list'); if(!el) return;
+  console.log('🔵 admRenderUtenti() CHIAMATA');
+  var el = document.getElementById('adm-users-list'); if(!el) { console.log('❌ adm-users-list non trovato'); return; }
   // Popola select lega nel form aggiungi utente
   var selLega = document.getElementById('adm-new-user-lega');
   if (selLega) {
@@ -6866,19 +6867,23 @@ function admRenderUtenti() {
   var countEl = document.getElementById('adm-pending-count');
 
   fbLoadKey('pending_requests', function(val) {
+    console.log('fbLoadKey pending_requests:', val);
     var pending = [];
     if (val) {
       var data = typeof val === 'string' ? JSON.parse(val) : val;
+      console.log('Dati convertiti:', data);
       // Converte da oggetto annidato (come salvato da webhook) a array
       for (var key in data) {
         if (data.hasOwnProperty(key) && typeof data[key] === 'object') {
           var req = data[key];
           if (req.cognome || req.nome) {
+            console.log('Aggiunto:', req);
             pending.push(req);
           }
         }
       }
     }
+    console.log('Array finale pending:', pending);
 
     // Salva in variabile globale per admPreFillFromRequest()
     window.GLOBAL_PENDING_REQUESTS = pending;
@@ -12038,7 +12043,8 @@ function admSaveUsers() {
 }
 
 function admRenderUtenti() {
-  var el = document.getElementById('adm-users-list'); if(!el) return;
+  console.log('🔵 admRenderUtenti() CHIAMATA');
+  var el = document.getElementById('adm-users-list'); if(!el) { console.log('❌ adm-users-list non trovato'); return; }
   // Popola select lega nel form aggiungi utente
   var selLega = document.getElementById('adm-new-user-lega');
   if (selLega) {
@@ -12089,19 +12095,23 @@ function admRenderUtenti() {
   var countEl = document.getElementById('adm-pending-count');
 
   fbLoadKey('pending_requests', function(val) {
+    console.log('fbLoadKey pending_requests:', val);
     var pending = [];
     if (val) {
       var data = typeof val === 'string' ? JSON.parse(val) : val;
+      console.log('Dati convertiti:', data);
       // Converte da oggetto annidato (come salvato da webhook) a array
       for (var key in data) {
         if (data.hasOwnProperty(key) && typeof data[key] === 'object') {
           var req = data[key];
           if (req.cognome || req.nome) {
+            console.log('Aggiunto:', req);
             pending.push(req);
           }
         }
       }
     }
+    console.log('Array finale pending:', pending);
 
     // Salva in variabile globale per admPreFillFromRequest()
     window.GLOBAL_PENDING_REQUESTS = pending;
