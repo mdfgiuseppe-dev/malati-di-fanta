@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1531 -->
+﻿<!-- build:20261011_1536 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -6866,9 +6866,12 @@ function admRenderUtenti() {
     +'</tbody></table>';
 
   // Sezione richieste pendenti - Carica da Firebase
+  console.log('📋 INIZIO: Sezione richieste pendenti');
   var pendingEl = document.getElementById('adm-pending-list');
   var countEl = document.getElementById('adm-pending-count');
+  console.log('📋 pendingEl:', pendingEl, 'countEl:', countEl);
 
+  console.log('📋 Chiamo fbLoadKey...');
   fbLoadKey('pending_requests', function(val) {
     console.log('fbLoadKey pending_requests:', val);
     var pending = [];
@@ -12094,9 +12097,12 @@ function admRenderUtenti() {
     +'</tbody></table>';
 
   // Sezione richieste pendenti - Carica da Firebase
+  console.log('📋 INIZIO: Sezione richieste pendenti');
   var pendingEl = document.getElementById('adm-pending-list');
   var countEl = document.getElementById('adm-pending-count');
+  console.log('📋 pendingEl:', pendingEl, 'countEl:', countEl);
 
+  console.log('📋 Chiamo fbLoadKey...');
   fbLoadKey('pending_requests', function(val) {
     console.log('fbLoadKey pending_requests:', val);
     var pending = [];
