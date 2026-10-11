@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1600 -->
+﻿<!-- build:20261011_1604 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -4550,6 +4550,17 @@ function loadDataFromFirebase() {
     }
   });
 
+  // Carica utenti da Firebase
+  fbLoadKey('users/list', function(val) {
+    if (val) {
+      try {
+        var utenti = typeof val === 'string' ? JSON.parse(val) : val;
+        ADMIN_USERS.length = 0;
+        utenti.forEach(function(u) { ADMIN_USERS.push(u); });
+      } catch(e) { console.error('Error parsing users:', e); }
+    }
+  });
+
   // Carica altri dati critici
   ['adm_stadio_table_global', 'admin_modulistica'].forEach(function(key) {
     fbLoadKey(key, function(val) {
@@ -4717,8 +4728,8 @@ var ADMIN_PASSWORD = 'admin2026';
 // Struttura tornei (estensibile dall'Admin)
 var ADMIN_TORNEI = JSON.parse(localStorage.getItem('admin_tornei') || '[]');
 
-// Utenti
-var ADMIN_USERS = JSON.parse(localStorage.getItem('admin_users') || '[]');
+// Utenti (caricati da Firebase)
+var ADMIN_USERS = [];
 
 // ═══════════════════════════════════════════════════════
 // ADMIN — Login / Logout
@@ -6814,16 +6825,8 @@ function admAggiornaDashboard() {
 // ADMIN — Utenti
 // ═══════════════════════════════════════════════════════
 function admSaveUsers() {
-  localStorage.setItem('admin_users', JSON.stringify(ADMIN_USERS));
-  // Salva lista completa su GSheets in una sola chiamata
-  if (GS_ONLINE) {
-    gsCall({action:'saveAllUtenti', data:JSON.stringify(ADMIN_USERS)}, function(err, data) {
-      if (err || !data || !data.ok) {
-        // Fallback: salva uno per uno
-        ADMIN_USERS.forEach(function(u){ gsSaveUtente(u); });
-      }
-    });
-  }
+  // Salva utenti su Firebase
+  fbSaveKey('users/list', JSON.stringify(ADMIN_USERS));
 }
 
 function admRenderUtenti() {
@@ -10236,8 +10239,8 @@ var ADMIN_PASSWORD = 'admin2026';
 // Struttura tornei (estensibile dall'Admin)
 var ADMIN_TORNEI = JSON.parse(localStorage.getItem('admin_tornei') || '[]');
 
-// Utenti
-var ADMIN_USERS = JSON.parse(localStorage.getItem('admin_users') || '[]');
+// Utenti (caricati da Firebase)
+var ADMIN_USERS = [];
 
 // ═══════════════════════════════════════════════════════
 // ADMIN — Login / Logout
@@ -12054,16 +12057,8 @@ function admAggiornaDashboard() {
 // ADMIN — Utenti
 // ═══════════════════════════════════════════════════════
 function admSaveUsers() {
-  localStorage.setItem('admin_users', JSON.stringify(ADMIN_USERS));
-  // Salva lista completa su GSheets in una sola chiamata
-  if (GS_ONLINE) {
-    gsCall({action:'saveAllUtenti', data:JSON.stringify(ADMIN_USERS)}, function(err, data) {
-      if (err || !data || !data.ok) {
-        // Fallback: salva uno per uno
-        ADMIN_USERS.forEach(function(u){ gsSaveUtente(u); });
-      }
-    });
-  }
+  // Salva utenti su Firebase
+  fbSaveKey('users/list', JSON.stringify(ADMIN_USERS));
 }
 
 function admRenderUtenti() {
