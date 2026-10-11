@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1525 -->
+﻿<!-- build:20261011_1528 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -6036,6 +6036,7 @@ function showAdminSection(id, el) {
   });
   if (id==='tornei') admRenderTornei();
   if (id==='utenti') {
+    console.log('🔴 showAdminSection utenti TRIGGERATO');
     // Carica utenti da GSheets prima di renderizzare
     if (false && GS_ONLINE) {
       gsCall({action:'getUtenti'}, function(err, data) {
@@ -6053,6 +6054,7 @@ function showAdminSection(id, el) {
         });
       });
     } else {
+      console.log('🟢 Chiamata admRenderUtenti()');
       admRenderUtenti();
     }
   }
