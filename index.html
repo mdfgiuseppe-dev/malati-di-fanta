@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1538 -->
+﻿<!-- build:20261011_1549 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -4727,11 +4727,20 @@ function openAdminLogin() {
   var m = document.getElementById('admin-login-modal');
   if (m) {
     m.style.display='flex';
-    var saved = localStorage.getItem('_adminRemember');
     var inp = document.getElementById('admin-psw-input');
     var rem = document.getElementById('admin-remember');
-    if (saved) { inp.value = saved; if (rem) rem.checked = true; }
-    else { inp.value = ''; if (rem) rem.checked = false; }
+
+    // Carica password da Firebase
+    fbLoadKey('admin/password', function(val) {
+      if (val) {
+        inp.value = val;
+        if (rem) rem.checked = true;
+      } else {
+        inp.value = '';
+        if (rem) rem.checked = false;
+      }
+    });
+
     document.getElementById('admin-login-err').style.display='none';
     setTimeout(function(){ inp.focus(); },100);
   }
@@ -10237,11 +10246,20 @@ function openAdminLogin() {
   var m = document.getElementById('admin-login-modal');
   if (m) {
     m.style.display='flex';
-    var saved = localStorage.getItem('_adminRemember');
     var inp = document.getElementById('admin-psw-input');
     var rem = document.getElementById('admin-remember');
-    if (saved) { inp.value = saved; if (rem) rem.checked = true; }
-    else { inp.value = ''; if (rem) rem.checked = false; }
+
+    // Carica password da Firebase
+    fbLoadKey('admin/password', function(val) {
+      if (val) {
+        inp.value = val;
+        if (rem) rem.checked = true;
+      } else {
+        inp.value = '';
+        if (rem) rem.checked = false;
+      }
+    });
+
     document.getElementById('admin-login-err').style.display='none';
     setTimeout(function(){ inp.focus(); },100);
   }

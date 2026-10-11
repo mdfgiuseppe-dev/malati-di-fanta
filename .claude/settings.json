@@ -12,7 +12,8 @@
       "Bash(curl -L -o logo-orig.png \"https://drive.google.com/uc?export=download&id=1KTDVuBrY8DTvva0RlyGknFaCCZmHOul1\")",
       "Bash(xargs -I {} sh -c 'git show {}:logo.png | wc -c')",
       "Bash(curl -s \"https://script.google.com/macros/s/AKfycbzIBnmsLLFzfW3HTDH0ufgg_aFMltfP-d66pS_Hsnrd9x5f6ArtuY7j6DKekfmUPZxK/exec?action=ping&callback=test\")",
-      "Bash(curl -v \"https://script.google.com/macros/s/AKfycbzIBnmsLLFzfW3HTDH0ufgg_aFMltfP-d66pS_Hsnrd9x5f6ArtuY7j6DKekfmUPZxK/exec?action=ping&callback=test\")"
+      "Bash(curl -v \"https://script.google.com/macros/s/AKfycbzIBnmsLLFzfW3HTDH0ufgg_aFMltfP-d66pS_Hsnrd9x5f6ArtuY7j6DKekfmUPZxK/exec?action=ping&callback=test\")",
+      "Bash(curl -s \"https://raw.githubusercontent.com/mdfgiuseppe-dev/malati-di-fanta/main/index.html\")"
     ]
   }
 }
