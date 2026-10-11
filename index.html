@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1318 -->
+﻿<!-- build:20261011_1353 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -4523,6 +4523,38 @@ function fbLoadKey(key, callback) {
   });
 }
 
+// Carica dati critici da Firebase all'avvio
+function loadDataFromFirebase() {
+  // Carica admin_tornei
+  fbLoadKey('admin_tornei', function(val) {
+    if (val) {
+      try {
+        var tornei = typeof val === 'string' ? JSON.parse(val) : val;
+        localStorage.setItem('admin_tornei', JSON.stringify(tornei));
+        if (typeof ADMIN_TORNEI !== 'undefined') {
+          ADMIN_TORNEI.length = 0;
+          tornei.forEach(function(t) { ADMIN_TORNEI.push(t); });
+        }
+      } catch(e) { console.error('Error parsing admin_tornei:', e); }
+    }
+  });
+
+  // Carica logo principale
+  fbLoadKey('adm_logo_main', function(val) {
+    if (val) {
+      localStorage.setItem('adm_logo_main', val);
+      if (typeof _applyLogoMain === 'function') _applyLogoMain(val);
+    }
+  });
+
+  // Carica altri dati critici
+  ['adm_stadio_table_global', 'admin_modulistica'].forEach(function(key) {
+    fbLoadKey(key, function(val) {
+      if (val) localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+    });
+  });
+}
+
 // Legacy Google Apps Script functions (mapped to Firebase)
 function gsSaveKey(key, data) { fbSaveKey(key, data); }
 function gsLoadKey(key, callback) { fbLoadKey(key, callback); }
@@ -8702,6 +8734,9 @@ window.addEventListener('storage', function(e) {
 });
 
 document.addEventListener('DOMContentLoaded',function(){
+  // Carica dati da Firebase al startup
+  loadDataFromFirebase();
+
   // Sincronizza adm_crediti_base → user_crediti al caricamento (per tutti i tornei)
   (function(){
     var tornei = ['slim_it','slim_en','slim_de','slim_es','slim_fr','slim_pt','slim_nl','slim_tr','tsm_it'];
@@ -13817,6 +13852,9 @@ window.addEventListener('storage', function(e) {
 });
 
 document.addEventListener('DOMContentLoaded',function(){
+  // Carica dati da Firebase al startup
+  loadDataFromFirebase();
+
   // Sincronizza adm_crediti_base → user_crediti al caricamento (per tutti i tornei)
   (function(){
     var tornei = ['slim_it','slim_en','slim_de','slim_es','slim_fr','slim_pt','slim_nl','slim_tr','tsm_it'];
