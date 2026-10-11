@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1643 -->
+﻿<!-- build:20261011_1751 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -9329,23 +9329,8 @@ function doLogin(){
     }
   }
 
-  if (GS_ONLINE) {
-    gsLogin(u, p, onLoginResult);
-  } else {
-    var adminPsw = localStorage.getItem('admin_password') || 'admin2026';
-    var users = JSON.parse(localStorage.getItem('admin_users') || '[]');
-    var matchedUser = null;
-    for(var i=0;i<users.length;i++){
-      if(users[i].username.toLowerCase()===u && users[i].password===p && users[i].attivo!==false){matchedUser=users[i];break;}
-    }
-    if (u==='admin' && p===adminPsw) {
-      onLoginResult(true, {username:'admin', nome:'Admin', ruolo:'admin'});
-    } else if (matchedUser) {
-      onLoginResult(true, {username:matchedUser.username, nome:matchedUser.nome, lega:matchedUser.lega});
-    } else {
-      onLoginResult(false, 'Credenziali non valide. Contatta lo staff.');
-    }
-  }
+  // Login da Firebase
+  fbLoginUser(u, p, onLoginResult);
 }
 
 function slimGetCalendar() {
@@ -14483,23 +14468,8 @@ function doLogin(){
     }
   }
 
-  if (GS_ONLINE) {
-    gsLogin(u, p, onLoginResult);
-  } else {
-    var adminPsw = localStorage.getItem('admin_password') || 'admin2026';
-    var users = JSON.parse(localStorage.getItem('admin_users') || '[]');
-    var matchedUser = null;
-    for(var i=0;i<users.length;i++){
-      if(users[i].username.toLowerCase()===u && users[i].password===p && users[i].attivo!==false){matchedUser=users[i];break;}
-    }
-    if (u==='admin' && p===adminPsw) {
-      onLoginResult(true, {username:'admin', nome:'Admin', ruolo:'admin'});
-    } else if (matchedUser) {
-      onLoginResult(true, {username:matchedUser.username, nome:matchedUser.nome, lega:matchedUser.lega});
-    } else {
-      onLoginResult(false, 'Credenziali non valide. Contatta lo staff.');
-    }
-  }
+  // Login da Firebase
+  fbLoginUser(u, p, onLoginResult);
 }
 
 </script>
