@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1220 -->
+﻿<!-- build:20261011_1301 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -4529,7 +4529,7 @@ function gsCall(params, callback) {
 function gsPing() {
   // Firebase è sempre online, niente da pingare
   return;
-    if (GS_ONLINE) {
+    if (false && GS_ONLINE) {
       // Controlla richieste pendenti (solo se admin) + sync trofei locali → GSheets
       var cu = localStorage.getItem('current_user');
       if (cu) {
@@ -4621,7 +4621,7 @@ function gsPing() {
     // Aggiorna contatori dashboard
     setTimeout(function(){ updateDashboardCounters(); updateLogosTornei(); }, 500);
     // ── Carica tutti i dati generici da GSheets (chiavi KV) ──────────
-    if (GS_ONLINE) {
+    if (false && GS_ONLINE) {
       // Carica admin_tornei da GSheets (fondamentale per sessioni nuove/incognito)
       gsLoadKey('admin_tornei', function(val) {
         if (!val) return;
@@ -6384,7 +6384,7 @@ function showAdminSection(id, el) {
   if (id==='tornei') admRenderTornei();
   if (id==='utenti') {
     // Carica utenti da GSheets prima di renderizzare
-    if (GS_ONLINE) {
+    if (false && GS_ONLINE) {
       gsCall({action:'getUtenti'}, function(err, data) {
         if (!err && data && data.ok && data.data) {
           ADMIN_USERS = data.data;
@@ -7648,7 +7648,7 @@ function admLoadRosaGiocatori() {
 
   // Se GSheets è online, scarica prima le rose aggiornate (con scadenze) poi renderizza
   var roseKey = 'adm_rose_'+torneoKey+'_'+legaKey;
-  if (GS_ONLINE && typeof gsLoadKey === 'function') {
+  if (false && GS_ONLINE && typeof gsLoadKey === 'function') {
     el.innerHTML = '<div style="padding:20px;color:var(--text3);font-size:12px">⏳ Caricamento in corso...</div>';
     gsLoadKey(roseKey, function(val) {
       if (val !== null && val !== undefined) {
@@ -8780,7 +8780,7 @@ function enterLeague(tournament, leagueKey) {
       TEAMS_ROSE = JSON.parse(JSON.stringify(window._TEAMS_ROSE_IT));
     }
     // Se GSheets è online, scarica sempre la versione aggiornata (con scadenze e modifiche)
-    if (GS_ONLINE && typeof gsLoadKey === 'function') {
+    if (false && GS_ONLINE && typeof gsLoadKey === 'function') {
       gsLoadKey('adm_rose_slim_it', function(val) {
         if (val === null) return;
         try {
@@ -8808,7 +8808,7 @@ function enterLeague(tournament, leagueKey) {
       var _infLS = localStorage.getItem(_infKey);
       if (_infLS) {
         try { INFERMERIA = JSON.parse(_infLS); } catch(e) {}
-      } else if (GS_ONLINE && typeof gsLoadKey === 'function') {
+      } else if (false && GS_ONLINE && typeof gsLoadKey === 'function') {
         gsLoadKey(_infKey, function(val) {
           if (val !== null) {
             var arr = typeof val === 'string' ? JSON.parse(val) : val;
@@ -13899,7 +13899,7 @@ function enterLeague(tournament, leagueKey) {
       TEAMS_ROSE = JSON.parse(JSON.stringify(window._TEAMS_ROSE_IT));
     }
     // Se GSheets è online, scarica sempre la versione aggiornata (con scadenze e modifiche)
-    if (GS_ONLINE && typeof gsLoadKey === 'function') {
+    if (false && GS_ONLINE && typeof gsLoadKey === 'function') {
       gsLoadKey('adm_rose_slim_it', function(val) {
         if (val === null) return;
         try {
@@ -13927,7 +13927,7 @@ function enterLeague(tournament, leagueKey) {
       var _infLS = localStorage.getItem(_infKey);
       if (_infLS) {
         try { INFERMERIA = JSON.parse(_infLS); } catch(e) {}
-      } else if (GS_ONLINE && typeof gsLoadKey === 'function') {
+      } else if (false && GS_ONLINE && typeof gsLoadKey === 'function') {
         gsLoadKey(_infKey, function(val) {
           if (val !== null) {
             var arr = typeof val === 'string' ? JSON.parse(val) : val;
