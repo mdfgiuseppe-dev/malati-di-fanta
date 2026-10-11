@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1204 -->
+﻿<!-- build:20261011_1206 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -4787,6 +4787,7 @@ function gsPing() {
 }
 
 function syncCriticalData() {
+  return;  // Disabilitato: usa Firebase, non Google Sheets
   if (!GS_ONLINE) return;
   gsLoadKey('admin_tornei', function(val) {
     if (val) {
@@ -4838,6 +4839,7 @@ function syncCriticalData() {
 }
 
 function syncSecondaryData() {
+  return;  // Disabilitato: usa Firebase, non Google Sheets
   if (!GS_ONLINE) return;
   var _at = JSON.parse(localStorage.getItem('admin_tornei')||'[]');
   if (!_at.length) _at = [{key:'slim',leghe:[{key:'it'}]},{key:'tsm',leghe:[{key:'it'}]}];
