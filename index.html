@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1353 -->
+﻿<!-- build:20261011_1421 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -4553,6 +4553,91 @@ function loadDataFromFirebase() {
       if (val) localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
     });
   });
+}
+
+// ═══════════════════════════════════════════════════════
+// LOGIN SEMPLICE CON FIREBASE
+// ═══════════════════════════════════════════════════════
+
+// Salva credenziali admin (una sola volta)
+function initializeAdminPassword() {
+  fbSaveKey('admin/password', 'admin2026');
+  fbSaveKey('admin/username', 'admin');
+}
+
+// Login admin
+function fbLoginAdmin(password, callback) {
+  fbLoadKey('admin/password', function(val) {
+    if (val === password) {
+      callback(true, {username: 'admin', role: 'admin'});
+    } else {
+      callback(false, {error: 'Password errata'});
+    }
+  });
+}
+
+// Login user (verifica su Firebase users)
+function fbLoginUser(username, password, callback) {
+  fbLoadKey('users/' + username, function(val) {
+    if (!val) {
+      callback(false, {error: 'Utente non trovato'});
+      return;
+    }
+    var user = typeof val === 'string' ? JSON.parse(val) : val;
+    if (user.password === password && user.status === 'approved') {
+      callback(true, {username: username, role: 'user'});
+    } else if (user.status !== 'approved') {
+      callback(false, {error: 'Utente non ancora approvato'});
+    } else {
+      callback(false, {error: 'Password errata'});
+    }
+  });
+}
+
+// Carica richieste pendenti (dal Google Sheet, salvate su Firebase)
+function loadPendingRequests(callback) {
+  fbLoadKey('pending_requests', function(val) {
+    if (val) {
+      callback(typeof val === 'string' ? JSON.parse(val) : val);
+    } else {
+      callback([]);
+    }
+  });
+}
+
+// Approva una richiesta (sposta da pending a users)
+function approvePendingRequest(username, callback) {
+  fbLoadKey('pending_requests/' + username, function(req) {
+    if (!req) { callback(false); return; }
+    var user = typeof req === 'string' ? JSON.parse(req) : req;
+    user.status = 'approved';
+    user.approvedAt = new Date().toISOString();
+    fbSaveKey('users/' + username, JSON.stringify(user));
+    fbSaveKey('pending_requests/' + username, null); // rimuovi da pending
+    callback(true);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// GESTIONE IMMAGINI (URL) SU FIREBASE
+// ═══════════════════════════════════════════════════════
+
+// Salva URL immagine
+function fbSaveImage(type, key, imageUrl) {
+  // Struttura: images/{type}/{key}
+  // type: loghi, sponsor, squadre, ecc.
+  fbSaveKey('images/' + type + '/' + key, imageUrl);
+}
+
+// Carica URL immagine
+function fbLoadImage(type, key, callback) {
+  fbLoadKey('images/' + type + '/' + key, callback);
+}
+
+// Salva tutte le immagini di un torneo/lega
+function fbSaveLeagueImages(torneoKey, legaKey, logoUrl, trofeoUrl) {
+  fbSaveImage('loghi', torneoKey + '_' + legaKey, logoUrl);
+  fbSaveImage('trofei', torneoKey + '_' + legaKey, trofeoUrl);
 }
 
 // Legacy Google Apps Script functions (mapped to Firebase)
