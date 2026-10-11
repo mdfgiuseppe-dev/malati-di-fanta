@@ -1,4 +1,4 @@
-const CACHE_NAME = 'malati-di-fanta-v7';
+const CACHE_NAME = 'malati-di-fanta-v8';
 const urlsToCache = [
   '/malati-di-fanta/',
   '/malati-di-fanta/index.html',
