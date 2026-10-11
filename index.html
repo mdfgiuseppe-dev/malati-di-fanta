@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1214 -->
+﻿<!-- build:20261011_1219 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -3937,7 +3937,8 @@ function enterTSM() {
   if (_tsmRoseLS) { try { var _tr=JSON.parse(_tsmRoseLS); TEAMS_ROSE=_tr; if(typeof TSM_ROSE_IT!=='undefined') Object.keys(_tr).forEach(function(k){TSM_ROSE_IT[k]=_tr[k];}); } catch(e){} }
   var _tsmInfLS = localStorage.getItem('adm_infermeria_tsm_it');
   if (_tsmInfLS) { try { INFERMERIA=JSON.parse(_tsmInfLS); } catch(e){} }
-  if (GS_ONLINE && typeof gsLoadKey === 'function') {
+  // GSheets disabled: use Firebase only
+  if (false && GS_ONLINE && typeof gsLoadKey === 'function') {
     gsLoadKey('adm_rose_tsm_it', function(val) {
       if (val===null) return;
       try { var parsed=typeof val==='string'?JSON.parse(val):val; localStorage.setItem('adm_rose_tsm_it',JSON.stringify(parsed)); TEAMS_ROSE=parsed; if(typeof TSM_ROSE_IT!=='undefined') Object.keys(parsed).forEach(function(k){TSM_ROSE_IT[k]=parsed[k];}); if(typeof tsmUpdateView==='function') tsmUpdateView(); else if(typeof showTeam==='function'&&tsmCurrentTeam) showTeam(tsmCurrentTeam); } catch(e){}
@@ -10039,7 +10040,8 @@ function enterTSM() {
   if (_tsmRoseLS) { try { var _tr=JSON.parse(_tsmRoseLS); TEAMS_ROSE=_tr; if(typeof TSM_ROSE_IT!=='undefined') Object.keys(_tr).forEach(function(k){TSM_ROSE_IT[k]=_tr[k];}); } catch(e){} }
   var _tsmInfLS = localStorage.getItem('adm_infermeria_tsm_it');
   if (_tsmInfLS) { try { INFERMERIA=JSON.parse(_tsmInfLS); } catch(e){} }
-  if (GS_ONLINE && typeof gsLoadKey === 'function') {
+  // GSheets disabled: use Firebase only
+  if (false && GS_ONLINE && typeof gsLoadKey === 'function') {
     gsLoadKey('adm_rose_tsm_it', function(val) {
       if (val===null) return;
       try { var parsed=typeof val==='string'?JSON.parse(val):val; localStorage.setItem('adm_rose_tsm_it',JSON.stringify(parsed)); TEAMS_ROSE=parsed; if(typeof TSM_ROSE_IT!=='undefined') Object.keys(parsed).forEach(function(k){TSM_ROSE_IT[k]=parsed[k];}); if(typeof tsmUpdateView==='function') tsmUpdateView(); else if(typeof showTeam==='function'&&tsmCurrentTeam) showTeam(tsmCurrentTeam); } catch(e){}
