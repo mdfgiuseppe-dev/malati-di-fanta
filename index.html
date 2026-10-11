@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1307 -->
+﻿<!-- build:20261011_1310 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -8707,11 +8707,7 @@ document.addEventListener('DOMContentLoaded',function(){
       } catch(e) {}
     });
   })();
-  // Ping Google Sheets per verificare connessione
-  gsPing();
-  // Sincronizzazione real-time
-  syncCriticalData(); setInterval(syncCriticalData, 4000);
-  syncSecondaryData(); setInterval(syncSecondaryData, 20000);
+  // Firebase only: no need for GSheets sync
   // Genera card tornei dinamicamente
   renderTournamentCards();
   // Carica logo principale app da localStorage/GSheets
@@ -13826,11 +13822,7 @@ document.addEventListener('DOMContentLoaded',function(){
       } catch(e) {}
     });
   })();
-  // Ping Google Sheets per verificare connessione
-  gsPing();
-  // Sincronizzazione real-time
-  syncCriticalData(); setInterval(syncCriticalData, 4000);
-  syncSecondaryData(); setInterval(syncSecondaryData, 20000);
+  // Firebase only: no need for GSheets sync
   // Genera card tornei dinamicamente
   renderTournamentCards();
   // Carica logo principale app da localStorage/GSheets
