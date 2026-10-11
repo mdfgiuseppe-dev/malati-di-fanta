@@ -1,4 +1,4 @@
-﻿<!-- build:20261011_1311 -->
+﻿<!-- build:20261011_1318 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -23,6 +23,14 @@ const fbApp = firebase.initializeApp(firebaseConfig);
 const fbDB = firebase.database();
 let FIREBASE_ONLINE = true;
 var GS_ONLINE = true;  // Firebase è sempre disponibile
+
+// Aggiorna pallino online al verde (Firebase is always online)
+setTimeout(function() {
+  var els = document.querySelectorAll('#gs-status, #gs-status-admin');
+  els.forEach(function(el) { el.style.background = '#10b981'; });
+  var lbl = document.getElementById('gs-status-admin-label');
+  if (lbl) { lbl.textContent = 'online'; lbl.style.color = '#10b981'; }
+}, 100);
 </script>
 
 <script>
