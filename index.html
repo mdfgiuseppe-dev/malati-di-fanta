@@ -1,7 +1,29 @@
-﻿<!-- build:20261011_0914 -->
+﻿<!-- build:20261011_0953 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js"></script>
+
+<script>
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBMLM8Fmkl_3Bha5Z5U1edkc8TwFWQW2Us",
+  authDomain: "malati-di-fanta-app.firebaseapp.com",
+  projectId: "malati-di-fanta-app",
+  storageBucket: "malati-di-fanta-app.firebasestorage.app",
+  messagingSenderId: "652177534668",
+  appId: "1:652177534668:web:f5ccd1289f2c458a9b1c69",
+  databaseURL: "https://malati-di-fanta-app-default-rtdb.europe-west1.firebasedatabase.app"
+};
+
+// Initialize Firebase
+const fbApp = firebase.initializeApp(firebaseConfig);
+const fbDB = firebase.database();
+let FIREBASE_ONLINE = true;
+</script>
+
 <script>
 (function(){
   localStorage.clear();
@@ -4500,10 +4522,10 @@ function gsCall(params, callback) {
   setTimeout(function(){ if(script.parentNode) script.parentNode.removeChild(script); }, 6000);
 }
 
-// Ping al caricamento per verificare connessione
+// Ping al caricamento per verificare connessione Firebase
 function gsPing() {
-  gsCall({action:'ping'}, function(err, data) {
-    GS_ONLINE = !err && data && data.ok;
+  fbDB.ref('.info/connected').once('value', snapshot => {
+    GS_ONLINE = snapshot.val() === true;
     if (GS_ONLINE) {
       // Controlla richieste pendenti (solo se admin) + sync trofei locali → GSheets
       var cu = localStorage.getItem('current_user');
@@ -4949,16 +4971,24 @@ function gsPost(params, callback) {
   .catch(function(e){ if(callback) callback(e, null); });
 }
 
-function gsSaveKey(key, data) {
-  gsPost({action:'saveKey', key:key, data: typeof data === 'string' ? data : JSON.stringify(data)}, null);
+// Firebase functions
+function fbSaveKey(key, data) {
+  const val = typeof data === 'string' ? data : JSON.stringify(data);
+  fbDB.ref('data/' + key).set(val).catch(e => console.error('Firebase save error:', e));
 }
-function gsLoadKey(key, callback) {
-  if (!GS_ONLINE) { if(callback) callback(null); return; }
-  gsCall({action:'getKey', key:key}, function(err, res) {
-    if (err || !res || !res.ok || res.data === null) { if(callback) callback(null); return; }
-    if(callback) callback(res.data);
+function fbLoadKey(key, callback) {
+  fbDB.ref('data/' + key).once('value', snapshot => {
+    const val = snapshot.val();
+    if (callback) callback(val);
+  }).catch(e => {
+    console.error('Firebase load error:', e);
+    if (callback) callback(null);
   });
 }
+
+// Legacy Google Apps Script functions (mapped to Firebase)
+function gsSaveKey(key, data) { fbSaveKey(key, data); }
+function gsLoadKey(key, callback) { fbLoadKey(key, callback); }
 // ──────────────────────────────────────────────────────────────────
 
 // Salva calendario su GSheets
