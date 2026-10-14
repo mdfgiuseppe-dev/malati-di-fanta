@@ -1,8 +1,18 @@
-﻿<!-- build:20261014_2121 -->
+﻿<!-- build:20261014_2147 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
-<script>localStorage.clear();</script>
+<script>
+// Pulisci SOLO i dati vecchi (logo, trofei) - mantieni login e dati importanti
+var keysToRemove = [];
+for (var i = 0; i < localStorage.length; i++) {
+  var key = localStorage.key(i);
+  if (key && (key.startsWith('adm_logo_') || key.startsWith('adm_trofeo_') || key.startsWith('admin_tornei') || key.startsWith('admin_users'))) {
+    keysToRemove.push(key);
+  }
+}
+keysToRemove.forEach(function(key) { localStorage.removeItem(key); });
+</script>
 <!-- Firebase SDK (Compat) -->
 <script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-database-compat.js"></script>
@@ -3949,6 +3959,26 @@ function loadLeagueLogos(torneoKey, leghe) {
   });
 }
 
+// FUNZIONE DEBUG: Sposta loghi tornei dal percorso vecchio a quello nuovo
+function debugMuoviLoghiTornei() {
+  var oldPath = 'data/adm_logo_torneo_slim';
+  var newPath = 'data/images/loghi/tornei/slim';
+  fbDB.ref(oldPath).once('value', function(snapshot) {
+    var logo = snapshot.val();
+    if (logo) {
+      console.log('📁 Spostando logo da', oldPath, 'a', newPath);
+      fbDB.ref(newPath).set(logo).then(() => {
+        fbDB.ref(oldPath).remove().then(() => {
+          alert('✅ Logo spostato a ' + newPath);
+          console.log('✅ Logo spostato');
+        });
+      });
+    } else {
+      alert('⚠️ Nessun logo trovato a ' + oldPath);
+    }
+  });
+}
+
 // FUNZIONE DEBUG: Crea la struttura corretta di Firebase
 function debugCreateFirebaseStructure() {
   var structure = {
@@ -6848,9 +6878,13 @@ function admEditLogoLega(ti, li) {
   url = _normalizeImgUrl(url);
   var fbPath = 'data/images/loghi/leghe/'+t.key+'_'+l.key;
   if (url) {
-    fbDB.ref(fbPath).set(url);
+    fbDB.ref(fbPath).set(url).then(() => {
+      loadLeagueLogos(t.key, t.leghe);
+    });
   } else {
-    fbDB.ref(fbPath).remove();
+    fbDB.ref(fbPath).remove().then(() => {
+      loadLeagueLogos(t.key, t.leghe);
+    });
   }
   var msg = document.createElement('div');
   msg.textContent = url ? '✅ URL logo lega salvato su Firebase' : '✅ URL rimosso da Firebase';
@@ -10248,6 +10282,26 @@ function loadLeagueLogos(torneoKey, leghe) {
   });
 }
 
+// FUNZIONE DEBUG: Sposta loghi tornei dal percorso vecchio a quello nuovo
+function debugMuoviLoghiTornei() {
+  var oldPath = 'data/adm_logo_torneo_slim';
+  var newPath = 'data/images/loghi/tornei/slim';
+  fbDB.ref(oldPath).once('value', function(snapshot) {
+    var logo = snapshot.val();
+    if (logo) {
+      console.log('📁 Spostando logo da', oldPath, 'a', newPath);
+      fbDB.ref(newPath).set(logo).then(() => {
+        fbDB.ref(oldPath).remove().then(() => {
+          alert('✅ Logo spostato a ' + newPath);
+          console.log('✅ Logo spostato');
+        });
+      });
+    } else {
+      alert('⚠️ Nessun logo trovato a ' + oldPath);
+    }
+  });
+}
+
 // FUNZIONE DEBUG: Crea la struttura corretta di Firebase
 function debugCreateFirebaseStructure() {
   var structure = {
@@ -12573,9 +12627,13 @@ function admEditLogoLega(ti, li) {
   url = _normalizeImgUrl(url);
   var fbPath = 'data/images/loghi/leghe/'+t.key+'_'+l.key;
   if (url) {
-    fbDB.ref(fbPath).set(url);
+    fbDB.ref(fbPath).set(url).then(() => {
+      loadLeagueLogos(t.key, t.leghe);
+    });
   } else {
-    fbDB.ref(fbPath).remove();
+    fbDB.ref(fbPath).remove().then(() => {
+      loadLeagueLogos(t.key, t.leghe);
+    });
   }
   var msg = document.createElement('div');
   msg.textContent = url ? '✅ URL logo lega salvato su Firebase' : '✅ URL rimosso da Firebase';
