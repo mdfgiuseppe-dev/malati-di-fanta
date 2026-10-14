@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "data": {
+      ".read": true,
+      ".write": true
+    },
+    "images": {
+      ".read": true,
+      ".write": true
+    },
+    "pending_requests": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}

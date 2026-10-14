@@ -1,10 +1,14 @@
-﻿<!-- build:20261011_1751 -->
+﻿<!-- build:20261014_2121 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
+<script>localStorage.clear();</script>
 <!-- Firebase SDK (Compat) -->
 <script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-database-compat.js"></script>
+
+<!-- EmailJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/emailjs-sdk/4.3.0/email.min.js"></script>
 
 <script>
 // Firebase Configuration
@@ -24,6 +28,7 @@ const fbDB = firebase.database();
 let FIREBASE_ONLINE = true;
 var GS_ONLINE = true;  // Firebase è sempre disponibile
 
+
 // Aggiorna pallino online al verde (Firebase is always online)
 setTimeout(function() {
   var els = document.querySelectorAll('#gs-status, #gs-status-admin');
@@ -31,13 +36,70 @@ setTimeout(function() {
   var lbl = document.getElementById('gs-status-admin-label');
   if (lbl) { lbl.textContent = 'online'; lbl.style.color = '#10b981'; }
 }, 100);
+
+// ═══════════════════════════════════════════════════════
+// IndexedDB per "Ricordami" (persiste anche dopo refresh)
+// ═══════════════════════════════════════════════════════
+const IDB_NAME = 'MalatiDiFantaDB';
+const IDB_VERSION = 1;
+const IDB_STORE = 'credentials';
+let idbInstance = null;
+
+function idbInit(callback) {
+  if (idbInstance) { callback(); return; }
+  const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+  req.onupgradeneeded = (e) => {
+    const db = e.target.result;
+    if (!db.objectStoreNames.contains(IDB_STORE)) {
+      db.createObjectStore(IDB_STORE);
+    }
+  };
+  req.onsuccess = () => {
+    idbInstance = req.result;
+    callback();
+  };
+  req.onerror = () => callback();
+}
+
+function idbSave(key, value, callback) {
+  idbInit(() => {
+    if (!idbInstance) { if (callback) callback(false); return; }
+    const tx = idbInstance.transaction([IDB_STORE], 'readwrite');
+    const store = tx.objectStore(IDB_STORE);
+    const req = store.put(value, key);
+    req.onsuccess = () => { console.log('💾 IDB salvo:', key); if (callback) callback(true); };
+    req.onerror = () => { if (callback) callback(false); };
+  });
+}
+
+function idbLoad(key, callback) {
+  idbInit(() => {
+    if (!idbInstance) { if (callback) callback(null); return; }
+    const tx = idbInstance.transaction([IDB_STORE], 'readonly');
+    const store = tx.objectStore(IDB_STORE);
+    const req = store.get(key);
+    req.onsuccess = () => { console.log('📖 IDB carico:', key, req.result); if (callback) callback(req.result); };
+    req.onerror = () => { if (callback) callback(null); };
+  });
+}
+
+function idbRemove(key, callback) {
+  idbInit(() => {
+    if (!idbInstance) { if (callback) callback(false); return; }
+    const tx = idbInstance.transaction([IDB_STORE], 'readwrite');
+    const store = tx.objectStore(IDB_STORE);
+    const req = store.delete(key);
+    req.onsuccess = () => { console.log('🗑️ IDB cancello:', key); if (callback) callback(true); };
+    req.onerror = () => { if (callback) callback(false); };
+  });
+}
 </script>
 
 <script>
 (function(){
   localStorage.clear();
   sessionStorage.clear();
-  try { indexedDB.databases().then(dbs => dbs.forEach(db => indexedDB.deleteDatabase(db.name))); } catch(e){}
+  // IndexedDB persiste per il "Ricordami"
 })();
 </script>
 <meta charset="UTF-8">
@@ -338,8 +400,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   .tournaments { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
   .t-logo-area { height: 80px !important; }
   .t-logo-area img { max-height: 50px !important; }
-  .t-name { font-size: 11px !important; }
-  .t-body { padding: 10px !important; }
+  .t-name { font-size: 11px !important; text-align: center !important; }
+  .t-body { padding: 10px !important; display: flex; flex-direction: column; align-items: center; width: 100%; }
   .t-stats { display: none; }
 
   /* Leghe nella dashboard */
@@ -501,8 +563,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     filter:drop-shadow(0 2px 8px rgba(0,0,0,0.4));}
 
   .t-
-  .t-name{font-family:'Bebas Neue';font-size:16px;letter-spacing:1.2px;line-height:1.15;margin-bottom:5px;}
-  .t-mode-row{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;}
+  .t-name{font-family:'Bebas Neue';font-size:16px;letter-spacing:1.2px;line-height:1.15;margin-bottom:5px;display:flex;justify-content:center;align-items:center;}
+  .t-mode-row{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;justify-content:center;}
   .t-badge{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;
     padding:2px 7px;border-radius:4px;background:var(--bg3);color:var(--text2);}
   .t-badge.mode{background:color-mix(in srgb,var(--tc,#3b82f6) 12%,var(--bg3));
@@ -3166,10 +3228,14 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
         <div style="font-size:13px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px">
           <span style="color:#ef4444">+</span> Aggiungi Utente Manualmente
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;align-items:end">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr auto;gap:10px;align-items:end">
           <div>
-            <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Nome Completo</div>
-            <input id="adm-new-user-nome" type="text" placeholder="Mario Rossi" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Barlow,sans-serif;font-size:13px;outline:none">
+            <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Cognome</div>
+            <input id="adm-new-user-cognome" type="text" placeholder="Rossi" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Barlow,sans-serif;font-size:13px;outline:none">
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Nome</div>
+            <input id="adm-new-user-nome" type="text" placeholder="Mario" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Barlow,sans-serif;font-size:13px;outline:none">
           </div>
           <div>
             <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Username</div>
@@ -3178,6 +3244,14 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
           <div>
             <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Password</div>
             <input id="adm-new-user-psw" type="text" placeholder="password" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Barlow,sans-serif;font-size:13px;outline:none">
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Email</div>
+            <input id="adm-new-user-email" type="email" placeholder="mario@example.com" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Barlow,sans-serif;font-size:13px;outline:none">
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Telefono</div>
+            <input id="adm-new-user-phone" type="text" placeholder="+39 333 1234567" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Barlow,sans-serif;font-size:13px;outline:none">
           </div>
           <div>
             <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Lega Assegnata</div>
@@ -3518,7 +3592,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 <div id="albo-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);overflow-y:auto;padding:20px;"><div style="background:var(--card,#101622);border:1px solid rgba(255,255,255,.1);border-radius:18px;width:100%;max-width:680px;margin:0 auto;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.8);"><div style="display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.07);"><div style="font-size:24px">🏆</div><div><div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--text,#eef2ff)">Albo d'Oro</div><div style="font-size:10px;color:#6a7d9e">Malati di Fanta · Since 2019</div></div><button onclick="closeAlboModal()" style="margin-left:auto;width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);cursor:pointer;color:#aaa;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button></div><div style="display:flex;gap:6px;padding:12px 16px;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.07);scrollbar-width:none"><div class="albo-btn" data-key="slim" onclick="alboTab(this,'slim')" style="padding:7px 12px;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap;transition:all .15s;background:#10b981;color:#fff;">Scudetto Slim</div><div class="albo-btn" data-key="tsm" onclick="alboTab(this,'tsm')" style="padding:7px 12px;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap;transition:all .15s;background:var(--bg3);color:var(--text2);">TSM</div><div class="albo-btn" data-key="ilm" onclick="alboTab(this,'ilm')" style="padding:7px 12px;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap;transition:all .15s;background:var(--bg3);color:var(--text2);">Intl. L. Mantra</div><div class="albo-btn" data-key="ilc" onclick="alboTab(this,'ilc')" style="padding:7px 12px;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap;transition:all .15s;background:var(--bg3);color:var(--text2);">Intl. L. Classic</div><div class="albo-btn" data-key="tdm" onclick="alboTab(this,'tdm')" style="padding:7px 12px;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap;transition:all .15s;background:var(--bg3);color:var(--text2);">Tana dei Mister</div></div><div id="albo-content" style="padding:14px;max-height:65vh;overflow-y:auto"></div></div></div>
 <script>
 
-var LOGOS={"malati":"","slim":"","tdm":"","tsm":"","ilm":"","ilc":"","it":"","en":"","es":"","de":"","fr":"","pt":"","nl":"","tr":""};
+var LOGOS={};
 // Loghi SLIM da Google Drive (sovrascrivono i base64 in LOGOS)
 if (typeof LOGOS !== 'undefined') Object.assign(LOGOS, {
   'it': 'https://drive.google.com/thumbnail?id=1ZA3ERUOfVM6-osQNegIJDCSBGGqOigYT&sz=w200',
@@ -3664,16 +3738,33 @@ function updateLogosTornei() {
       var oc = card.getAttribute('onclick') || '';
       var m = oc.match(/selectTournament\('([^']+)'/);
       if (!m) return;
-      var url = localStorage.getItem('adm_logo_torneo_'+m[1]);
       var img = card.querySelector('.t-logo-area img');
       if (!img) return;
-      if (url) {
-        img.style.display = '';
-        img.src = url;
-        img.onerror = function() { this.style.display = 'none'; };
-      } else {
-        img.style.display = 'none';
-        img.src = '';
+
+      // Carica da Firebase: nuovo percorso, poi vecchio, poi localStorage
+      fbDB.ref('data/images/loghi/tornei/'+m[1]).once('value', snapshot => {
+        var url = snapshot.val();
+        if (!url) {
+          fbDB.ref('images/loghi/'+m[1]).once('value', snapshot2 => {
+            url = snapshot2.val() || localStorage.getItem('adm_logo_torneo_'+m[1]);
+            setLogoImg(url);
+          });
+        } else {
+          setLogoImg(url);
+        }
+      }).catch(e => {
+        var url = localStorage.getItem('adm_logo_torneo_'+m[1]);
+        setLogoImg(url);
+      });
+      function setLogoImg(url) {
+        if (url) {
+          img.style.display = '';
+          img.src = url;
+          img.onerror = function() { this.style.display = 'none'; };
+        } else {
+          img.style.display = 'none';
+          img.src = '';
+        }
       }
     });
     var _slLogo = localStorage.getItem('adm_logo_torneo_slim');
@@ -3690,7 +3781,7 @@ function updateDashboardCounters() {
     at.forEach(function(t) {
       var legheEl = document.getElementById(t.key+'-n-leghe');
       var clubEl = document.getElementById(t.key+'-n-club');
-      if (legheEl) legheEl.textContent = t.leghe.length;
+      if (legheEl) legheEl.textContent = t.leghe.length > 0 ? t.leghe.length : '—';
       if (clubEl) {
         var totalClub = 0;
         var _cfgN = 0;
@@ -3714,26 +3805,28 @@ function updateDashboardCounters() {
   } catch(e) {}
 }
 
-// Sincronizza LEAGUES_DATA con leghe aggiunte in admin_tornei
-try {
-  var _at = JSON.parse(localStorage.getItem('admin_tornei') || 'null');
-  if (_at) {
+function syncLeaguesDataFromAdmin() {
+  var _at = (typeof ADMIN_TORNEI !== 'undefined') ? ADMIN_TORNEI : JSON.parse(localStorage.getItem('admin_tornei') || '[]');
+  if (_at.length) {
     var _colors = ['#10b981','#3b82f6','#8b5cf6','#f59e0b','#ec4899','#06b6d4'];
     _at.forEach(function(t, i) {
       if (!LEAGUES_DATA[t.key]) LEAGUES_DATA[t.key] = {color:_colors[i%_colors.length], leghe:[]};
       t.leghe.slice().sort(function(a,b){return a.label.localeCompare(b.label);}).forEach(function(l) {
-        // Controlla sia la chiave diretta che il formato torneo_lega (es. tdm_it)
         var existing = LEAGUES_DATA[t.key].leghe.find(function(x){
           return x.key===l.key || x.key===t.key+'_'+l.key;
         });
         if (existing) {
-          existing.label = l.label; // aggiorna label admin (es. "Serie Trapattoni")
+          existing.label = l.label;
         } else {
           LEAGUES_DATA[t.key].leghe.push({key:l.key, label:l.label, flag:'🏆', clubs:0});
         }
       });
     });
   }
+}
+
+try {
+  syncLeaguesDataFromAdmin();
 } catch(e) {}
 
 function renderTournamentCards() {
@@ -3799,21 +3892,7 @@ function selectTournament(key, el) {
 
   dati.leghe.slice().sort(function(a,b){return a.label.localeCompare(b.label);}).forEach(function(lega) {
     var _lk = lega.key;
-    var logo;
-    if (_lk.indexOf('tsm_') === 0) {
-      var _tsmLogoUrl = localStorage.getItem('adm_logo_lega_'+_lk);
-      logo = (_tsmLogoUrl ? _normalizeImgUrl(_tsmLogoUrl) : '') || (LOGOS && LOGOS['tsm']) || '';
-    } else {
-      // Prima cerca URL da localStorage, poi embedded
-      var _torneoK = currentTournament || '';
-      var _legaK = _lk;
-      var _urlLogo = localStorage.getItem('adm_logo_lega_'+_torneoK+'_'+_legaK)
-        || localStorage.getItem('adm_logo_lega_'+_torneoK+'_'+_legaK.replace(_torneoK+'_',''));
-      // Fallback: cerca per nome lega in ADMIN_TORNEI (gestisce key mismatch tra LEAGUES_DATA e admin)
-      if (!_urlLogo) { try { var _aT=(JSON.parse(localStorage.getItem('admin_tornei')||'[]')).find(function(t){return t.key===_torneoK;}); if(_aT){var _aL=_aT.leghe.find(function(l){return l.label===lega.label;});if(_aL&&_aL.key!==_legaK)_urlLogo=localStorage.getItem('adm_logo_lega_'+_torneoK+'_'+_aL.key)||'';}}catch(e){} }
-      if (_urlLogo) _urlLogo = _normalizeImgUrl(_urlLogo);
-      logo = _urlLogo || (LOGOS && LOGOS[_lk]) || '';
-    }
+    var logo = '';
     // Club count: rose da localStorage (fonte più aggiornata) > config
     var _realLk = _lk.indexOf(key+'_') === 0 ? _lk.slice(key.length+1) : _lk;
     var _nClub = 0;
@@ -3823,7 +3902,7 @@ function selectTournament(key, el) {
     html += '<div onclick="enterLeague(\''+key+'\',\''+lega.key+'\')" style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:8px;" '
           + 'onmouseover="this.style.borderColor=\''+dati.color+'\';this.style.background=\''+dati.color+'1a\'" '
           + 'onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--card)\'">'
-          + (logo ? '<img src="'+logo+'" data-flag="'+lega.flag+'" onerror="this.outerHTML=\'<div style=&quot;font-size:28px&quot;>\'+this.dataset.flag+\'</div>\'" style="width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))">' : '<div style="font-size:28px">'+lega.flag+'</div>')
+          + (logo ? '<img src="'+logo+'" data-flag="'+lega.flag+'" data-lega-key="'+lega.key+'" onerror="this.outerHTML=\'<div style=&quot;font-size:28px&quot;>\'+this.dataset.flag+\'</div>\'" style="width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))">' : '<div style="font-size:28px">'+lega.flag+'</div>')
           + '<div style="font-size:12px;font-weight:700;color:var(--text)">'+lega.label+'</div>'
           + (_nClub ? '<div style="font-size:10px;color:var(--text2)">'+_nClub+' club</div>' : '')
           + '</div>';
@@ -3832,6 +3911,81 @@ function selectTournament(key, el) {
   html += '</div></div>';
   container.innerHTML = html;
   container.scrollIntoView({behavior:'smooth', block:'nearest'});
+  loadLeagueLogos(currentTournament, dati.leghe);
+}
+
+function loadLeagueLogos(torneoKey, leghe) {
+  if (!leghe || !leghe.length) return;
+  leghe.forEach(function(lega) {
+    var fbPath = 'data/images/loghi/leghe/'+torneoKey+'_'+lega.key;
+    var fbPathOld = 'images/loghi_leghe/'+torneoKey+'_'+lega.key;
+    console.log('🔍 Caricando logo da Firebase per:', {lega: lega.key, fbPath, fbPathOld});
+    fbDB.ref(fbPath).once('value', function(snapshot) {
+      var fbLogo = snapshot.val();
+      console.log('📊 Valore Firebase per '+fbPath+':', fbLogo);
+      if (!fbLogo) {
+        fbDB.ref(fbPathOld).once('value', function(snapshot2) {
+          fbLogo = snapshot2.val();
+          console.log('📊 Valore Firebase old path per '+fbPathOld+':', fbLogo);
+          if (fbLogo) {
+            setLeagueImg(fbLogo);
+          } else {
+            // Pulisci localStorage
+            localStorage.removeItem('adm_logo_lega_'+torneoKey+'_'+lega.key);
+          }
+        });
+      } else {
+        setLeagueImg(fbLogo);
+      }
+    });
+    function setLeagueImg(fbLogo) {
+      if (fbLogo) {
+        fbLogo = _normalizeImgUrl(fbLogo);
+        var imgEls = document.querySelectorAll('img[data-lega-key="'+lega.key+'"]');
+        console.log('🖼️ Logo trovato per '+lega.key+': '+fbLogo);
+        imgEls.forEach(function(img) { img.src = fbLogo; });
+      }
+    }
+  });
+}
+
+// FUNZIONE DEBUG: Crea la struttura corretta di Firebase
+function debugCreateFirebaseStructure() {
+  var structure = {
+    'data/images/loghi/squadre': {},
+    'data/images/loghi/tornei': {},
+    'data/images/loghi/leghe': {},
+    'data/images/trofei': {},
+    'data/images/vari': {}
+  };
+
+  var promises = [];
+  Object.keys(structure).forEach(path => {
+    console.log('📁 Creando path:', path);
+    promises.push(
+      fbDB.ref(path).set({_init: true}).catch(e => console.error('Errore:', path, e))
+    );
+  });
+
+  Promise.all(promises).then(() => {
+    console.log('✅ Struttura Firebase creata');
+    alert('✅ Struttura Firebase creata:\n- data/images/loghi/squadre/\n- data/images/loghi/tornei/\n- data/images/loghi/leghe/\n- data/images/trofei/\n- data/images/vari/');
+  }).catch(e => {
+    console.error('❌ Errore creazione struttura:', e);
+    alert('❌ Errore: ' + e.message);
+  });
+}
+
+// FUNZIONE DEBUG: Cancella TUTTI i loghi di leghe da Firebase
+function debugCancellaLoghiLeghe() {
+  var path = 'data/images/loghi/leghe';
+  console.log('🗑️ Cancellando loghi da Firebase:', path);
+  fbDB.ref(path).remove().then(() => {
+    console.log('✅ Loghi leghe cancellati');
+    alert('✅ Tutti i loghi leghe cancellati da Firebase');
+  }).catch(e => {
+    console.error('❌ Errore cancellazione:', e);
+  });
 }
 
 var currentLeagueKey = 'it';  // lega attiva corrente
@@ -3846,7 +4000,7 @@ function _updateLegaDashboard(leagueKey) {
   if (typeof ADMIN_TORNEI !== 'undefined') {
     ADMIN_TORNEI.forEach(function(t) {
       t.leghe.forEach(function(l) {
-        if (l.key === leagueKey || leagueKey === t.key+'_'+l.key) { _admTK = t.key; _realLK = l.key; }
+        if (l.key === leagueKey || leagueKey === t.key+'_'+l.key || leagueKey.endsWith('_'+l.key)) { _admTK = t.key; _realLK = l.key; }
       });
     });
   }
@@ -3885,7 +4039,7 @@ function _updateLegaDashboard(leagueKey) {
   if (bcEl) bcEl.textContent = breadcrumbNames[_realLK] || _dynLegaLabel || _realLK.toUpperCase();
   var nameEl = document.querySelector('.league-info-name');
   var subEl  = document.querySelector('.league-info-sub');
-  if (nameEl) nameEl.textContent = legaNames[leagueKey] || (_torneoShort ? _torneoShort+' '+(_dynLegaLabel||_realLK.toUpperCase()) : 'Slim '+_realLK.toUpperCase());
+  if (nameEl) nameEl.textContent = legaNames[leagueKey] || _dynLegaLabel || _realLK.toUpperCase();
   var nTeams = Object.keys(TEAMS_ROSE).length;
   if (subEl) subEl.textContent = nTeams + ' squadre · Mantra';
   // Trofeo
@@ -3909,14 +4063,15 @@ function _updateLegaDashboard(leagueKey) {
   }
   // Titolo dashboard
   var titleEl = document.getElementById('lega-dash-title');
-  if (titleEl) titleEl.textContent = (legaNames[leagueKey] || (_torneoShort && (_dynLegaLabel||_realLK) ? _torneoShort+' '+(_dynLegaLabel||_realLK) : 'Slim '+_realLK)).toUpperCase();
-  // Logo: prima adm URL da localStorage, poi LOGOS embedded
-  var _admLogoUrl = _admTK ? localStorage.getItem('adm_logo_lega_'+_admTK+'_'+_realLK) : null;
-  var _logoFinal = (_admLogoUrl ? _normalizeImgUrl(_admLogoUrl) : '') || (typeof LOGOS!=='undefined' ? (LOGOS[leagueKey]||LOGOS[_realLK]||LOGOS['it']||'') : '');
-  var bcLogoEl = document.getElementById('breadcrumb-logo');
-  if (bcLogoEl && _logoFinal) bcLogoEl.src = _logoFinal;
-  var lgLogoEl = document.getElementById('league-logo');
-  if (lgLogoEl && _logoFinal) lgLogoEl.src = _logoFinal;
+  if (titleEl) titleEl.textContent = (legaNames[leagueKey] || _dynLegaLabel || _realLK).toUpperCase();
+  // Logo: solo da Firebase via loadLeagueLogos() - NO localStorage, NO hardcode
+  // var _admLogoUrl = _admTK ? localStorage.getItem('adm_logo_lega_'+_admTK+'_'+_realLK) : null;
+  // var _logoFinal = (_admLogoUrl ? _normalizeImgUrl(_admLogoUrl) : '') || (typeof LOGOS!=='undefined' ? (LOGOS[leagueKey]||LOGOS[_realLK]||LOGOS['it']||'') : '');
+  // console.log('🔍 DEBUG Logo lega:', {_admLogoUrl, _logoFinal, LOGOS_it: LOGOS['it'], leagueKey, _realLK});
+  // var bcLogoEl = document.getElementById('breadcrumb-logo');
+  // if (bcLogoEl && _logoFinal) bcLogoEl.src = _logoFinal;
+  // var lgLogoEl = document.getElementById('league-logo');
+  // if (lgLogoEl && _logoFinal) lgLogoEl.src = _logoFinal;
 }
 
 
@@ -4511,7 +4666,9 @@ function syncCreditiToUser(torneoKey, legaKey, crObj) {
 // Firebase functions
 function fbSaveKey(key, data) {
   const val = typeof data === 'string' ? data : JSON.stringify(data);
-  fbDB.ref('data/' + key).set(val).catch(e => console.error('Firebase save error:', e));
+  const promise = fbDB.ref('data/' + key).set(val);
+  promise.catch(e => console.error('Firebase save error:', e));
+  return promise;
 }
 function fbLoadKey(key, callback) {
   fbDB.ref('data/' + key).once('value', snapshot => {
@@ -4526,7 +4683,7 @@ function fbLoadKey(key, callback) {
 // Carica dati critici da Firebase all'avvio
 function loadDataFromFirebase() {
   // Inizializza password admin al primo caricamento
-  initializeAdminPassword();
+  // Admin password gestito in localStorage, non su Firebase
 
   // Carica admin_tornei
   fbLoadKey('admin_tornei', function(val) {
@@ -4543,7 +4700,7 @@ function loadDataFromFirebase() {
   });
 
   // Carica logo principale
-  fbLoadKey('images/loghi/main', function(val) {
+  fbLoadKey('data/images/loghi/tornei/main', function(val) {
     if (val) {
       localStorage.setItem('adm_logo_main', val);
       if (typeof _applyLogoMain === 'function') _applyLogoMain(val);
@@ -4570,40 +4727,42 @@ function loadDataFromFirebase() {
 }
 
 // ═══════════════════════════════════════════════════════
-// LOGIN SEMPLICE CON FIREBASE
+// LOGIN ADMIN SU LOCALSTORAGE (NON SU FIREBASE)
 // ═══════════════════════════════════════════════════════
-
-// Salva credenziali admin (una sola volta)
-function initializeAdminPassword() {
-  fbSaveKey('admin/password', 'admin2026');
-  fbSaveKey('admin/username', 'admin');
-}
-
-// Login admin
-function fbLoginAdmin(password, callback) {
-  fbLoadKey('admin/password', function(val) {
-    if (val === password) {
-      callback(true, {username: 'admin', role: 'admin'});
-    } else {
-      callback(false, {error: 'Password errata'});
-    }
-  });
-}
+// Login admin gestito in checkAdminLogin() - salva/carica da localStorage solo
 
 // Login user (verifica su Firebase users)
 function fbLoginUser(username, password, callback) {
-  fbLoadKey('users/' + username, function(val) {
+  console.log('🔐 fbLoginUser() cercando:', username);
+  fbLoadKey('users/list', function(val) {
+    console.log('📊 Users caricati da Firebase:', val);
     if (!val) {
-      callback(false, {error: 'Utente non trovato'});
+      console.log('❌ Nessun utente trovato');
+      callback(false, {error: 'Nessun utente trovato'});
       return;
     }
-    var user = typeof val === 'string' ? JSON.parse(val) : val;
-    if (user.password === password && user.status === 'approved') {
-      callback(true, {username: username, role: 'user'});
-    } else if (user.status !== 'approved') {
-      callback(false, {error: 'Utente non ancora approvato'});
+    var users = typeof val === 'string' ? JSON.parse(val) : val;
+    if (!Array.isArray(users)) { users = []; }
+    console.log('👥 Array di utenti:', users.length, 'utenti');
+
+    var matchedUser = null;
+    for (var i = 0; i < users.length; i++) {
+      if (users[i].username && users[i].username.toLowerCase() === username.toLowerCase() && users[i].password === password) {
+        matchedUser = users[i];
+        console.log('✅ Utente trovato:', matchedUser.username);
+        break;
+      }
+    }
+
+    if (!matchedUser) {
+      console.log('❌ Credenziali non valide');
+      callback(false, {error: 'Credenziali non valide'});
+    } else if (matchedUser.attivo === false) {
+      console.log('❌ Utente disattivato');
+      callback(false, {error: 'Utente disattivato'});
     } else {
-      callback(false, {error: 'Password errata'});
+      console.log('✅ Login SUCCESS - salvo credenziali');
+      callback(true, {username: matchedUser.username, nome: matchedUser.nome, lega: matchedUser.lega, role: 'user'});
     }
   });
 }
@@ -4645,7 +4804,13 @@ function fbSaveImage(type, key, imageUrl) {
 
 // Carica URL immagine
 function fbLoadImage(type, key, callback) {
-  fbLoadKey('images/' + type + '/' + key, callback);
+  fbDB.ref('images/' + type + '/' + key).once('value', snapshot => {
+    const val = snapshot.val();
+    if (callback) callback(val);
+  }).catch(e => {
+    console.error('Firebase load image error:', e);
+    if (callback) callback(null);
+  });
 }
 
 // Salva tutte le immagini di un torneo/lega
@@ -4725,8 +4890,70 @@ function gsLoadMulte(torneo, lega, callback) {
 
 var ADMIN_PASSWORD = 'admin2026';
 
-// Struttura tornei (estensibile dall'Admin)
+// Struttura tornei (caricati da Firebase con fallback localStorage)
 var ADMIN_TORNEI = JSON.parse(localStorage.getItem('admin_tornei') || '[]');
+console.log('📦 localStorage keys:', Object.keys(localStorage).length > 0 ? Object.keys(localStorage) : '✅ EMPTY');
+
+// Crea struttura Firebase organizzata
+function createFirebaseStructure() {
+  console.log('📁 Creazione struttura Firebase...');
+
+  // Crea cartelle placeholder
+  var structure = [
+    'data/images/loghi/squadre',
+    'data/images/loghi/tornei',
+    'data/images/loghi/leghe',
+    'data/images/trofei',
+    'data/images/vari'
+  ];
+
+  structure.forEach(function(path) {
+    fbDB.ref(path).set(null, function(err) {
+      if (!err) {
+        console.log('✅ Creata: ' + path);
+      }
+    });
+  });
+
+  // Sposta loghi tornei vecchi
+  fbDB.ref('images/loghi/slm').once('value', snapshot => {
+    if (snapshot.exists()) {
+      fbDB.ref('data/images/loghi/tornei/slim').set(snapshot.val());
+      fbDB.ref('images/loghi/slm').remove();
+      console.log('✅ Logo spostato: data/images/loghi/tornei/slim');
+    }
+  });
+
+  fbDB.ref('images/loghi/main').once('value', snapshot => {
+    if (snapshot.exists()) {
+      fbDB.ref('data/images/loghi/tornei/main').set(snapshot.val());
+      fbDB.ref('images/loghi/main').remove();
+      console.log('✅ Logo spostato: data/images/loghi/tornei/main');
+    }
+  });
+
+  // Elimina vecchia struttura
+  fbDB.ref('images/loghi_leghe').remove();
+  fbDB.ref('images/loghi').remove();
+  fbDB.ref('data/adm_logo_torneo_slim').remove();
+
+  console.log('✅ Struttura creata!');
+}
+// DISABILITATO: ha cancellato i loghi
+// setTimeout(createFirebaseStructure, 2000);
+fbLoadKey('tornei', function(data) {
+  if (data) {
+    try {
+      ADMIN_TORNEI = JSON.parse(data);
+      if (typeof syncLeaguesDataFromAdmin === 'function') syncLeaguesDataFromAdmin();
+      if (typeof renderTournamentCards === 'function') renderTournamentCards();
+      if (typeof admRenderTornei === 'function') admRenderTornei();
+      setTimeout(function() {
+        if (typeof updateLogosTornei === 'function') updateLogosTornei();
+      }, 100);
+    } catch(e) { console.error('Errore parsing tornei da Firebase:', e); }
+  }
+});
 
 // Utenti (caricati da Firebase)
 var ADMIN_USERS = [];
@@ -4741,11 +4968,12 @@ function openAdminLogin() {
     var inp = document.getElementById('admin-psw-input');
     var rem = document.getElementById('admin-remember');
 
-    // Carica password da Firebase
-    fbLoadKey('admin/password', function(val) {
-      if (val) {
-        inp.value = val;
+    // Carica password da IndexedDB (se "Ricordami" era spuntato)
+    idbLoad('_adminRemember', function(saved) {
+      if (saved) {
+        inp.value = saved;
         if (rem) rem.checked = true;
+        console.log('📖 Admin password carica da IndexedDB');
       } else {
         inp.value = '';
         if (rem) rem.checked = false;
@@ -4765,7 +4993,15 @@ function checkAdminLogin() {
   var stored = localStorage.getItem('admin_password') || ADMIN_PASSWORD;
   if (psw === stored) {
     var rem = document.getElementById('admin-remember');
-    if (rem && rem.checked) { localStorage.setItem('_adminRemember', psw); } else { localStorage.removeItem('_adminRemember'); }
+    console.log('ADMIN: remember checkbox checked?', rem && rem.checked);
+    if (rem && rem.checked) {
+      idbSave('_adminRemember', psw, function() {
+        console.log('ADMIN: password salvata in IndexedDB ✅');
+      });
+    } else {
+      idbRemove('_adminRemember');
+      console.log('ADMIN: password NON salvata');
+    }
     closeAdminLogin();
     showPage('admin');
     admInitPage();
@@ -6115,6 +6351,7 @@ function admInitPage() {
 // ADMIN — Tornei & Leghe
 // ═══════════════════════════════════════════════════════
 function admSaveTornei() {
+  fbSaveKey('tornei', JSON.stringify(ADMIN_TORNEI));
   localStorage.setItem('admin_tornei', JSON.stringify(ADMIN_TORNEI));
   if (typeof gsPost === 'function' && GS_ONLINE) {
     gsPost({action:'saveTornei', data: ADMIN_TORNEI}, null);
@@ -6139,6 +6376,17 @@ function admRenderTornei() {
   sel.selectedIndex = 0;
 }
 
+function admUpdateTorneoColor(ti, color) {
+  var t = ADMIN_TORNEI[ti];
+  if (!t) return;
+  t.color = color;
+  admSaveTornei();
+  if (typeof renderTournamentCards === 'function') renderTournamentCards();
+  setTimeout(function() {
+    if (typeof updateLogosTornei === 'function') updateLogosTornei();
+  }, 50);
+}
+
 function admSelectTorneoDetail(val) {
   var det = document.getElementById('adm-tornei-detail');
   if (!det) return;
@@ -6160,7 +6408,10 @@ function admSelectTorneoDetail(val) {
   }).join('');
   det.innerHTML = '<div class="card" style="padding:16px;margin-bottom:12px">'
     +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'
-    +'<div style="font-family:\'Bebas Neue\';font-size:18px;flex:1">'+t.label+'</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;flex:1">'
+    +'<div style="font-family:\'Bebas Neue\';font-size:18px">'+t.label+'</div>'
+    +'<input type="color" id="adm-torneo-color-'+ti+'" value="'+(t.color||'#3b82f6')+'" onchange="admUpdateTorneoColor('+ti+',this.value)" style="width:32px;height:32px;border:none;outline:none;border-radius:4px;cursor:pointer">'
+    +'</div>'
     +badge
     +'<button onclick="admEditLogoTorneo('+ti+')" style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);color:#8b5cf6;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">🖼 Logo</button>'
     +'<button onclick="admConfirmRemoveTorneo('+ti+')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#ef4444;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">🗑 Elimina</button>'
@@ -6571,8 +6822,16 @@ function admEditLogoTorneo(ti) {
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  if (url) { localStorage.setItem('adm_logo_torneo_'+t.key, url); gsSaveKey('adm_logo_torneo_'+t.key, url); }
-  else { localStorage.removeItem('adm_logo_torneo_'+t.key); gsSaveKey('adm_logo_torneo_'+t.key, ''); }
+  if (url) {
+    localStorage.setItem('adm_logo_torneo_'+t.key, url);
+    gsSaveKey('adm_logo_torneo_'+t.key, url);
+    fbDB.ref('data/images/loghi/tornei/'+t.key).set(url).catch(e => console.error('Logo save error:', e));
+  }
+  else {
+    localStorage.removeItem('adm_logo_torneo_'+t.key);
+    gsSaveKey('adm_logo_torneo_'+t.key, '');
+    fbDB.ref('data/images/loghi/tornei/'+t.key).remove().catch(e => console.error('Logo remove error:', e));
+  }
   updateLogosTornei();
   var msg = document.createElement('div');
   msg.textContent = url ? '✅ URL logo torneo salvato' : '✅ URL rimosso';
@@ -6583,15 +6842,18 @@ function admEditLogoTorneo(ti) {
 function admEditLogoLega(ti, li) {
   var t = ADMIN_TORNEI[ti]; if(!t) return;
   var l = t.leghe[li]; if(!l) return;
-  var current = localStorage.getItem('adm_logo_lega_'+t.key+'_'+l.key) || '';
-  var url = prompt('URL Logo per "'+l.label+'":', current);
+  var url = prompt('URL Logo per "'+l.label+'":', '');
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  if (url) { localStorage.setItem('adm_logo_lega_'+t.key+'_'+l.key, url); gsSaveKey('adm_logo_lega_'+t.key+'_'+l.key, url); }
-  else { localStorage.removeItem('adm_logo_lega_'+t.key+'_'+l.key); gsSaveKey('adm_logo_lega_'+t.key+'_'+l.key, ''); }
+  var fbPath = 'data/images/loghi/leghe/'+t.key+'_'+l.key;
+  if (url) {
+    fbDB.ref(fbPath).set(url);
+  } else {
+    fbDB.ref(fbPath).remove();
+  }
   var msg = document.createElement('div');
-  msg.textContent = url ? '✅ URL logo lega salvato' : '✅ URL rimosso';
+  msg.textContent = url ? '✅ URL logo lega salvato su Firebase' : '✅ URL rimosso da Firebase';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},2000);
@@ -6636,8 +6898,12 @@ function admEditLogoMain() {
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  if (url) { localStorage.setItem('adm_logo_main', url); gsSaveKey('images/loghi/main', url); }
-  else { localStorage.removeItem('adm_logo_main'); gsSaveKey('images/loghi/main', ''); }
+  // Salva il logo in Firebase
+  if (url) {
+    fbDB.ref('data/images/loghi/tornei/main').set(url).catch(e => console.error('Logo save error:', e));
+  } else {
+    fbDB.ref('data/images/loghi/tornei/main').set('').catch(e => console.error('Logo clear error:', e));
+  }
   _applyLogoMain(url);
   var prev = document.getElementById('adm-logo-main-preview');
   if (prev) prev.src = url || '';
@@ -6753,13 +7019,24 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
     cal[String(g)] = {};
     squadre.forEach(function(s){ cal[String(g)][s.toUpperCase()]=''; });
   }
+  // Salva su Firebase
+  fbDB.ref('data/rose/'+torneo.key+'_'+legaKey).set(rose);
+  fbDB.ref('data/crediti/'+torneo.key+'_'+legaKey).set(cr);
+  fbDB.ref('data/calendario/'+torneo.key+'_'+legaKey).set(cal);
+  console.log('✅ Squadre salvate su Firebase: data/rose/'+torneo.key+'_'+legaKey);
+
   localStorage.setItem('adm_rose_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
   localStorage.setItem('adm_rose_import_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
   localStorage.setItem('adm_crediti_base_'+torneo.key+'_'+legaKey, JSON.stringify(cr)); syncCreditiToUser(torneo.key, legaKey, cr);
   localStorage.setItem('adm_cal_'+torneo.key+'_'+legaKey, JSON.stringify(cal));
 
-  // Aggiorna LEAGUES_DATA
-  if (typeof LEAGUES_DATA !== 'undefined' && LEAGUES_DATA[torneo.key]) {
+  // Aggiorna LEAGUES_DATA (crea struttura se non esiste)
+  if (typeof LEAGUES_DATA !== 'undefined') {
+    if (!LEAGUES_DATA[torneo.key]) {
+      var colors = ['#8b5cf6','#f59e0b','#ec4899','#06b6d4','#84cc16'];
+      var colorIdx = Object.keys(LEAGUES_DATA).length % colors.length;
+      LEAGUES_DATA[torneo.key] = {color: colors[colorIdx], leghe: []};
+    }
     LEAGUES_DATA[torneo.key].leghe.push({key:legaKey, label:legaLabel, flag:'🏆', clubs:squadre.length});
     LEAGUES_DATA[torneo.key].leghe.sort(function(a,b){return a.label.localeCompare(b.label);});
   }
@@ -6825,8 +7102,8 @@ function admAggiornaDashboard() {
 // ADMIN — Utenti
 // ═══════════════════════════════════════════════════════
 function admSaveUsers() {
-  // Salva utenti su Firebase
-  fbSaveKey('users/list', JSON.stringify(ADMIN_USERS));
+  // Salva utenti su Firebase e ritorna Promise
+  return fbSaveKey('users/list', JSON.stringify(ADMIN_USERS));
 }
 
 function admRenderUtenti() {
@@ -6845,32 +7122,179 @@ function admRenderUtenti() {
       });
     });
   }
+
+  // Sezione richieste pendenti - Carica PRIMA dei controlli su ADMIN_USERS
+  console.log('📋 INIZIO: Sezione richieste pendenti');
+  var pendingEl = document.getElementById('adm-pending-list');
+  var countEl = document.getElementById('adm-pending-count');
+  console.log('📋 pendingEl:', pendingEl, 'countEl:', countEl);
+
+  console.log('📋 Chiamo fbLoadKey...');
+  fbDB.ref('pending_requests').once('value', function(snapshot) {
+    console.log('fbLoadKey pending_requests snapshot:', snapshot.val());
+    var pending = [];
+    var data = snapshot.val();
+
+    if (data) {
+      console.log('Dati convertiti:', data);
+      for (var key in data) {
+        if (data.hasOwnProperty(key) && typeof data[key] === 'object') {
+          var req = data[key];
+          if (req.cognome || req.nome) {
+            console.log('Aggiunto:', req);
+            req._fbKey = key; // Salva la chiave Firebase per cancellare dopo
+            pending.push(req);
+          }
+        }
+      }
+    }
+    console.log('Array finale pending:', pending);
+
+    window.GLOBAL_PENDING_REQUESTS = pending;
+
+    // Ordina richieste pendenti per cognome, poi per nome
+    pending.sort(function(a, b) {
+      var cognomeA = (a.cognome || '').toLowerCase();
+      var cognomeB = (b.cognome || '').toLowerCase();
+      if (cognomeA !== cognomeB) {
+        return cognomeA.localeCompare(cognomeB);
+      }
+      var nomeA = (a.nome || '').toLowerCase();
+      var nomeB = (b.nome || '').toLowerCase();
+      return nomeA.localeCompare(nomeB);
+    });
+
+    if (pendingEl) {
+      if (!pending.length) {
+        pendingEl.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12px;padding:10px">Nessuna richiesta pendente.</div>';
+        if (countEl) countEl.textContent = '0';
+      } else {
+        if (countEl) countEl.textContent = pending.length;
+        pendingEl.innerHTML = pending.map(function(r, i) {
+          var nomeCompleto = (r.cognome||'') + ' ' + (r.nome||'');
+          var wa = r.whatsapp || '—';
+          var email = r.email || '—';
+          var squadra = r.squadra || '—';
+          var dn = r.data_nascita || '';
+          var ts = r.timestamp || '—';
+          if (ts && ts.includes(' ')) {
+            ts = ts.split(' ')[0];
+          }
+          // Converti timestamp da mm/dd/yyyy a gg/mm/yyyy se necessario (Google Forms usa mm/dd/yyyy)
+          if (ts && ts !== '—') {
+            var tsParts = ts.split('/');
+            if (tsParts.length === 3) {
+              var tp0 = parseInt(tsParts[0]);
+              var tp1 = parseInt(tsParts[1]);
+              var tgg, tmm;
+              // Se primo > 12, è gg/mm/yyyy (il primo è il giorno)
+              if (tp0 > 12) {
+                tgg = tsParts[0];
+                tmm = tsParts[1];
+              }
+              // Se secondo > 12, è mm/gg/yyyy (il secondo è il giorno)
+              else if (tp1 > 12) {
+                tmm = tsParts[0];
+                tgg = tsParts[1];
+              }
+              // Altrimenti entrambi <= 12, assumi mm/gg/yyyy (formato Google Forms USA - PREDEFINITO)
+              else {
+                tmm = tsParts[0];
+                tgg = tsParts[1];
+              }
+              ts = tgg.padStart(2, '0') + '/' + tmm.padStart(2, '0') + '/' + tsParts[2];
+            }
+          }
+          // Converti data di nascita da mm/dd/yyyy a gg/mm/yyyy se necessario
+          if (dn) {
+            var dnParts = dn.split('/');
+            if (dnParts.length === 3) {
+              var p0 = parseInt(dnParts[0]);
+              var p1 = parseInt(dnParts[1]);
+              var gg, mm;
+              // Se primo > 12, è gg/mm/yyyy
+              if (p0 > 12) {
+                gg = dnParts[0];
+                mm = dnParts[1];
+              }
+              // Se secondo > 12, è mm/gg/yyyy (primo è mese)
+              else if (p1 > 12) {
+                mm = dnParts[0];
+                gg = dnParts[1];
+              }
+              // Altrimenti entrambi <= 12, assumi gg/mm (formato europeo)
+              else {
+                gg = dnParts[0];
+                mm = dnParts[1];
+              }
+              dn = gg.padStart(2, '0') + '/' + mm.padStart(2, '0') + '/' + dnParts[2];
+            }
+          }
+          return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px">'
+            +'<div style="display:flex;justify-content:space-between;align-items:start;gap:10px">'
+            +'<div style="flex:1;min-width:500px">'
+            +'<div style="font-weight:700;font-size:13px;color:var(--text)">'+nomeCompleto.trim()+'</div>'
+            +'<div style="font-size:11px;color:var(--text2);margin-top:3px">📱 '+wa+' · 📧 '+email+'</div>'
+            +(dn?'<div style="font-size:11px;color:var(--text2)">🎂 '+dn+'</div>':'')
+            +(squadra!=='—'?'<div style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⚽ '+squadra+'</div>':'')
+            +'<div style="font-size:11px;color:var(--text2);margin-top:4px">🗓 '+ts+'</div>'
+            +'</div>'
+            +'<button onclick="admPreFillFromRequest('+i+')" style="flex-shrink:0;padding:6px 10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#10b981;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer">+ Registra</button>'
+            +'</div></div>';
+        }).join('');
+      }
+    }
+  });
+
   if (!ADMIN_USERS.length) {
     el.innerHTML='<div style="padding:20px;text-align:center;color:var(--text2);font-size:12px">Nessun utente registrato</div>';
     return;
   }
+
+  // Ordina utenti per cognome, poi per nome
+  var sortedUsers = ADMIN_USERS.slice().sort(function(a, b) {
+    var cognomeA = (a.nome || '').split(' ')[0].toLowerCase();
+    var cognomeB = (b.nome || '').split(' ')[0].toLowerCase();
+    if (cognomeA !== cognomeB) {
+      return cognomeA.localeCompare(cognomeB);
+    }
+    var nomeA = (a.nome || '').split(' ').slice(1).join(' ').toLowerCase();
+    var nomeB = (b.nome || '').split(' ').slice(1).join(' ').toLowerCase();
+    return nomeA.localeCompare(nomeB);
+  });
+
   el.innerHTML = '<table style="width:100%;border-collapse:collapse">'
     +'<thead><tr style="background:var(--bg2);font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--text3)">'
+    +'<th style="padding:8px 14px;text-align:left">Cognome</th>'
     +'<th style="padding:8px 14px;text-align:left">Nome</th>'
     +'<th style="padding:8px 14px;text-align:left">Username</th>'
     +'<th style="padding:8px 14px;text-align:left">Password</th>'
+    +'<th style="padding:8px 14px;text-align:left">Email</th>'
+    +'<th style="padding:8px 14px;text-align:left">Telefono</th>'
     +'<th style="padding:8px 14px;text-align:left">Lega</th>'
     +'<th style="padding:8px 14px;text-align:center">Stato</th>'
     +'<th style="padding:8px 14px;text-align:center">Azioni</th>'
     +'</tr></thead><tbody>'
-    + ADMIN_USERS.map(function(u, i) {
+    + sortedUsers.map(function(u, i) {
+      var nomeParti = (u.nome || '').split(' ');
+      var cognome = nomeParti[0] || '';
+      var nome = nomeParti.slice(1).join(' ') || '';
       var statoBtn = u.attivo!==false
         ? '<span style="background:rgba(16,185,129,.1);color:#10b981;font-size:9px;font-weight:800;padding:3px 10px;border-radius:20px;border:1px solid rgba(16,185,129,.2)">ATTIVO</span>'
         : '<span style="background:rgba(239,68,68,.1);color:#ef4444;font-size:9px;font-weight:800;padding:3px 10px;border-radius:20px;border:1px solid rgba(239,68,68,.2)">DISATTIVATO</span>';
       var toggleLabel = u.attivo!==false ? 'Disattiva' : 'Riattiva';
       return '<tr style="border-bottom:1px solid var(--border)">'
-        +'<td style="padding:9px 14px;font-weight:700;font-size:12px">'+u.nome+'</td>'
+        +'<td style="padding:9px 14px;font-weight:700;font-size:12px">'+cognome+'</td>'
+        +'<td style="padding:9px 14px;font-weight:600;font-size:12px">'+nome+'</td>'
         +'<td style="padding:9px 14px;font-size:12px;color:var(--text2)">'+u.username+'</td>'
         +'<td style="padding:9px 14px;font-size:12px;color:var(--text2);font-family:monospace">'+u.password+'</td>'
+        +'<td style="padding:9px 14px;font-size:12px;color:var(--text2)">'+(u.email||'—')+'</td>'
+        +'<td style="padding:9px 14px;font-size:12px;color:var(--text2)">'+(u.phone||'—')+'</td>'
         +'<td style="padding:9px 14px;font-size:11px;color:var(--text2)">'+(u.lega||'—')+'</td>'
         +'<td style="padding:9px 14px;text-align:center">'+statoBtn+'</td>'
         +'<td style="padding:9px 14px;text-align:center;display:flex;gap:6px;justify-content:center">'
         +'<button onclick="admEditUser('+i+')" style="padding:4px 10px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#3b82f6;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">✏️ Modifica</button>'
+        +'<button onclick="mostraCredenziali('+i+')" style="padding:4px 10px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#10b981;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">📧 Invia</button>'
         +'<button onclick="admToggleUser('+i+')" style="padding:4px 10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:#f59e0b;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">'+toggleLabel+'</button>'
         +'<button onclick="admDeleteUser('+i+')" style="padding:4px 10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#ef4444;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">Elimina</button>'
         +'</td></tr>';
@@ -6884,7 +7308,7 @@ function admRenderUtenti() {
   console.log('📋 pendingEl:', pendingEl, 'countEl:', countEl);
 
   console.log('📋 Chiamo fbLoadKey...');
-  fbDB.ref('data/pending_requests').once('value', function(snapshot) {
+  fbDB.ref('pending_requests').once('value', function(snapshot) {
     console.log('fbLoadKey pending_requests snapshot:', snapshot.val());
     var pending = [];
     var data = snapshot.val();
@@ -6897,6 +7321,7 @@ function admRenderUtenti() {
           var req = data[key];
           if (req.cognome || req.nome) {
             console.log('Aggiunto:', req);
+            req._fbKey = key; // Salva la chiave Firebase per cancellare dopo
             pending.push(req);
           }
         }
@@ -6916,16 +7341,71 @@ function admRenderUtenti() {
         pendingEl.innerHTML = pending.map(function(r, i) {
           var nomeCompleto = (r.cognome||'') + ' ' + (r.nome||'');
           var wa = r.whatsapp || '—';
+          var email = r.email || '—';
           var squadra = r.squadra || '—';
           var dn = r.data_nascita || '';
           var ts = r.timestamp || '—';
+          if (ts && ts.includes(' ')) {
+            ts = ts.split(' ')[0];
+          }
+          // Converti timestamp da mm/dd/yyyy a gg/mm/yyyy se necessario (Google Forms usa mm/dd/yyyy)
+          if (ts && ts !== '—') {
+            var tsParts = ts.split('/');
+            if (tsParts.length === 3) {
+              var tp0 = parseInt(tsParts[0]);
+              var tp1 = parseInt(tsParts[1]);
+              var tgg, tmm;
+              // Se primo > 12, è gg/mm/yyyy (il primo è il giorno)
+              if (tp0 > 12) {
+                tgg = tsParts[0];
+                tmm = tsParts[1];
+              }
+              // Se secondo > 12, è mm/gg/yyyy (il secondo è il giorno)
+              else if (tp1 > 12) {
+                tmm = tsParts[0];
+                tgg = tsParts[1];
+              }
+              // Altrimenti entrambi <= 12, assumi mm/gg/yyyy (formato Google Forms USA - PREDEFINITO)
+              else {
+                tmm = tsParts[0];
+                tgg = tsParts[1];
+              }
+              ts = tgg.padStart(2, '0') + '/' + tmm.padStart(2, '0') + '/' + tsParts[2];
+            }
+          }
+          // Converti data di nascita da mm/dd/yyyy a gg/mm/yyyy se necessario
+          if (dn) {
+            var dnParts = dn.split('/');
+            if (dnParts.length === 3) {
+              var p0 = parseInt(dnParts[0]);
+              var p1 = parseInt(dnParts[1]);
+              var gg, mm;
+              // Se primo > 12, è gg/mm/yyyy
+              if (p0 > 12) {
+                gg = dnParts[0];
+                mm = dnParts[1];
+              }
+              // Se secondo > 12, è mm/gg/yyyy (primo è mese)
+              else if (p1 > 12) {
+                mm = dnParts[0];
+                gg = dnParts[1];
+              }
+              // Altrimenti entrambi <= 12, assumi gg/mm (formato europeo)
+              else {
+                gg = dnParts[0];
+                mm = dnParts[1];
+              }
+              dn = gg.padStart(2, '0') + '/' + mm.padStart(2, '0') + '/' + dnParts[2];
+            }
+          }
           return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px">'
             +'<div style="display:flex;justify-content:space-between;align-items:start;gap:10px">'
             +'<div style="flex:1;min-width:500px">'
             +'<div style="font-weight:700;font-size:13px;color:var(--text)">'+nomeCompleto.trim()+'</div>'
-            +'<div style="font-size:11px;color:var(--text2);margin-top:3px">📱 '+wa+' · 🗓 '+ts+'</div>'
+            +'<div style="font-size:11px;color:var(--text2);margin-top:3px">📱 '+wa+' · 📧 '+email+'</div>'
             +(dn?'<div style="font-size:11px;color:var(--text2)">🎂 '+dn+'</div>':'')
             +(squadra!=='—'?'<div style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⚽ '+squadra+'</div>':'')
+            +'<div style="font-size:11px;color:var(--text2);margin-top:4px">🗓 '+ts+'</div>'
             +'</div>'
             +'<button onclick="admPreFillFromRequest('+i+')" style="flex-shrink:0;padding:6px 10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#10b981;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer">+ Registra</button>'
             +'</div></div>';
@@ -6942,50 +7422,174 @@ function admPreFillFromRequest(idx) {
   var pending = window.GLOBAL_PENDING_REQUESTS || [];
   var r = pending[idx];
   if (!r) return;
+
+  // Salva la chiave Firebase per cancellare dopo l'aggiunta
+  window._pendingRequestKeyToDelete = r._fbKey;
+
   var nomeCompleto = ((r.cognome||'') + ' ' + (r.nome||'')).trim();
-  var el = document.getElementById('adm-new-user-nome');
-  if (el) el.value = nomeCompleto;
-  // Pre-compila anche username (cognome.nome in minuscolo)
-  var uEl = document.getElementById('adm-new-user-username');
-  if (uEl && !uEl.value) {
-    uEl.value = ((r.cognome||'').toLowerCase() + '.' + (r.nome||'').toLowerCase()).replace(/\s+/g,'');
+  var el = document.getElementById('adm-new-user-cognome');
+  if (el) el.value = (r.cognome||'').trim();
+  var el2 = document.getElementById('adm-new-user-nome');
+  if (el2) el2.value = (r.nome||'').trim();
+
+  // Genera username e password: Nome + ggmmaa (da data di nascita)
+  var nome = (r.nome||'').trim();
+  // Capitalizza prima lettera: Giuseppe (non giuseppe)
+  if (nome) {
+    nome = nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
   }
+  var dataNascita = (r.data_nascita||'').trim(); // formato mm/dd/yyyy o gg/mm/yyyy
+
+  var credentials = nome;
+  if (dataNascita) {
+    var parts = dataNascita.split('/');
+    if (parts.length >= 3) {
+      var part0 = (parts[0]||'').padStart(2, '0');
+      var part1 = (parts[1]||'').padStart(2, '0');
+      var yyyy = (parts[2]||'');
+      // Detecta formato: se part0 > 12, è formato gg/mm/yyyy, altrimenti è mm/dd/yyyy
+      var gg, mm;
+      if (parseInt(part0) > 12) {
+        gg = part0;
+        mm = part1;
+      } else {
+        mm = part0;
+        gg = part1;
+      }
+      var aa = yyyy.length === 4 ? yyyy.slice(-2) : yyyy;
+      credentials += gg + mm + aa;
+    }
+  }
+
+  var uEl = document.getElementById('adm-new-user-username');
+  var pEl = document.getElementById('adm-new-user-psw');
+  var eEl = document.getElementById('adm-new-user-email');
+  var phEl = document.getElementById('adm-new-user-phone');
+  if (uEl && !uEl.value && credentials) {
+    uEl.value = credentials;
+  }
+  if (pEl && !pEl.value && credentials) {
+    pEl.value = credentials;
+  }
+  if (eEl && !eEl.value && r.email) {
+    eEl.value = r.email;
+  }
+  if (phEl && !phEl.value && r.whatsapp) {
+    phEl.value = r.whatsapp;
+  }
+
   // Scorri fino al form
   if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
 function admAddUser() {
+  if (window._addingUser) { console.log('⏳ Operazione in corso, attendere...'); return; }
+  window._addingUser = true;
+
+  var cognome = document.getElementById('adm-new-user-cognome').value.trim();
   var nome = document.getElementById('adm-new-user-nome').value.trim();
+  var nomeCompleto = (cognome + ' ' + nome).trim();
   var username = document.getElementById('adm-new-user-username').value.trim();
   var password = document.getElementById('adm-new-user-psw').value.trim();
+  var email = document.getElementById('adm-new-user-email').value.trim();
+  var phone = document.getElementById('adm-new-user-phone').value.trim();
   var lega = document.getElementById('adm-new-user-lega').value;
-  if (!nome || !username || !password) { alert('Compila tutti i campi obbligatori'); return; }
-  if (ADMIN_USERS.find(function(u){ return u.username===username; })) { alert('Username già esistente'); return; }
-  var newUser = { nome:nome, username:username, password:password, lega:lega, attivo:true };
-  ADMIN_USERS.push(newUser);
-  admSaveUsers();
-  // Rimuovi dalle richieste pendenti su Firebase se il nome corrisponde
-  var nomeLower = nome.toLowerCase().trim();
-  fbLoadKey('pending_requests', function(val) {
-    if (!val) return;
-    var data = typeof val === 'string' ? JSON.parse(val) : val;
-    for (var key in data) {
-      if (data.hasOwnProperty(key) && typeof data[key] === 'object') {
-        var req = data[key];
-        var nc = ((req.cognome||'') + ' ' + (req.nome||'')).toLowerCase().trim();
-        var ni = ((req.nome||'') + ' ' + (req.cognome||'')).toLowerCase().trim();
-        if (nc === nomeLower || ni === nomeLower) {
-          fbSaveKey('pending_requests/' + key, null);
+  if (!cognome || !nome || !username || !password) { alert('Compila tutti i campi obbligatori'); window._addingUser = false; return; }
+
+  console.log('🔍 Verifico username e carico utenti da Firebase...');
+  // Ricarica ADMIN_USERS da Firebase per verificare gli username attuali
+  fbLoadKey('users/list', function(usersFromFb) {
+    console.log('📥 Utenti caricati da Firebase:', usersFromFb);
+    var fbUsers = (typeof usersFromFb === 'string' ? JSON.parse(usersFromFb) : usersFromFb) || [];
+    if (!Array.isArray(fbUsers)) fbUsers = [];
+    if (fbUsers.find(function(u){ return u.username===username; })) { alert('Username già esistente'); window._addingUser = false; return; }
+
+    var newUser = { nome:nomeCompleto, username:username, password:password, email:email, phone:phone, lega:lega, attivo:true };
+    ADMIN_USERS.push(newUser);
+    console.log('👤 Nuovo utente aggiunto a ADMIN_USERS:', newUser);
+
+    // Aspetta che il salvataggio su Firebase sia completato
+    console.log('💾 Inizio salvataggio su Firebase...');
+    admSaveUsers().then(function() {
+      console.log('✅ Salvataggio completato! Ora cancello richieste pendenti...');
+      // Rimuovi dalle richieste pendenti su Firebase se il nome corrisponde
+      var nomeCompletoLower = nomeCompleto.toLowerCase().trim();
+      fbDB.ref('pending_requests').once('value', function(snapshot) {
+        var data = snapshot.val();
+        var deletePromises = [];
+
+        if (data) {
+          for (var key in data) {
+            if (data.hasOwnProperty(key) && typeof data[key] === 'object') {
+              var req = data[key];
+              var nc = ((req.cognome||'') + ' ' + (req.nome||'')).toLowerCase().trim();
+              var ni = ((req.nome||'') + ' ' + (req.cognome||'')).toLowerCase().trim();
+              if (nc === nomeCompletoLower || ni === nomeCompletoLower) {
+                console.log('🗑️ Cancellando richiesta:', key, req);
+                deletePromises.push(fbDB.ref('pending_requests/' + key).remove());
+              }
+            }
+          }
         }
-      }
-    }
+
+        // Se viene da "+ Registra", cancella anche usando la chiave salvata
+        if (window._pendingRequestKeyToDelete) {
+          console.log('🗑️ Cancellando richiesta salvata:', window._pendingRequestKeyToDelete);
+          deletePromises.push(fbDB.ref('pending_requests/' + window._pendingRequestKeyToDelete).remove());
+          window._pendingRequestKeyToDelete = null;
+        }
+
+        Promise.all(deletePromises).then(function() {
+          console.log('✅ Tutte le richieste cancellate!');
+          document.getElementById('adm-new-user-cognome').value='';
+          document.getElementById('adm-new-user-nome').value='';
+          document.getElementById('adm-new-user-username').value='';
+          document.getElementById('adm-new-user-psw').value='';
+          document.getElementById('adm-new-user-lega').value='';
+          admRenderUtenti();
+          window._addingUser = false;
+          alert('✅ Utente ' + nomeCompleto + ' aggiunto correttamente!');
+        }).catch(function(err) {
+          console.error('❌ Errore cancellazione richieste:', err);
+          window._addingUser = false;
+          alert('Errore: ' + err.message);
+        });
+      });
+    }).catch(function(err) {
+      console.error('❌ Errore salvataggio Firebase:', err);
+      window._addingUser = false;
+      alert('Errore salvataggio: ' + err.message);
+    });
   });
-  document.getElementById('adm-new-user-nome').value='';
-  document.getElementById('adm-new-user-username').value='';
-  document.getElementById('adm-new-user-psw').value='';
-  document.getElementById('adm-new-user-lega').value='';
-  admRenderUtenti();
-  alert('✅ Utente ' + nome + ' aggiunto correttamente!');
+}
+
+function mostraCredenziali(i) {
+  var u = ADMIN_USERS[i];
+  if (!u) return;
+  document.getElementById('cred-email').textContent = u.email || '';
+  document.getElementById('cred-username').textContent = u.username || '';
+  document.getElementById('cred-password').textContent = u.password || '';
+  window._credEmail = u.email || '';
+  window._credUsername = u.username || '';
+  window._credPassword = u.password || '';
+  document.getElementById('modale-credenziali').style.visibility = 'visible';
+}
+
+function copiaCredenziali() {
+  var testo = 'Email: ' + window._credEmail + '\nUsername: ' + window._credUsername + '\nPassword: ' + window._credPassword;
+  navigator.clipboard.writeText(testo).then(function() {
+    alert('✅ Credenziali copiate negli appunti!');
+  }).catch(function() {
+    alert('❌ Errore nel copia negli appunti');
+  });
+}
+
+function apriEmail() {
+  var email = window._credEmail;
+  var subject = 'Le tue credenziali - Malati di Fanta';
+  var gmailUrl = 'https://mail.google.com/mail/?to=' + encodeURIComponent(email) +
+                 '&su=' + encodeURIComponent(subject);
+  window.open(gmailUrl, '_blank');
 }
 
 function admEditUser(i) {
@@ -7007,13 +7611,23 @@ function admEditUser(i) {
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center';
     document.body.appendChild(modal);
   }
-  modal.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;width:360px;max-width:92vw">'
+  var nomeParti = (u.nome || '').split(' ');
+  var cognome = nomeParti[0] || '';
+  var nome = nomeParti.slice(1).join(' ') || '';
+  var statoOpts = '<option value="true"'+(u.attivo!==false ? ' selected' : '')+'>Attivo</option>'
+    +'<option value="false"'+(u.attivo===false ? ' selected' : '')+'>Disattivato</option>';
+
+  modal.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;width:400px;max-width:92vw;max-height:90vh;overflow-y:auto">'
     +'<div style="font-family:Bebas Neue;font-size:20px;letter-spacing:2px;margin-bottom:16px">✏️ Modifica <span style="color:#3b82f6">Utente</span></div>'
     +'<div style="display:flex;flex-direction:column;gap:10px">'
-    +'<input id="adm-eu-nome" type="text" value="'+u.nome+'" placeholder="Nome completo" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
+    +'<input id="adm-eu-cognome" type="text" value="'+cognome+'" placeholder="Cognome" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
+    +'<input id="adm-eu-nome" type="text" value="'+nome+'" placeholder="Nome" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
     +'<input id="adm-eu-username" type="text" value="'+u.username+'" placeholder="Username" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
     +'<input id="adm-eu-password" type="text" value="'+u.password+'" placeholder="Password" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
+    +'<input id="adm-eu-email" type="email" value="'+(u.email||'')+'" placeholder="Email" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
+    +'<input id="adm-eu-phone" type="text" value="'+(u.phone||'')+'" placeholder="Telefono" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
     +'<select id="adm-eu-lega" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'+legheOpts+'</select>'
+    +'<select id="adm-eu-stato" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'+statoOpts+'</select>'
     +'</div>'
     +'<div style="display:flex;gap:8px;margin-top:16px">'
     +'<button onclick="admSaveEditUser('+i+')" style="flex:1;padding:8px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">💾 Salva</button>'
@@ -7025,18 +7639,24 @@ function admEditUser(i) {
 function admSaveEditUser(i) {
   var u = ADMIN_USERS[i];
   if (!u) return;
-  u.nome = document.getElementById('adm-eu-nome').value.trim() || u.nome;
+  var cognome = document.getElementById('adm-eu-cognome').value.trim() || '';
+  var nome = document.getElementById('adm-eu-nome').value.trim() || '';
+  u.nome = (cognome + ' ' + nome).trim();
   u.username = document.getElementById('adm-eu-username').value.trim() || u.username;
   u.password = document.getElementById('adm-eu-password').value.trim() || u.password;
+  u.email = document.getElementById('adm-eu-email').value.trim() || '';
+  u.phone = document.getElementById('adm-eu-phone').value.trim() || '';
   u.lega = document.getElementById('adm-eu-lega').value;
+  u.attivo = document.getElementById('adm-eu-stato').value !== 'false';
   ADMIN_USERS[i] = u;
-  localStorage.setItem('admin_users', JSON.stringify(ADMIN_USERS));
-  // Salva su GSheets
-  gsCall({action:'saveUtente', data:JSON.stringify(u)}, null);
+  // Salva su Firebase
+  fbSaveKey('users/' + u.username, JSON.stringify(u), function() {
+    fbSaveKey('users/list', JSON.stringify(ADMIN_USERS));
+  });
   document.getElementById('adm-edit-user-modal').style.display = 'none';
   admRenderUtenti();
   var msg = document.createElement('div');
-  msg.textContent = '✅ Utente aggiornato'+(GS_ONLINE?' · Sincronizzato':'');
+  msg.textContent = '✅ Utente aggiornato su Firebase';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},2000);
@@ -8364,11 +8984,19 @@ function enterLeague(tournament, leagueKey) {
     window._currentTourneyKey = tournament;
     FANTASY_LOGOS = {};
     showPage('lega');
-    setTimeout(function(){
-      _updateLegaDashboard(tournament+'_'+currentLeagueKey);
-      buildTeamsGrid();
-      showSection('dashboard', null);
-    }, 50);
+    // Ricarica ADMIN_TORNEI da Firebase per aggiornare nomi leghe
+    fbLoadKey('tornei', function(data) {
+      if (data) {
+        try {
+          ADMIN_TORNEI = JSON.parse(data);
+        } catch(e) {}
+      }
+      setTimeout(function(){
+        _updateLegaDashboard(tournament+'_'+currentLeagueKey);
+        buildTeamsGrid();
+        showSection('dashboard', null);
+      }, 50);
+    });
     if (typeof gsCall === 'function' && typeof GS_URL !== 'undefined' && GS_URL) {
       (function(_tk, _lk) {
         var _rk = 'adm_rose_'+_tk+'_'+_lk;
@@ -8568,7 +9196,14 @@ function _updateLeagueHeader(tournament, leagueKey) {
   if (subEl)  subEl.textContent  = nTeams + ' squadre · Mantra';
   if (seasonEl) seasonEl.textContent = '⚽ Stagione 2026/27';
 }
-function goBackToLega(){showPage('lega');setTimeout(function(){showSection('dashboard',null);},50);}
+function goBackToLega(){
+  currentTournament = null;
+  var container = document.getElementById('leagues-container');
+  if (container) container.innerHTML = '<div class="select-placeholder"><div class="sp-icon">🏆</div><div class="sp-title">Seleziona un torneo</div><div class="sp-sub">Clicca su uno dei tornei qui sopra<br>per visualizzare le leghe disponibili</div></div>';
+  document.querySelectorAll('.t-card').forEach(function(c) { c.classList.remove('active'); });
+  showPage('lega');
+  setTimeout(function(){showSection('dashboard',null);},50);
+}
 function goTo(page){showPage(page);}
 function renderMulte(){
   var el=document.getElementById('slim-multe-body');
@@ -8901,7 +9536,7 @@ document.addEventListener('DOMContentLoaded',function(){
   });
   updateLogosTornei();
   if (typeof gsLoadKey === 'function') {
-    gsLoadKey('adm_logo_main', function(val) {
+    fbLoadImage('loghi', 'main', function(val) {
       if (val) { localStorage.setItem('adm_logo_main', val); _applyLogoMain(val); var p=document.getElementById('adm-logo-main-preview'); if(p) p.src=val; }
     });
     ['tdm','ilm','ilc'].forEach(function(k) {
@@ -9289,50 +9924,6 @@ function closeLoginModal(){
   if(m){m.style.display='none';document.body.style.overflow='';}
   var e=document.getElementById('login-error');if(e)e.style.display='none';
 }
-function doLogin(){
-  var u=(document.getElementById('login-user')?document.getElementById('login-user').value||'':'').trim().toLowerCase();
-  var p=(document.getElementById('login-pass')?document.getElementById('login-pass').value||'':'').trim();
-  var e=document.getElementById('login-error');
-  if(!u||!p){if(e){e.textContent='Inserisci username e password.';e.style.display='block';}return;}
-
-  var btn=document.querySelector('#login-modal button[onclick]');
-  if(btn){btn.textContent='...';btn.disabled=true;}
-
-  function onLoginResult(ok, userOrError) {
-    if(btn){btn.textContent='Accedi';btn.disabled=false;}
-    if (ok) {
-      var user = userOrError;
-      localStorage.setItem('current_user', JSON.stringify(user));
-      // Salva credenziali solo se "Ricordami" è spuntato
-      var remember = document.getElementById('login-remember');
-      if (remember && remember.checked) {
-        // Salva credenziali E dati utente per auto-login offline
-        localStorage.setItem('saved_credentials', JSON.stringify({u:u, p:p}));
-        localStorage.setItem('saved_user_data', JSON.stringify(user));
-      } else {
-        localStorage.removeItem('saved_credentials');
-        localStorage.removeItem('saved_user_data');
-      }
-      closeLoginModal();
-      var initials = user.ruolo==='admin' ? 'AD' : (user.nome||'?').split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'??';
-      var firstName = user.ruolo==='admin' ? 'Admin' : (user.nome||'').split(' ')[0];
-      var chip = document.getElementById('login-btn');
-      if(chip){
-        chip.innerHTML='<div class="user-av">'+initials+'</div><div style="font-size:12px;font-weight:600">'+firstName+'</div>';
-        chip.onclick=function(){ openLogoutModal(); };
-        chip.style.cursor='pointer';
-        var nameEl=document.getElementById('user-profile-name');
-        if(nameEl) nameEl.textContent=user.nome||user.username;
-      }
-    } else {
-      if(e){e.textContent=userOrError||'Credenziali non valide.';e.style.display='block';}
-    }
-  }
-
-  // Login da Firebase
-  fbLoginUser(u, p, onLoginResult);
-}
-
 function slimGetCalendar() {
   // Sincronizza key con currentLeagueKey
   var lkCur = (typeof currentLeagueKey !== 'undefined' ? currentLeagueKey : 'it');
@@ -9446,16 +10037,33 @@ function updateLogosTornei() {
       var oc = card.getAttribute('onclick') || '';
       var m = oc.match(/selectTournament\('([^']+)'/);
       if (!m) return;
-      var url = localStorage.getItem('adm_logo_torneo_'+m[1]);
       var img = card.querySelector('.t-logo-area img');
       if (!img) return;
-      if (url) {
-        img.style.display = '';
-        img.src = url;
-        img.onerror = function() { this.style.display = 'none'; };
-      } else {
-        img.style.display = 'none';
-        img.src = '';
+
+      // Carica da Firebase: nuovo percorso, poi vecchio, poi localStorage
+      fbDB.ref('data/images/loghi/tornei/'+m[1]).once('value', snapshot => {
+        var url = snapshot.val();
+        if (!url) {
+          fbDB.ref('images/loghi/'+m[1]).once('value', snapshot2 => {
+            url = snapshot2.val() || localStorage.getItem('adm_logo_torneo_'+m[1]);
+            setLogoImg(url);
+          });
+        } else {
+          setLogoImg(url);
+        }
+      }).catch(e => {
+        var url = localStorage.getItem('adm_logo_torneo_'+m[1]);
+        setLogoImg(url);
+      });
+      function setLogoImg(url) {
+        if (url) {
+          img.style.display = '';
+          img.src = url;
+          img.onerror = function() { this.style.display = 'none'; };
+        } else {
+          img.style.display = 'none';
+          img.src = '';
+        }
       }
     });
     var _slLogo = localStorage.getItem('adm_logo_torneo_slim');
@@ -9472,7 +10080,7 @@ function updateDashboardCounters() {
     at.forEach(function(t) {
       var legheEl = document.getElementById(t.key+'-n-leghe');
       var clubEl = document.getElementById(t.key+'-n-club');
-      if (legheEl) legheEl.textContent = t.leghe.length;
+      if (legheEl) legheEl.textContent = t.leghe.length > 0 ? t.leghe.length : '—';
       if (clubEl) {
         var totalClub = 0;
         var _cfgN = 0;
@@ -9496,26 +10104,28 @@ function updateDashboardCounters() {
   } catch(e) {}
 }
 
-// Sincronizza LEAGUES_DATA con leghe aggiunte in admin_tornei
-try {
-  var _at = JSON.parse(localStorage.getItem('admin_tornei') || 'null');
-  if (_at) {
+function syncLeaguesDataFromAdmin() {
+  var _at = (typeof ADMIN_TORNEI !== 'undefined') ? ADMIN_TORNEI : JSON.parse(localStorage.getItem('admin_tornei') || '[]');
+  if (_at.length) {
     var _colors = ['#10b981','#3b82f6','#8b5cf6','#f59e0b','#ec4899','#06b6d4'];
     _at.forEach(function(t, i) {
       if (!LEAGUES_DATA[t.key]) LEAGUES_DATA[t.key] = {color:_colors[i%_colors.length], leghe:[]};
       t.leghe.slice().sort(function(a,b){return a.label.localeCompare(b.label);}).forEach(function(l) {
-        // Controlla sia la chiave diretta che il formato torneo_lega (es. tdm_it)
         var existing = LEAGUES_DATA[t.key].leghe.find(function(x){
           return x.key===l.key || x.key===t.key+'_'+l.key;
         });
         if (existing) {
-          existing.label = l.label; // aggiorna label admin (es. "Serie Trapattoni")
+          existing.label = l.label;
         } else {
           LEAGUES_DATA[t.key].leghe.push({key:l.key, label:l.label, flag:'🏆', clubs:0});
         }
       });
     });
   }
+}
+
+try {
+  syncLeaguesDataFromAdmin();
 } catch(e) {}
 
 function renderTournamentCards() {
@@ -9581,21 +10191,7 @@ function selectTournament(key, el) {
 
   dati.leghe.slice().sort(function(a,b){return a.label.localeCompare(b.label);}).forEach(function(lega) {
     var _lk = lega.key;
-    var logo;
-    if (_lk.indexOf('tsm_') === 0) {
-      var _tsmLogoUrl = localStorage.getItem('adm_logo_lega_'+_lk);
-      logo = (_tsmLogoUrl ? _normalizeImgUrl(_tsmLogoUrl) : '') || (LOGOS && LOGOS['tsm']) || '';
-    } else {
-      // Prima cerca URL da localStorage, poi embedded
-      var _torneoK = currentTournament || '';
-      var _legaK = _lk;
-      var _urlLogo = localStorage.getItem('adm_logo_lega_'+_torneoK+'_'+_legaK)
-        || localStorage.getItem('adm_logo_lega_'+_torneoK+'_'+_legaK.replace(_torneoK+'_',''));
-      // Fallback: cerca per nome lega in ADMIN_TORNEI (gestisce key mismatch tra LEAGUES_DATA e admin)
-      if (!_urlLogo) { try { var _aT=(JSON.parse(localStorage.getItem('admin_tornei')||'[]')).find(function(t){return t.key===_torneoK;}); if(_aT){var _aL=_aT.leghe.find(function(l){return l.label===lega.label;});if(_aL&&_aL.key!==_legaK)_urlLogo=localStorage.getItem('adm_logo_lega_'+_torneoK+'_'+_aL.key)||'';}}catch(e){} }
-      if (_urlLogo) _urlLogo = _normalizeImgUrl(_urlLogo);
-      logo = _urlLogo || (LOGOS && LOGOS[_lk]) || '';
-    }
+    var logo = '';
     // Club count: rose da localStorage (fonte più aggiornata) > config
     var _realLk = _lk.indexOf(key+'_') === 0 ? _lk.slice(key.length+1) : _lk;
     var _nClub = 0;
@@ -9605,7 +10201,7 @@ function selectTournament(key, el) {
     html += '<div onclick="enterLeague(\''+key+'\',\''+lega.key+'\')" style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:8px;" '
           + 'onmouseover="this.style.borderColor=\''+dati.color+'\';this.style.background=\''+dati.color+'1a\'" '
           + 'onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--card)\'">'
-          + (logo ? '<img src="'+logo+'" data-flag="'+lega.flag+'" onerror="this.outerHTML=\'<div style=&quot;font-size:28px&quot;>\'+this.dataset.flag+\'</div>\'" style="width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))">' : '<div style="font-size:28px">'+lega.flag+'</div>')
+          + (logo ? '<img src="'+logo+'" data-flag="'+lega.flag+'" data-lega-key="'+lega.key+'" onerror="this.outerHTML=\'<div style=&quot;font-size:28px&quot;>\'+this.dataset.flag+\'</div>\'" style="width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))">' : '<div style="font-size:28px">'+lega.flag+'</div>')
           + '<div style="font-size:12px;font-weight:700;color:var(--text)">'+lega.label+'</div>'
           + (_nClub ? '<div style="font-size:10px;color:var(--text2)">'+_nClub+' club</div>' : '')
           + '</div>';
@@ -9614,6 +10210,81 @@ function selectTournament(key, el) {
   html += '</div></div>';
   container.innerHTML = html;
   container.scrollIntoView({behavior:'smooth', block:'nearest'});
+  loadLeagueLogos(currentTournament, dati.leghe);
+}
+
+function loadLeagueLogos(torneoKey, leghe) {
+  if (!leghe || !leghe.length) return;
+  leghe.forEach(function(lega) {
+    var fbPath = 'data/images/loghi/leghe/'+torneoKey+'_'+lega.key;
+    var fbPathOld = 'images/loghi_leghe/'+torneoKey+'_'+lega.key;
+    console.log('🔍 Caricando logo da Firebase per:', {lega: lega.key, fbPath, fbPathOld});
+    fbDB.ref(fbPath).once('value', function(snapshot) {
+      var fbLogo = snapshot.val();
+      console.log('📊 Valore Firebase per '+fbPath+':', fbLogo);
+      if (!fbLogo) {
+        fbDB.ref(fbPathOld).once('value', function(snapshot2) {
+          fbLogo = snapshot2.val();
+          console.log('📊 Valore Firebase old path per '+fbPathOld+':', fbLogo);
+          if (fbLogo) {
+            setLeagueImg(fbLogo);
+          } else {
+            // Pulisci localStorage
+            localStorage.removeItem('adm_logo_lega_'+torneoKey+'_'+lega.key);
+          }
+        });
+      } else {
+        setLeagueImg(fbLogo);
+      }
+    });
+    function setLeagueImg(fbLogo) {
+      if (fbLogo) {
+        fbLogo = _normalizeImgUrl(fbLogo);
+        var imgEls = document.querySelectorAll('img[data-lega-key="'+lega.key+'"]');
+        console.log('🖼️ Logo trovato per '+lega.key+': '+fbLogo);
+        imgEls.forEach(function(img) { img.src = fbLogo; });
+      }
+    }
+  });
+}
+
+// FUNZIONE DEBUG: Crea la struttura corretta di Firebase
+function debugCreateFirebaseStructure() {
+  var structure = {
+    'data/images/loghi/squadre': {},
+    'data/images/loghi/tornei': {},
+    'data/images/loghi/leghe': {},
+    'data/images/trofei': {},
+    'data/images/vari': {}
+  };
+
+  var promises = [];
+  Object.keys(structure).forEach(path => {
+    console.log('📁 Creando path:', path);
+    promises.push(
+      fbDB.ref(path).set({_init: true}).catch(e => console.error('Errore:', path, e))
+    );
+  });
+
+  Promise.all(promises).then(() => {
+    console.log('✅ Struttura Firebase creata');
+    alert('✅ Struttura Firebase creata:\n- data/images/loghi/squadre/\n- data/images/loghi/tornei/\n- data/images/loghi/leghe/\n- data/images/trofei/\n- data/images/vari/');
+  }).catch(e => {
+    console.error('❌ Errore creazione struttura:', e);
+    alert('❌ Errore: ' + e.message);
+  });
+}
+
+// FUNZIONE DEBUG: Cancella TUTTI i loghi di leghe da Firebase
+function debugCancellaLoghiLeghe() {
+  var path = 'data/images/loghi/leghe';
+  console.log('🗑️ Cancellando loghi da Firebase:', path);
+  fbDB.ref(path).remove().then(() => {
+    console.log('✅ Loghi leghe cancellati');
+    alert('✅ Tutti i loghi leghe cancellati da Firebase');
+  }).catch(e => {
+    console.error('❌ Errore cancellazione:', e);
+  });
 }
 
 var currentLeagueKey = 'it';  // lega attiva corrente
@@ -9628,7 +10299,7 @@ function _updateLegaDashboard(leagueKey) {
   if (typeof ADMIN_TORNEI !== 'undefined') {
     ADMIN_TORNEI.forEach(function(t) {
       t.leghe.forEach(function(l) {
-        if (l.key === leagueKey || leagueKey === t.key+'_'+l.key) { _admTK = t.key; _realLK = l.key; }
+        if (l.key === leagueKey || leagueKey === t.key+'_'+l.key || leagueKey.endsWith('_'+l.key)) { _admTK = t.key; _realLK = l.key; }
       });
     });
   }
@@ -9667,7 +10338,7 @@ function _updateLegaDashboard(leagueKey) {
   if (bcEl) bcEl.textContent = breadcrumbNames[_realLK] || _dynLegaLabel || _realLK.toUpperCase();
   var nameEl = document.querySelector('.league-info-name');
   var subEl  = document.querySelector('.league-info-sub');
-  if (nameEl) nameEl.textContent = legaNames[leagueKey] || (_torneoShort ? _torneoShort+' '+(_dynLegaLabel||_realLK.toUpperCase()) : 'Slim '+_realLK.toUpperCase());
+  if (nameEl) nameEl.textContent = legaNames[leagueKey] || _dynLegaLabel || _realLK.toUpperCase();
   var nTeams = Object.keys(TEAMS_ROSE).length;
   if (subEl) subEl.textContent = nTeams + ' squadre · Mantra';
   // Trofeo
@@ -9691,14 +10362,15 @@ function _updateLegaDashboard(leagueKey) {
   }
   // Titolo dashboard
   var titleEl = document.getElementById('lega-dash-title');
-  if (titleEl) titleEl.textContent = (legaNames[leagueKey] || (_torneoShort && (_dynLegaLabel||_realLK) ? _torneoShort+' '+(_dynLegaLabel||_realLK) : 'Slim '+_realLK)).toUpperCase();
-  // Logo: prima adm URL da localStorage, poi LOGOS embedded
-  var _admLogoUrl = _admTK ? localStorage.getItem('adm_logo_lega_'+_admTK+'_'+_realLK) : null;
-  var _logoFinal = (_admLogoUrl ? _normalizeImgUrl(_admLogoUrl) : '') || (typeof LOGOS!=='undefined' ? (LOGOS[leagueKey]||LOGOS[_realLK]||LOGOS['it']||'') : '');
-  var bcLogoEl = document.getElementById('breadcrumb-logo');
-  if (bcLogoEl && _logoFinal) bcLogoEl.src = _logoFinal;
-  var lgLogoEl = document.getElementById('league-logo');
-  if (lgLogoEl && _logoFinal) lgLogoEl.src = _logoFinal;
+  if (titleEl) titleEl.textContent = (legaNames[leagueKey] || _dynLegaLabel || _realLK).toUpperCase();
+  // Logo: solo da Firebase via loadLeagueLogos() - NO localStorage, NO hardcode
+  // var _admLogoUrl = _admTK ? localStorage.getItem('adm_logo_lega_'+_admTK+'_'+_realLK) : null;
+  // var _logoFinal = (_admLogoUrl ? _normalizeImgUrl(_admLogoUrl) : '') || (typeof LOGOS!=='undefined' ? (LOGOS[leagueKey]||LOGOS[_realLK]||LOGOS['it']||'') : '');
+  // console.log('🔍 DEBUG Logo lega:', {_admLogoUrl, _logoFinal, LOGOS_it: LOGOS['it'], leagueKey, _realLK});
+  // var bcLogoEl = document.getElementById('breadcrumb-logo');
+  // if (bcLogoEl && _logoFinal) bcLogoEl.src = _logoFinal;
+  // var lgLogoEl = document.getElementById('league-logo');
+  // if (lgLogoEl && _logoFinal) lgLogoEl.src = _logoFinal;
 }
 
 
@@ -10222,8 +10894,70 @@ function gsLoadMulte(torneo, lega, callback) {
 
 var ADMIN_PASSWORD = 'admin2026';
 
-// Struttura tornei (estensibile dall'Admin)
+// Struttura tornei (caricati da Firebase con fallback localStorage)
 var ADMIN_TORNEI = JSON.parse(localStorage.getItem('admin_tornei') || '[]');
+console.log('📦 localStorage keys:', Object.keys(localStorage).length > 0 ? Object.keys(localStorage) : '✅ EMPTY');
+
+// Crea struttura Firebase organizzata
+function createFirebaseStructure() {
+  console.log('📁 Creazione struttura Firebase...');
+
+  // Crea cartelle placeholder
+  var structure = [
+    'data/images/loghi/squadre',
+    'data/images/loghi/tornei',
+    'data/images/loghi/leghe',
+    'data/images/trofei',
+    'data/images/vari'
+  ];
+
+  structure.forEach(function(path) {
+    fbDB.ref(path).set(null, function(err) {
+      if (!err) {
+        console.log('✅ Creata: ' + path);
+      }
+    });
+  });
+
+  // Sposta loghi tornei vecchi
+  fbDB.ref('images/loghi/slm').once('value', snapshot => {
+    if (snapshot.exists()) {
+      fbDB.ref('data/images/loghi/tornei/slim').set(snapshot.val());
+      fbDB.ref('images/loghi/slm').remove();
+      console.log('✅ Logo spostato: data/images/loghi/tornei/slim');
+    }
+  });
+
+  fbDB.ref('images/loghi/main').once('value', snapshot => {
+    if (snapshot.exists()) {
+      fbDB.ref('data/images/loghi/tornei/main').set(snapshot.val());
+      fbDB.ref('images/loghi/main').remove();
+      console.log('✅ Logo spostato: data/images/loghi/tornei/main');
+    }
+  });
+
+  // Elimina vecchia struttura
+  fbDB.ref('images/loghi_leghe').remove();
+  fbDB.ref('images/loghi').remove();
+  fbDB.ref('data/adm_logo_torneo_slim').remove();
+
+  console.log('✅ Struttura creata!');
+}
+// DISABILITATO: ha cancellato i loghi
+// setTimeout(createFirebaseStructure, 2000);
+fbLoadKey('tornei', function(data) {
+  if (data) {
+    try {
+      ADMIN_TORNEI = JSON.parse(data);
+      if (typeof syncLeaguesDataFromAdmin === 'function') syncLeaguesDataFromAdmin();
+      if (typeof renderTournamentCards === 'function') renderTournamentCards();
+      if (typeof admRenderTornei === 'function') admRenderTornei();
+      setTimeout(function() {
+        if (typeof updateLogosTornei === 'function') updateLogosTornei();
+      }, 100);
+    } catch(e) { console.error('Errore parsing tornei da Firebase:', e); }
+  }
+});
 
 // Utenti (caricati da Firebase)
 var ADMIN_USERS = [];
@@ -10238,11 +10972,12 @@ function openAdminLogin() {
     var inp = document.getElementById('admin-psw-input');
     var rem = document.getElementById('admin-remember');
 
-    // Carica password da Firebase
-    fbLoadKey('admin/password', function(val) {
-      if (val) {
-        inp.value = val;
+    // Carica password da IndexedDB (se "Ricordami" era spuntato)
+    idbLoad('_adminRemember', function(saved) {
+      if (saved) {
+        inp.value = saved;
         if (rem) rem.checked = true;
+        console.log('📖 Admin password carica da IndexedDB');
       } else {
         inp.value = '';
         if (rem) rem.checked = false;
@@ -10262,7 +10997,15 @@ function checkAdminLogin() {
   var stored = localStorage.getItem('admin_password') || ADMIN_PASSWORD;
   if (psw === stored) {
     var rem = document.getElementById('admin-remember');
-    if (rem && rem.checked) { localStorage.setItem('_adminRemember', psw); } else { localStorage.removeItem('_adminRemember'); }
+    console.log('ADMIN: remember checkbox checked?', rem && rem.checked);
+    if (rem && rem.checked) {
+      idbSave('_adminRemember', psw, function() {
+        console.log('ADMIN: password salvata in IndexedDB ✅');
+      });
+    } else {
+      idbRemove('_adminRemember');
+      console.log('ADMIN: password NON salvata');
+    }
     closeAdminLogin();
     showPage('admin');
     admInitPage();
@@ -11522,6 +12265,7 @@ function admSaveMulteEl(el) {
 // ADMIN — Tornei & Leghe
 // ═══════════════════════════════════════════════════════
 function admSaveTornei() {
+  fbSaveKey('tornei', JSON.stringify(ADMIN_TORNEI));
   localStorage.setItem('admin_tornei', JSON.stringify(ADMIN_TORNEI));
   if (typeof gsPost === 'function' && GS_ONLINE) {
     gsPost({action:'saveTornei', data: ADMIN_TORNEI}, null);
@@ -11546,6 +12290,17 @@ function admRenderTornei() {
   sel.selectedIndex = 0;
 }
 
+function admUpdateTorneoColor(ti, color) {
+  var t = ADMIN_TORNEI[ti];
+  if (!t) return;
+  t.color = color;
+  admSaveTornei();
+  if (typeof renderTournamentCards === 'function') renderTournamentCards();
+  setTimeout(function() {
+    if (typeof updateLogosTornei === 'function') updateLogosTornei();
+  }, 50);
+}
+
 function admSelectTorneoDetail(val) {
   var det = document.getElementById('adm-tornei-detail');
   if (!det) return;
@@ -11567,7 +12322,10 @@ function admSelectTorneoDetail(val) {
   }).join('');
   det.innerHTML = '<div class="card" style="padding:16px;margin-bottom:12px">'
     +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'
-    +'<div style="font-family:\'Bebas Neue\';font-size:18px;flex:1">'+t.label+'</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;flex:1">'
+    +'<div style="font-family:\'Bebas Neue\';font-size:18px">'+t.label+'</div>'
+    +'<input type="color" id="adm-torneo-color-'+ti+'" value="'+(t.color||'#3b82f6')+'" onchange="admUpdateTorneoColor('+ti+',this.value)" style="width:32px;height:32px;border:none;outline:none;border-radius:4px;cursor:pointer">'
+    +'</div>'
     +badge
     +'<button onclick="admEditLogoTorneo('+ti+')" style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);color:#8b5cf6;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">🖼 Logo</button>'
     +'<button onclick="admConfirmRemoveTorneo('+ti+')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#ef4444;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">🗑 Elimina</button>'
@@ -11789,8 +12547,16 @@ function admEditLogoTorneo(ti) {
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  if (url) { localStorage.setItem('adm_logo_torneo_'+t.key, url); gsSaveKey('adm_logo_torneo_'+t.key, url); }
-  else { localStorage.removeItem('adm_logo_torneo_'+t.key); gsSaveKey('adm_logo_torneo_'+t.key, ''); }
+  if (url) {
+    localStorage.setItem('adm_logo_torneo_'+t.key, url);
+    gsSaveKey('adm_logo_torneo_'+t.key, url);
+    fbDB.ref('data/images/loghi/tornei/'+t.key).set(url).catch(e => console.error('Logo save error:', e));
+  }
+  else {
+    localStorage.removeItem('adm_logo_torneo_'+t.key);
+    gsSaveKey('adm_logo_torneo_'+t.key, '');
+    fbDB.ref('data/images/loghi/tornei/'+t.key).remove().catch(e => console.error('Logo remove error:', e));
+  }
   updateLogosTornei();
   var msg = document.createElement('div');
   msg.textContent = url ? '✅ URL logo torneo salvato' : '✅ URL rimosso';
@@ -11801,15 +12567,18 @@ function admEditLogoTorneo(ti) {
 function admEditLogoLega(ti, li) {
   var t = ADMIN_TORNEI[ti]; if(!t) return;
   var l = t.leghe[li]; if(!l) return;
-  var current = localStorage.getItem('adm_logo_lega_'+t.key+'_'+l.key) || '';
-  var url = prompt('URL Logo per "'+l.label+'":', current);
+  var url = prompt('URL Logo per "'+l.label+'":', '');
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  if (url) { localStorage.setItem('adm_logo_lega_'+t.key+'_'+l.key, url); gsSaveKey('adm_logo_lega_'+t.key+'_'+l.key, url); }
-  else { localStorage.removeItem('adm_logo_lega_'+t.key+'_'+l.key); gsSaveKey('adm_logo_lega_'+t.key+'_'+l.key, ''); }
+  var fbPath = 'data/images/loghi/leghe/'+t.key+'_'+l.key;
+  if (url) {
+    fbDB.ref(fbPath).set(url);
+  } else {
+    fbDB.ref(fbPath).remove();
+  }
   var msg = document.createElement('div');
-  msg.textContent = url ? '✅ URL logo lega salvato' : '✅ URL rimosso';
+  msg.textContent = url ? '✅ URL logo lega salvato su Firebase' : '✅ URL rimosso da Firebase';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},2000);
@@ -11854,8 +12623,12 @@ function admEditLogoMain() {
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  if (url) { localStorage.setItem('adm_logo_main', url); gsSaveKey('images/loghi/main', url); }
-  else { localStorage.removeItem('adm_logo_main'); gsSaveKey('images/loghi/main', ''); }
+  // Salva il logo in Firebase
+  if (url) {
+    fbDB.ref('data/images/loghi/tornei/main').set(url).catch(e => console.error('Logo save error:', e));
+  } else {
+    fbDB.ref('data/images/loghi/tornei/main').set('').catch(e => console.error('Logo clear error:', e));
+  }
   _applyLogoMain(url);
   var prev = document.getElementById('adm-logo-main-preview');
   if (prev) prev.src = url || '';
@@ -11971,13 +12744,24 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
     cal[String(g)] = {};
     squadre.forEach(function(s){ cal[String(g)][s.toUpperCase()]=''; });
   }
+  // Salva su Firebase
+  fbDB.ref('data/rose/'+torneo.key+'_'+legaKey).set(rose);
+  fbDB.ref('data/crediti/'+torneo.key+'_'+legaKey).set(cr);
+  fbDB.ref('data/calendario/'+torneo.key+'_'+legaKey).set(cal);
+  console.log('✅ Squadre salvate su Firebase: data/rose/'+torneo.key+'_'+legaKey);
+
   localStorage.setItem('adm_rose_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
   localStorage.setItem('adm_rose_import_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
   localStorage.setItem('adm_crediti_base_'+torneo.key+'_'+legaKey, JSON.stringify(cr)); syncCreditiToUser(torneo.key, legaKey, cr);
   localStorage.setItem('adm_cal_'+torneo.key+'_'+legaKey, JSON.stringify(cal));
 
-  // Aggiorna LEAGUES_DATA
-  if (typeof LEAGUES_DATA !== 'undefined' && LEAGUES_DATA[torneo.key]) {
+  // Aggiorna LEAGUES_DATA (crea struttura se non esiste)
+  if (typeof LEAGUES_DATA !== 'undefined') {
+    if (!LEAGUES_DATA[torneo.key]) {
+      var colors = ['#8b5cf6','#f59e0b','#ec4899','#06b6d4','#84cc16'];
+      var colorIdx = Object.keys(LEAGUES_DATA).length % colors.length;
+      LEAGUES_DATA[torneo.key] = {color: colors[colorIdx], leghe: []};
+    }
     LEAGUES_DATA[torneo.key].leghe.push({key:legaKey, label:legaLabel, flag:'🏆', clubs:squadre.length});
     LEAGUES_DATA[torneo.key].leghe.sort(function(a,b){return a.label.localeCompare(b.label);});
   }
@@ -12043,8 +12827,8 @@ function admAggiornaDashboard() {
 // ADMIN — Utenti
 // ═══════════════════════════════════════════════════════
 function admSaveUsers() {
-  // Salva utenti su Firebase
-  fbSaveKey('users/list', JSON.stringify(ADMIN_USERS));
+  // Salva utenti su Firebase e ritorna Promise
+  return fbSaveKey('users/list', JSON.stringify(ADMIN_USERS));
 }
 
 function admRenderUtenti() {
@@ -12063,32 +12847,179 @@ function admRenderUtenti() {
       });
     });
   }
+
+  // Sezione richieste pendenti - Carica PRIMA dei controlli su ADMIN_USERS
+  console.log('📋 INIZIO: Sezione richieste pendenti');
+  var pendingEl = document.getElementById('adm-pending-list');
+  var countEl = document.getElementById('adm-pending-count');
+  console.log('📋 pendingEl:', pendingEl, 'countEl:', countEl);
+
+  console.log('📋 Chiamo fbLoadKey...');
+  fbDB.ref('pending_requests').once('value', function(snapshot) {
+    console.log('fbLoadKey pending_requests snapshot:', snapshot.val());
+    var pending = [];
+    var data = snapshot.val();
+
+    if (data) {
+      console.log('Dati convertiti:', data);
+      for (var key in data) {
+        if (data.hasOwnProperty(key) && typeof data[key] === 'object') {
+          var req = data[key];
+          if (req.cognome || req.nome) {
+            console.log('Aggiunto:', req);
+            req._fbKey = key; // Salva la chiave Firebase per cancellare dopo
+            pending.push(req);
+          }
+        }
+      }
+    }
+    console.log('Array finale pending:', pending);
+
+    window.GLOBAL_PENDING_REQUESTS = pending;
+
+    // Ordina richieste pendenti per cognome, poi per nome
+    pending.sort(function(a, b) {
+      var cognomeA = (a.cognome || '').toLowerCase();
+      var cognomeB = (b.cognome || '').toLowerCase();
+      if (cognomeA !== cognomeB) {
+        return cognomeA.localeCompare(cognomeB);
+      }
+      var nomeA = (a.nome || '').toLowerCase();
+      var nomeB = (b.nome || '').toLowerCase();
+      return nomeA.localeCompare(nomeB);
+    });
+
+    if (pendingEl) {
+      if (!pending.length) {
+        pendingEl.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12px;padding:10px">Nessuna richiesta pendente.</div>';
+        if (countEl) countEl.textContent = '0';
+      } else {
+        if (countEl) countEl.textContent = pending.length;
+        pendingEl.innerHTML = pending.map(function(r, i) {
+          var nomeCompleto = (r.cognome||'') + ' ' + (r.nome||'');
+          var wa = r.whatsapp || '—';
+          var email = r.email || '—';
+          var squadra = r.squadra || '—';
+          var dn = r.data_nascita || '';
+          var ts = r.timestamp || '—';
+          if (ts && ts.includes(' ')) {
+            ts = ts.split(' ')[0];
+          }
+          // Converti timestamp da mm/dd/yyyy a gg/mm/yyyy se necessario (Google Forms usa mm/dd/yyyy)
+          if (ts && ts !== '—') {
+            var tsParts = ts.split('/');
+            if (tsParts.length === 3) {
+              var tp0 = parseInt(tsParts[0]);
+              var tp1 = parseInt(tsParts[1]);
+              var tgg, tmm;
+              // Se primo > 12, è gg/mm/yyyy (il primo è il giorno)
+              if (tp0 > 12) {
+                tgg = tsParts[0];
+                tmm = tsParts[1];
+              }
+              // Se secondo > 12, è mm/gg/yyyy (il secondo è il giorno)
+              else if (tp1 > 12) {
+                tmm = tsParts[0];
+                tgg = tsParts[1];
+              }
+              // Altrimenti entrambi <= 12, assumi mm/gg/yyyy (formato Google Forms USA - PREDEFINITO)
+              else {
+                tmm = tsParts[0];
+                tgg = tsParts[1];
+              }
+              ts = tgg.padStart(2, '0') + '/' + tmm.padStart(2, '0') + '/' + tsParts[2];
+            }
+          }
+          // Converti data di nascita da mm/dd/yyyy a gg/mm/yyyy se necessario
+          if (dn) {
+            var dnParts = dn.split('/');
+            if (dnParts.length === 3) {
+              var p0 = parseInt(dnParts[0]);
+              var p1 = parseInt(dnParts[1]);
+              var gg, mm;
+              // Se primo > 12, è gg/mm/yyyy
+              if (p0 > 12) {
+                gg = dnParts[0];
+                mm = dnParts[1];
+              }
+              // Se secondo > 12, è mm/gg/yyyy (primo è mese)
+              else if (p1 > 12) {
+                mm = dnParts[0];
+                gg = dnParts[1];
+              }
+              // Altrimenti entrambi <= 12, assumi gg/mm (formato europeo)
+              else {
+                gg = dnParts[0];
+                mm = dnParts[1];
+              }
+              dn = gg.padStart(2, '0') + '/' + mm.padStart(2, '0') + '/' + dnParts[2];
+            }
+          }
+          return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px">'
+            +'<div style="display:flex;justify-content:space-between;align-items:start;gap:10px">'
+            +'<div style="flex:1;min-width:500px">'
+            +'<div style="font-weight:700;font-size:13px;color:var(--text)">'+nomeCompleto.trim()+'</div>'
+            +'<div style="font-size:11px;color:var(--text2);margin-top:3px">📱 '+wa+' · 📧 '+email+'</div>'
+            +(dn?'<div style="font-size:11px;color:var(--text2)">🎂 '+dn+'</div>':'')
+            +(squadra!=='—'?'<div style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⚽ '+squadra+'</div>':'')
+            +'<div style="font-size:11px;color:var(--text2);margin-top:4px">🗓 '+ts+'</div>'
+            +'</div>'
+            +'<button onclick="admPreFillFromRequest('+i+')" style="flex-shrink:0;padding:6px 10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#10b981;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer">+ Registra</button>'
+            +'</div></div>';
+        }).join('');
+      }
+    }
+  });
+
   if (!ADMIN_USERS.length) {
     el.innerHTML='<div style="padding:20px;text-align:center;color:var(--text2);font-size:12px">Nessun utente registrato</div>';
     return;
   }
+
+  // Ordina utenti per cognome, poi per nome
+  var sortedUsers = ADMIN_USERS.slice().sort(function(a, b) {
+    var cognomeA = (a.nome || '').split(' ')[0].toLowerCase();
+    var cognomeB = (b.nome || '').split(' ')[0].toLowerCase();
+    if (cognomeA !== cognomeB) {
+      return cognomeA.localeCompare(cognomeB);
+    }
+    var nomeA = (a.nome || '').split(' ').slice(1).join(' ').toLowerCase();
+    var nomeB = (b.nome || '').split(' ').slice(1).join(' ').toLowerCase();
+    return nomeA.localeCompare(nomeB);
+  });
+
   el.innerHTML = '<table style="width:100%;border-collapse:collapse">'
     +'<thead><tr style="background:var(--bg2);font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--text3)">'
+    +'<th style="padding:8px 14px;text-align:left">Cognome</th>'
     +'<th style="padding:8px 14px;text-align:left">Nome</th>'
     +'<th style="padding:8px 14px;text-align:left">Username</th>'
     +'<th style="padding:8px 14px;text-align:left">Password</th>'
+    +'<th style="padding:8px 14px;text-align:left">Email</th>'
+    +'<th style="padding:8px 14px;text-align:left">Telefono</th>'
     +'<th style="padding:8px 14px;text-align:left">Lega</th>'
     +'<th style="padding:8px 14px;text-align:center">Stato</th>'
     +'<th style="padding:8px 14px;text-align:center">Azioni</th>'
     +'</tr></thead><tbody>'
-    + ADMIN_USERS.map(function(u, i) {
+    + sortedUsers.map(function(u, i) {
+      var nomeParti = (u.nome || '').split(' ');
+      var cognome = nomeParti[0] || '';
+      var nome = nomeParti.slice(1).join(' ') || '';
       var statoBtn = u.attivo!==false
         ? '<span style="background:rgba(16,185,129,.1);color:#10b981;font-size:9px;font-weight:800;padding:3px 10px;border-radius:20px;border:1px solid rgba(16,185,129,.2)">ATTIVO</span>'
         : '<span style="background:rgba(239,68,68,.1);color:#ef4444;font-size:9px;font-weight:800;padding:3px 10px;border-radius:20px;border:1px solid rgba(239,68,68,.2)">DISATTIVATO</span>';
       var toggleLabel = u.attivo!==false ? 'Disattiva' : 'Riattiva';
       return '<tr style="border-bottom:1px solid var(--border)">'
-        +'<td style="padding:9px 14px;font-weight:700;font-size:12px">'+u.nome+'</td>'
+        +'<td style="padding:9px 14px;font-weight:700;font-size:12px">'+cognome+'</td>'
+        +'<td style="padding:9px 14px;font-weight:600;font-size:12px">'+nome+'</td>'
         +'<td style="padding:9px 14px;font-size:12px;color:var(--text2)">'+u.username+'</td>'
         +'<td style="padding:9px 14px;font-size:12px;color:var(--text2);font-family:monospace">'+u.password+'</td>'
+        +'<td style="padding:9px 14px;font-size:12px;color:var(--text2)">'+(u.email||'—')+'</td>'
+        +'<td style="padding:9px 14px;font-size:12px;color:var(--text2)">'+(u.phone||'—')+'</td>'
         +'<td style="padding:9px 14px;font-size:11px;color:var(--text2)">'+(u.lega||'—')+'</td>'
         +'<td style="padding:9px 14px;text-align:center">'+statoBtn+'</td>'
         +'<td style="padding:9px 14px;text-align:center;display:flex;gap:6px;justify-content:center">'
         +'<button onclick="admEditUser('+i+')" style="padding:4px 10px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#3b82f6;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">✏️ Modifica</button>'
+        +'<button onclick="mostraCredenziali('+i+')" style="padding:4px 10px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#10b981;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">📧 Invia</button>'
         +'<button onclick="admToggleUser('+i+')" style="padding:4px 10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:#f59e0b;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">'+toggleLabel+'</button>'
         +'<button onclick="admDeleteUser('+i+')" style="padding:4px 10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#ef4444;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">Elimina</button>'
         +'</td></tr>';
@@ -12102,7 +13033,7 @@ function admRenderUtenti() {
   console.log('📋 pendingEl:', pendingEl, 'countEl:', countEl);
 
   console.log('📋 Chiamo fbLoadKey...');
-  fbDB.ref('data/pending_requests').once('value', function(snapshot) {
+  fbDB.ref('pending_requests').once('value', function(snapshot) {
     console.log('fbLoadKey pending_requests snapshot:', snapshot.val());
     var pending = [];
     var data = snapshot.val();
@@ -12115,6 +13046,7 @@ function admRenderUtenti() {
           var req = data[key];
           if (req.cognome || req.nome) {
             console.log('Aggiunto:', req);
+            req._fbKey = key; // Salva la chiave Firebase per cancellare dopo
             pending.push(req);
           }
         }
@@ -12134,16 +13066,71 @@ function admRenderUtenti() {
         pendingEl.innerHTML = pending.map(function(r, i) {
           var nomeCompleto = (r.cognome||'') + ' ' + (r.nome||'');
           var wa = r.whatsapp || '—';
+          var email = r.email || '—';
           var squadra = r.squadra || '—';
           var dn = r.data_nascita || '';
           var ts = r.timestamp || '—';
+          if (ts && ts.includes(' ')) {
+            ts = ts.split(' ')[0];
+          }
+          // Converti timestamp da mm/dd/yyyy a gg/mm/yyyy se necessario (Google Forms usa mm/dd/yyyy)
+          if (ts && ts !== '—') {
+            var tsParts = ts.split('/');
+            if (tsParts.length === 3) {
+              var tp0 = parseInt(tsParts[0]);
+              var tp1 = parseInt(tsParts[1]);
+              var tgg, tmm;
+              // Se primo > 12, è gg/mm/yyyy (il primo è il giorno)
+              if (tp0 > 12) {
+                tgg = tsParts[0];
+                tmm = tsParts[1];
+              }
+              // Se secondo > 12, è mm/gg/yyyy (il secondo è il giorno)
+              else if (tp1 > 12) {
+                tmm = tsParts[0];
+                tgg = tsParts[1];
+              }
+              // Altrimenti entrambi <= 12, assumi mm/gg/yyyy (formato Google Forms USA - PREDEFINITO)
+              else {
+                tmm = tsParts[0];
+                tgg = tsParts[1];
+              }
+              ts = tgg.padStart(2, '0') + '/' + tmm.padStart(2, '0') + '/' + tsParts[2];
+            }
+          }
+          // Converti data di nascita da mm/dd/yyyy a gg/mm/yyyy se necessario
+          if (dn) {
+            var dnParts = dn.split('/');
+            if (dnParts.length === 3) {
+              var p0 = parseInt(dnParts[0]);
+              var p1 = parseInt(dnParts[1]);
+              var gg, mm;
+              // Se primo > 12, è gg/mm/yyyy
+              if (p0 > 12) {
+                gg = dnParts[0];
+                mm = dnParts[1];
+              }
+              // Se secondo > 12, è mm/gg/yyyy (primo è mese)
+              else if (p1 > 12) {
+                mm = dnParts[0];
+                gg = dnParts[1];
+              }
+              // Altrimenti entrambi <= 12, assumi gg/mm (formato europeo)
+              else {
+                gg = dnParts[0];
+                mm = dnParts[1];
+              }
+              dn = gg.padStart(2, '0') + '/' + mm.padStart(2, '0') + '/' + dnParts[2];
+            }
+          }
           return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px">'
             +'<div style="display:flex;justify-content:space-between;align-items:start;gap:10px">'
             +'<div style="flex:1;min-width:500px">'
             +'<div style="font-weight:700;font-size:13px;color:var(--text)">'+nomeCompleto.trim()+'</div>'
-            +'<div style="font-size:11px;color:var(--text2);margin-top:3px">📱 '+wa+' · 🗓 '+ts+'</div>'
+            +'<div style="font-size:11px;color:var(--text2);margin-top:3px">📱 '+wa+' · 📧 '+email+'</div>'
             +(dn?'<div style="font-size:11px;color:var(--text2)">🎂 '+dn+'</div>':'')
             +(squadra!=='—'?'<div style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⚽ '+squadra+'</div>':'')
+            +'<div style="font-size:11px;color:var(--text2);margin-top:4px">🗓 '+ts+'</div>'
             +'</div>'
             +'<button onclick="admPreFillFromRequest('+i+')" style="flex-shrink:0;padding:6px 10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#10b981;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer">+ Registra</button>'
             +'</div></div>';
@@ -12160,50 +13147,174 @@ function admPreFillFromRequest(idx) {
   var pending = window.GLOBAL_PENDING_REQUESTS || [];
   var r = pending[idx];
   if (!r) return;
+
+  // Salva la chiave Firebase per cancellare dopo l'aggiunta
+  window._pendingRequestKeyToDelete = r._fbKey;
+
   var nomeCompleto = ((r.cognome||'') + ' ' + (r.nome||'')).trim();
-  var el = document.getElementById('adm-new-user-nome');
-  if (el) el.value = nomeCompleto;
-  // Pre-compila anche username (cognome.nome in minuscolo)
-  var uEl = document.getElementById('adm-new-user-username');
-  if (uEl && !uEl.value) {
-    uEl.value = ((r.cognome||'').toLowerCase() + '.' + (r.nome||'').toLowerCase()).replace(/\s+/g,'');
+  var el = document.getElementById('adm-new-user-cognome');
+  if (el) el.value = (r.cognome||'').trim();
+  var el2 = document.getElementById('adm-new-user-nome');
+  if (el2) el2.value = (r.nome||'').trim();
+
+  // Genera username e password: Nome + ggmmaa (da data di nascita)
+  var nome = (r.nome||'').trim();
+  // Capitalizza prima lettera: Giuseppe (non giuseppe)
+  if (nome) {
+    nome = nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
   }
+  var dataNascita = (r.data_nascita||'').trim(); // formato mm/dd/yyyy o gg/mm/yyyy
+
+  var credentials = nome;
+  if (dataNascita) {
+    var parts = dataNascita.split('/');
+    if (parts.length >= 3) {
+      var part0 = (parts[0]||'').padStart(2, '0');
+      var part1 = (parts[1]||'').padStart(2, '0');
+      var yyyy = (parts[2]||'');
+      // Detecta formato: se part0 > 12, è formato gg/mm/yyyy, altrimenti è mm/dd/yyyy
+      var gg, mm;
+      if (parseInt(part0) > 12) {
+        gg = part0;
+        mm = part1;
+      } else {
+        mm = part0;
+        gg = part1;
+      }
+      var aa = yyyy.length === 4 ? yyyy.slice(-2) : yyyy;
+      credentials += gg + mm + aa;
+    }
+  }
+
+  var uEl = document.getElementById('adm-new-user-username');
+  var pEl = document.getElementById('adm-new-user-psw');
+  var eEl = document.getElementById('adm-new-user-email');
+  var phEl = document.getElementById('adm-new-user-phone');
+  if (uEl && !uEl.value && credentials) {
+    uEl.value = credentials;
+  }
+  if (pEl && !pEl.value && credentials) {
+    pEl.value = credentials;
+  }
+  if (eEl && !eEl.value && r.email) {
+    eEl.value = r.email;
+  }
+  if (phEl && !phEl.value && r.whatsapp) {
+    phEl.value = r.whatsapp;
+  }
+
   // Scorri fino al form
   if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
 function admAddUser() {
+  if (window._addingUser) { console.log('⏳ Operazione in corso, attendere...'); return; }
+  window._addingUser = true;
+
+  var cognome = document.getElementById('adm-new-user-cognome').value.trim();
   var nome = document.getElementById('adm-new-user-nome').value.trim();
+  var nomeCompleto = (cognome + ' ' + nome).trim();
   var username = document.getElementById('adm-new-user-username').value.trim();
   var password = document.getElementById('adm-new-user-psw').value.trim();
+  var email = document.getElementById('adm-new-user-email').value.trim();
+  var phone = document.getElementById('adm-new-user-phone').value.trim();
   var lega = document.getElementById('adm-new-user-lega').value;
-  if (!nome || !username || !password) { alert('Compila tutti i campi obbligatori'); return; }
-  if (ADMIN_USERS.find(function(u){ return u.username===username; })) { alert('Username già esistente'); return; }
-  var newUser = { nome:nome, username:username, password:password, lega:lega, attivo:true };
-  ADMIN_USERS.push(newUser);
-  admSaveUsers();
-  // Rimuovi dalle richieste pendenti su Firebase se il nome corrisponde
-  var nomeLower = nome.toLowerCase().trim();
-  fbLoadKey('pending_requests', function(val) {
-    if (!val) return;
-    var data = typeof val === 'string' ? JSON.parse(val) : val;
-    for (var key in data) {
-      if (data.hasOwnProperty(key) && typeof data[key] === 'object') {
-        var req = data[key];
-        var nc = ((req.cognome||'') + ' ' + (req.nome||'')).toLowerCase().trim();
-        var ni = ((req.nome||'') + ' ' + (req.cognome||'')).toLowerCase().trim();
-        if (nc === nomeLower || ni === nomeLower) {
-          fbSaveKey('pending_requests/' + key, null);
+  if (!cognome || !nome || !username || !password) { alert('Compila tutti i campi obbligatori'); window._addingUser = false; return; }
+
+  console.log('🔍 Verifico username e carico utenti da Firebase...');
+  // Ricarica ADMIN_USERS da Firebase per verificare gli username attuali
+  fbLoadKey('users/list', function(usersFromFb) {
+    console.log('📥 Utenti caricati da Firebase:', usersFromFb);
+    var fbUsers = (typeof usersFromFb === 'string' ? JSON.parse(usersFromFb) : usersFromFb) || [];
+    if (!Array.isArray(fbUsers)) fbUsers = [];
+    if (fbUsers.find(function(u){ return u.username===username; })) { alert('Username già esistente'); window._addingUser = false; return; }
+
+    var newUser = { nome:nomeCompleto, username:username, password:password, email:email, phone:phone, lega:lega, attivo:true };
+    ADMIN_USERS.push(newUser);
+    console.log('👤 Nuovo utente aggiunto a ADMIN_USERS:', newUser);
+
+    // Aspetta che il salvataggio su Firebase sia completato
+    console.log('💾 Inizio salvataggio su Firebase...');
+    admSaveUsers().then(function() {
+      console.log('✅ Salvataggio completato! Ora cancello richieste pendenti...');
+      // Rimuovi dalle richieste pendenti su Firebase se il nome corrisponde
+      var nomeCompletoLower = nomeCompleto.toLowerCase().trim();
+      fbDB.ref('pending_requests').once('value', function(snapshot) {
+        var data = snapshot.val();
+        var deletePromises = [];
+
+        if (data) {
+          for (var key in data) {
+            if (data.hasOwnProperty(key) && typeof data[key] === 'object') {
+              var req = data[key];
+              var nc = ((req.cognome||'') + ' ' + (req.nome||'')).toLowerCase().trim();
+              var ni = ((req.nome||'') + ' ' + (req.cognome||'')).toLowerCase().trim();
+              if (nc === nomeCompletoLower || ni === nomeCompletoLower) {
+                console.log('🗑️ Cancellando richiesta:', key, req);
+                deletePromises.push(fbDB.ref('pending_requests/' + key).remove());
+              }
+            }
+          }
         }
-      }
-    }
+
+        // Se viene da "+ Registra", cancella anche usando la chiave salvata
+        if (window._pendingRequestKeyToDelete) {
+          console.log('🗑️ Cancellando richiesta salvata:', window._pendingRequestKeyToDelete);
+          deletePromises.push(fbDB.ref('pending_requests/' + window._pendingRequestKeyToDelete).remove());
+          window._pendingRequestKeyToDelete = null;
+        }
+
+        Promise.all(deletePromises).then(function() {
+          console.log('✅ Tutte le richieste cancellate!');
+          document.getElementById('adm-new-user-cognome').value='';
+          document.getElementById('adm-new-user-nome').value='';
+          document.getElementById('adm-new-user-username').value='';
+          document.getElementById('adm-new-user-psw').value='';
+          document.getElementById('adm-new-user-lega').value='';
+          admRenderUtenti();
+          window._addingUser = false;
+          alert('✅ Utente ' + nomeCompleto + ' aggiunto correttamente!');
+        }).catch(function(err) {
+          console.error('❌ Errore cancellazione richieste:', err);
+          window._addingUser = false;
+          alert('Errore: ' + err.message);
+        });
+      });
+    }).catch(function(err) {
+      console.error('❌ Errore salvataggio Firebase:', err);
+      window._addingUser = false;
+      alert('Errore salvataggio: ' + err.message);
+    });
   });
-  document.getElementById('adm-new-user-nome').value='';
-  document.getElementById('adm-new-user-username').value='';
-  document.getElementById('adm-new-user-psw').value='';
-  document.getElementById('adm-new-user-lega').value='';
-  admRenderUtenti();
-  alert('✅ Utente ' + nome + ' aggiunto correttamente!');
+}
+
+function mostraCredenziali(i) {
+  var u = ADMIN_USERS[i];
+  if (!u) return;
+  document.getElementById('cred-email').textContent = u.email || '';
+  document.getElementById('cred-username').textContent = u.username || '';
+  document.getElementById('cred-password').textContent = u.password || '';
+  window._credEmail = u.email || '';
+  window._credUsername = u.username || '';
+  window._credPassword = u.password || '';
+  document.getElementById('modale-credenziali').style.visibility = 'visible';
+}
+
+function copiaCredenziali() {
+  var testo = 'Email: ' + window._credEmail + '\nUsername: ' + window._credUsername + '\nPassword: ' + window._credPassword;
+  navigator.clipboard.writeText(testo).then(function() {
+    alert('✅ Credenziali copiate negli appunti!');
+  }).catch(function() {
+    alert('❌ Errore nel copia negli appunti');
+  });
+}
+
+function apriEmail() {
+  var email = window._credEmail;
+  var subject = 'Le tue credenziali - Malati di Fanta';
+  var gmailUrl = 'https://mail.google.com/mail/?to=' + encodeURIComponent(email) +
+                 '&su=' + encodeURIComponent(subject);
+  window.open(gmailUrl, '_blank');
 }
 
 function admEditUser(i) {
@@ -12225,13 +13336,23 @@ function admEditUser(i) {
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center';
     document.body.appendChild(modal);
   }
-  modal.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;width:360px;max-width:92vw">'
+  var nomeParti = (u.nome || '').split(' ');
+  var cognome = nomeParti[0] || '';
+  var nome = nomeParti.slice(1).join(' ') || '';
+  var statoOpts = '<option value="true"'+(u.attivo!==false ? ' selected' : '')+'>Attivo</option>'
+    +'<option value="false"'+(u.attivo===false ? ' selected' : '')+'>Disattivato</option>';
+
+  modal.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;width:400px;max-width:92vw;max-height:90vh;overflow-y:auto">'
     +'<div style="font-family:Bebas Neue;font-size:20px;letter-spacing:2px;margin-bottom:16px">✏️ Modifica <span style="color:#3b82f6">Utente</span></div>'
     +'<div style="display:flex;flex-direction:column;gap:10px">'
-    +'<input id="adm-eu-nome" type="text" value="'+u.nome+'" placeholder="Nome completo" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
+    +'<input id="adm-eu-cognome" type="text" value="'+cognome+'" placeholder="Cognome" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
+    +'<input id="adm-eu-nome" type="text" value="'+nome+'" placeholder="Nome" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
     +'<input id="adm-eu-username" type="text" value="'+u.username+'" placeholder="Username" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
     +'<input id="adm-eu-password" type="text" value="'+u.password+'" placeholder="Password" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
+    +'<input id="adm-eu-email" type="email" value="'+(u.email||'')+'" placeholder="Email" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
+    +'<input id="adm-eu-phone" type="text" value="'+(u.phone||'')+'" placeholder="Telefono" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
     +'<select id="adm-eu-lega" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'+legheOpts+'</select>'
+    +'<select id="adm-eu-stato" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'+statoOpts+'</select>'
     +'</div>'
     +'<div style="display:flex;gap:8px;margin-top:16px">'
     +'<button onclick="admSaveEditUser('+i+')" style="flex:1;padding:8px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">💾 Salva</button>'
@@ -12243,18 +13364,24 @@ function admEditUser(i) {
 function admSaveEditUser(i) {
   var u = ADMIN_USERS[i];
   if (!u) return;
-  u.nome = document.getElementById('adm-eu-nome').value.trim() || u.nome;
+  var cognome = document.getElementById('adm-eu-cognome').value.trim() || '';
+  var nome = document.getElementById('adm-eu-nome').value.trim() || '';
+  u.nome = (cognome + ' ' + nome).trim();
   u.username = document.getElementById('adm-eu-username').value.trim() || u.username;
   u.password = document.getElementById('adm-eu-password').value.trim() || u.password;
+  u.email = document.getElementById('adm-eu-email').value.trim() || '';
+  u.phone = document.getElementById('adm-eu-phone').value.trim() || '';
   u.lega = document.getElementById('adm-eu-lega').value;
+  u.attivo = document.getElementById('adm-eu-stato').value !== 'false';
   ADMIN_USERS[i] = u;
-  localStorage.setItem('admin_users', JSON.stringify(ADMIN_USERS));
-  // Salva su GSheets
-  gsCall({action:'saveUtente', data:JSON.stringify(u)}, null);
+  // Salva su Firebase
+  fbSaveKey('users/' + u.username, JSON.stringify(u), function() {
+    fbSaveKey('users/list', JSON.stringify(ADMIN_USERS));
+  });
   document.getElementById('adm-edit-user-modal').style.display = 'none';
   admRenderUtenti();
   var msg = document.createElement('div');
-  msg.textContent = '✅ Utente aggiornato'+(GS_ONLINE?' · Sincronizzato':'');
+  msg.textContent = '✅ Utente aggiornato su Firebase';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},2000);
@@ -13328,7 +14455,7 @@ function dynRenderDashboard() {
   var cr = (window._dynCr||{})[sq] || 0;
   var rose = ((window._dynRose||{})[sq]||[]);
   var formato = (window._dynConfig||{}).formato || 'classic';
-  var ruoliLabel = formato==='mantra' ? ['P','D','C','A'] : ['Por','Dc','Dd','Ds','M','C','A','Pc'];
+  var ruoliLabel = formato==='classic' ? ['P','D','C','A'] : ['Por','Dd','Ds','Dc','B','E','M','C','W','T','A','Pc'];
   var counts = {};
   ruoliLabel.forEach(function(r){counts[r]=0;});
   rose.forEach(function(p){
@@ -13366,7 +14493,7 @@ function dynRenderRose() {
   var sq = window._dynTeam;
   var rose = ((window._dynRose||{})[sq]||[]);
   var formato = (window._dynConfig||{}).formato || 'classic';
-  var ruoliOrder = formato==='mantra' ? ['P','D','C','A'] : ['Por','Dc','B','Dd','Ds','E','M','C','T','W','A','Pc'];
+  var ruoliOrder = formato==='classic' ? ['P','D','C','A'] : ['Por','Dd','Ds','Dc','B','E','M','C','W','T','A','Pc'];
   rose = rose.slice().sort(function(a,b){
     var ia=ruoliOrder.indexOf((a.ruolo||'').split(';')[0].trim());
     var ib=ruoliOrder.indexOf((b.ruolo||'').split(';')[0].trim());
@@ -13503,11 +14630,19 @@ function enterLeague(tournament, leagueKey) {
     window._currentTourneyKey = tournament;
     FANTASY_LOGOS = {};
     showPage('lega');
-    setTimeout(function(){
-      _updateLegaDashboard(tournament+'_'+currentLeagueKey);
-      buildTeamsGrid();
-      showSection('dashboard', null);
-    }, 50);
+    // Ricarica ADMIN_TORNEI da Firebase per aggiornare nomi leghe
+    fbLoadKey('tornei', function(data) {
+      if (data) {
+        try {
+          ADMIN_TORNEI = JSON.parse(data);
+        } catch(e) {}
+      }
+      setTimeout(function(){
+        _updateLegaDashboard(tournament+'_'+currentLeagueKey);
+        buildTeamsGrid();
+        showSection('dashboard', null);
+      }, 50);
+    });
     if (typeof gsCall === 'function' && typeof GS_URL !== 'undefined' && GS_URL) {
       (function(_tk, _lk) {
         var _rk = 'adm_rose_'+_tk+'_'+_lk;
@@ -13707,7 +14842,14 @@ function _updateLeagueHeader(tournament, leagueKey) {
   if (subEl)  subEl.textContent  = nTeams + ' squadre · Mantra';
   if (seasonEl) seasonEl.textContent = '⚽ Stagione 2026/27';
 }
-function goBackToLega(){showPage('lega');setTimeout(function(){showSection('dashboard',null);},50);}
+function goBackToLega(){
+  currentTournament = null;
+  var container = document.getElementById('leagues-container');
+  if (container) container.innerHTML = '<div class="select-placeholder"><div class="sp-icon">🏆</div><div class="sp-title">Seleziona un torneo</div><div class="sp-sub">Clicca su uno dei tornei qui sopra<br>per visualizzare le leghe disponibili</div></div>';
+  document.querySelectorAll('.t-card').forEach(function(c) { c.classList.remove('active'); });
+  showPage('lega');
+  setTimeout(function(){showSection('dashboard',null);},50);
+}
 function goTo(page){showPage(page);}
 function renderMulte(){
   var el=document.getElementById('slim-multe-body');
@@ -14040,7 +15182,7 @@ document.addEventListener('DOMContentLoaded',function(){
   });
   updateLogosTornei();
   if (typeof gsLoadKey === 'function') {
-    gsLoadKey('adm_logo_main', function(val) {
+    fbLoadImage('loghi', 'main', function(val) {
       if (val) { localStorage.setItem('adm_logo_main', val); _applyLogoMain(val); var p=document.getElementById('adm-logo-main-preview'); if(p) p.src=val; }
     });
     ['tdm','ilm','ilc'].forEach(function(k) {
@@ -14429,9 +15571,12 @@ function closeLoginModal(){
   var e=document.getElementById('login-error');if(e)e.style.display='none';
 }
 function doLogin(){
-  var u=(document.getElementById('login-user')?document.getElementById('login-user').value||'':'').trim().toLowerCase();
+  console.log('🔍 doLogin() CHIAMATO');
+  var uOriginal = (document.getElementById('login-user')?document.getElementById('login-user').value||'':'').trim();
+  var u = uOriginal.toLowerCase();
   var p=(document.getElementById('login-pass')?document.getElementById('login-pass').value||'':'').trim();
   var e=document.getElementById('login-error');
+  console.log('📝 Username:', u, 'Password length:', p.length);
   if(!u||!p){if(e){e.textContent='Inserisci username e password.';e.style.display='block';}return;}
 
   var btn=document.querySelector('#login-modal button[onclick]');
@@ -14441,16 +15586,20 @@ function doLogin(){
     if(btn){btn.textContent='Accedi';btn.disabled=false;}
     if (ok) {
       var user = userOrError;
-      localStorage.setItem('current_user', JSON.stringify(user));
       // Salva credenziali solo se "Ricordami" è spuntato
       var remember = document.getElementById('login-remember');
+      console.log('LOGIN: remember checkbox checked?', remember && remember.checked);
       if (remember && remember.checked) {
-        // Salva credenziali E dati utente per auto-login offline
-        localStorage.setItem('saved_credentials', JSON.stringify({u:u, p:p}));
-        localStorage.setItem('saved_user_data', JSON.stringify(user));
+        // Salva in IndexedDB per persistenza dopo refresh (con username originale per display)
+        idbSave('saved_credentials', {u:u, uDisplay:uOriginal, p:p}, function() {
+          idbSave('saved_user_data', user, function() {
+            console.log('LOGIN: credenziali salvate in IndexedDB ✅');
+          });
+        });
       } else {
-        localStorage.removeItem('saved_credentials');
-        localStorage.removeItem('saved_user_data');
+        idbRemove('saved_credentials');
+        idbRemove('saved_user_data');
+        console.log('LOGIN: credenziali NON salvate');
       }
       closeLoginModal();
       var initials = user.ruolo==='admin' ? 'AD' : (user.nome||'?').split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'??';
@@ -14470,6 +15619,33 @@ function doLogin(){
 
   // Login da Firebase
   fbLoginUser(u, p, onLoginResult);
+}
+
+// Pre-compila form di login con credenziali salvate
+function loadSavedCredentials() {
+  idbLoad('saved_credentials', function(saved) {
+    if (saved) {
+      try {
+        var creds = saved;
+        var userField = document.getElementById('login-user');
+        var passField = document.getElementById('login-pass');
+        var rememberField = document.getElementById('login-remember');
+        // Usa uDisplay (originale con maiuscole) se disponibile, altrimenti u
+        if (userField) userField.value = creds.uDisplay || creds.u;
+        if (passField) passField.value = creds.p;
+        if (rememberField) rememberField.checked = true;
+        console.log('📖 Credenziali caricate da IndexedDB');
+      } catch(e) { console.log('Errore caricamento credenziali:', e); }
+    }
+  });
+}
+
+// Carica credenziali salvate quando si apre il modal di login
+function openLoginModal() {
+  var modal = document.getElementById('login-modal');
+  if (modal) modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(loadSavedCredentials, 100);
 }
 
 </script>
@@ -14557,5 +15733,23 @@ if ('serviceWorker' in navigator) {
     .catch(err => console.log('❌ Service Worker errore:', err));
 }
 </script>
+
+<!-- Modale Invia Credenziali -->
+<div id="modale-credenziali" style="display:flex;visibility:hidden;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;align-items:center;justify-content:center">
+  <div style="background:var(--bg);border-radius:12px;padding:24px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <div style="font-size:16px;font-weight:700;margin-bottom:20px">📧 Invia Credenziali</div>
+    <div style="background:var(--bg2);padding:16px;border-radius:8px;margin-bottom:20px;font-size:13px">
+      <div style="margin-bottom:12px"><strong>Email:</strong><br><span id="cred-email"></span></div>
+      <div style="margin-bottom:12px"><strong>Username:</strong><br><code id="cred-username" style="background:var(--bg);padding:4px 8px;border-radius:4px;display:inline-block"></code></div>
+      <div><strong>Password:</strong><br><code id="cred-password" style="background:var(--bg);padding:4px 8px;border-radius:4px;display:inline-block"></code></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="document.getElementById('modale-credenziali').style.visibility='hidden'" style="padding:8px 16px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-weight:600">Chiudi</button>
+      <button onclick="copiaCredenziali()" style="padding:8px 16px;background:#10b981;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">📋 Copia</button>
+      <button onclick="apriEmail()" style="padding:8px 16px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">✉️ Email</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
