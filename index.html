@@ -1,4 +1,4 @@
-﻿<!-- build:20261017_2249 -->
+﻿<!-- build:20261017_2251 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -9073,10 +9073,10 @@ function enterLeague(tournament, leagueKey) {
     setTimeout(function(){
       var chip = document.getElementById('lega-user-chip');
       if (chip) {
-        chip.style.background = 'linear-gradient(135deg,#10b981,#059669) !important';
         chip.style.setProperty('background', 'linear-gradient(135deg,#10b981,#059669)', 'important');
+        chip.style.setProperty('box-shadow', '0 2px 12px rgba(16,185,129,.3)', 'important');
       }
-    }, 100);
+    }, 500);
   } catch(e) {}
   if (leagueKey === 'tsm_it') { enterTSM(); return; }
   // ILM e ILC non ancora disponibili lato utente
@@ -14820,10 +14820,10 @@ function enterLeague(tournament, leagueKey) {
     setTimeout(function(){
       var chip = document.getElementById('lega-user-chip');
       if (chip) {
-        chip.style.background = 'linear-gradient(135deg,#10b981,#059669) !important';
         chip.style.setProperty('background', 'linear-gradient(135deg,#10b981,#059669)', 'important');
+        chip.style.setProperty('box-shadow', '0 2px 12px rgba(16,185,129,.3)', 'important');
       }
-    }, 100);
+    }, 500);
   } catch(e) {}
   if (leagueKey === 'tsm_it') { enterTSM(); return; }
   // ILM e ILC non ancora disponibili lato utente
