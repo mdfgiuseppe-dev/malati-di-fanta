@@ -1,4 +1,4 @@
-﻿<!-- build:20261014_2147 -->
+﻿<!-- build:20261017_2229 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -1056,7 +1056,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   </div>
   <div class="topbar-right">
     <div id="pg-theme-btn" onclick="toggleTheme()" title="Cambia tema" style="width:34px;height:34px;border-radius:9px;background:var(--card2,rgba(255,255,255,.08));border:1px solid var(--border,rgba(255,255,255,.1));display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;transition:all .2s">☀️</div>
-    <div class="user-chip" id="lega-user-chip" onclick="openLogoutModal()" style="cursor:pointer">
+    <div class="user-chip" id="lega-user-chip" onclick="openLogoutModal()" style="cursor:pointer;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2)">
       <div class="user-av" id="lega-user-av">?</div>
       <div style="font-size:12px;font-weight:600" id="lega-user-name">Utente</div>
     </div>
@@ -3751,29 +3751,49 @@ function updateLogosTornei() {
       var img = card.querySelector('.t-logo-area img');
       if (!img) return;
 
-      // Carica da Firebase: nuovo percorso, poi vecchio, poi localStorage
-      fbDB.ref('data/images/loghi/tornei/'+m[1]).once('value', snapshot => {
+      // Carica da Firebase: main (nuovo) → tornei/[key] (vecchio) → images/ (vecchissimo) → localStorage
+      fbDB.ref('data/images/loghi/main').once('value', snapshot => {
         var url = snapshot.val();
+        console.log('📊 Logo main:', url);
         if (!url) {
-          fbDB.ref('images/loghi/'+m[1]).once('value', snapshot2 => {
-            url = snapshot2.val() || localStorage.getItem('adm_logo_torneo_'+m[1]);
-            setLogoImg(url);
+          fbDB.ref('data/images/loghi/tornei/'+m[1]).once('value', snapshot1 => {
+            url = snapshot1.val();
+            console.log('📊 Logo tornei/'+m[1]+':', url);
+            if (!url) {
+              fbDB.ref('images/loghi/'+m[1]).once('value', snapshot2 => {
+                url = snapshot2.val() || localStorage.getItem('adm_logo_torneo_'+m[1]);
+                console.log('📊 Logo images/'+m[1]+':', url);
+                setLogoImg(url);
+              });
+            } else {
+              setLogoImg(url);
+            }
           });
         } else {
           setLogoImg(url);
         }
       }).catch(e => {
+        console.error('❌ Firebase error:', e);
         var url = localStorage.getItem('adm_logo_torneo_'+m[1]);
         setLogoImg(url);
       });
       function setLogoImg(url) {
+        console.log('🖼️ setLogoImg() - img element:', img, 'url:', url);
         if (url) {
           img.style.display = '';
           img.src = url;
-          img.onerror = function() { this.style.display = 'none'; };
+          console.log('✅ Assegnato src:', url);
+          img.onerror = function() {
+            console.log('❌ Errore caricamento immagine');
+            this.style.display = 'none';
+          };
+          img.onload = function() {
+            console.log('✅ Immagine caricata');
+          };
         } else {
           img.style.display = 'none';
           img.src = '';
+          console.log('⚪ URL vuoto');
         }
       }
     });
@@ -3912,7 +3932,8 @@ function selectTournament(key, el) {
     html += '<div onclick="enterLeague(\''+key+'\',\''+lega.key+'\')" style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:8px;" '
           + 'onmouseover="this.style.borderColor=\''+dati.color+'\';this.style.background=\''+dati.color+'1a\'" '
           + 'onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--card)\'">'
-          + (logo ? '<img src="'+logo+'" data-flag="'+lega.flag+'" data-lega-key="'+lega.key+'" onerror="this.outerHTML=\'<div style=&quot;font-size:28px&quot;>\'+this.dataset.flag+\'</div>\'" style="width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))">' : '<div style="font-size:28px">'+lega.flag+'</div>')
+          + '<img src="'+logo+'" data-flag="'+lega.flag+'" data-lega-key="'+lega.key+'" onerror="this.style.display=\'none\'; if(!this.nextElementSibling) { var d=document.createElement(\'div\'); d.style.cssText=\'font-size:28px\'; d.textContent=this.dataset.flag; this.parentNode.insertBefore(d, this.nextSibling); }" style="width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));">'
+          + '<div style="display:none;font-size:28px">'+lega.flag+'</div>'
           + '<div style="font-size:12px;font-weight:700;color:var(--text)">'+lega.label+'</div>'
           + (_nClub ? '<div style="font-size:10px;color:var(--text2)">'+_nClub+' club</div>' : '')
           + '</div>';
@@ -3952,9 +3973,32 @@ function loadLeagueLogos(torneoKey, leghe) {
       if (fbLogo) {
         fbLogo = _normalizeImgUrl(fbLogo);
         var imgEls = document.querySelectorAll('img[data-lega-key="'+lega.key+'"]');
-        console.log('🖼️ Logo trovato per '+lega.key+': '+fbLogo);
-        imgEls.forEach(function(img) { img.src = fbLogo; });
+        console.log('🖼️ Logo trovato per '+lega.key+': '+fbLogo, 'elementi trovati:', imgEls.length);
+        imgEls.forEach(function(img) {
+          img.src = fbLogo;
+          img.style.display = '';  // Mostra l'elemento se era stato nascosto
+        });
       }
+    }
+  });
+}
+
+// FUNZIONE DEBUG: Sposta logo torneo dal percorso vecchio a quello nuovo
+function debugMuoviLogoTorneoMain() {
+  var oldPath = 'data/adm_logo_torneo_slim';
+  var newPath = 'data/images/loghi/main';
+  fbDB.ref(oldPath).once('value', function(snapshot) {
+    var logo = snapshot.val();
+    if (logo) {
+      console.log('📁 Spostando logo da', oldPath, 'a', newPath);
+      fbDB.ref(newPath).set(logo).then(() => {
+        fbDB.ref(oldPath).remove().then(() => {
+          alert('✅ Logo spostato a ' + newPath);
+          console.log('✅ Logo spostato');
+        });
+      });
+    } else {
+      alert('⚠️ Nessun logo trovato a ' + oldPath);
     }
   });
 }
@@ -4072,36 +4116,41 @@ function _updateLegaDashboard(leagueKey) {
   if (nameEl) nameEl.textContent = legaNames[leagueKey] || _dynLegaLabel || _realLK.toUpperCase();
   var nTeams = Object.keys(TEAMS_ROSE).length;
   if (subEl) subEl.textContent = nTeams + ' squadre · Mantra';
-  // Trofeo
+  // Trofeo: carica da Firebase
   var trophyEl = document.getElementById('lega-dash-trophy');
-  if (trophyEl) {
+  if (trophyEl && _admTK && _realLK) {
     trophyEl.src = '';
-    var _trofeoUrl = (_admTK ? localStorage.getItem('adm_trofeo_lega_'+_admTK+'_'+_realLK) : null)
-      || (_admTK ? localStorage.getItem('adm_trofeo_url_'+_admTK) : null);
-    if (_trofeoUrl) {
-      trophyEl.src = _normalizeImgUrl(_trofeoUrl);
-    } else if (_admTK && typeof gsCall === 'function' && typeof GS_URL !== 'undefined' && GS_URL) {
-      (function(el, tk, lk) {
-        gsCall({action:'getKey', key:'adm_trofeo_lega_'+tk+'_'+lk}, function(err, res) {
-          if (!err && res && res.ok && res.data) { localStorage.setItem('adm_trofeo_lega_'+tk+'_'+lk, res.data); el.src = _normalizeImgUrl(res.data); }
-        });
-      })(trophyEl, _admTK, _realLK);
-    } else if (typeof TROPHY_MAP !== 'undefined') {
-      var trophyName = trophyMap[_realLK];
-      if (trophyName && TROPHY_MAP[trophyName]) trophyEl.src = TROPHY_MAP[trophyName];
-    }
+    var fbPath = 'data/images/trofei/'+_admTK+'_'+_realLK;
+    fbDB.ref(fbPath).once('value', function(snapshot) {
+      var fbTrophy = snapshot.val();
+      if (fbTrophy) {
+        fbTrophy = _normalizeImgUrl(fbTrophy);
+        trophyEl.src = fbTrophy;
+        console.log('🏆 Trofeo caricato:', fbTrophy);
+      } else if (typeof TROPHY_MAP !== 'undefined') {
+        var trophyName = trophyMap[_realLK];
+        if (trophyName && TROPHY_MAP[trophyName]) trophyEl.src = TROPHY_MAP[trophyName];
+      }
+    });
   }
   // Titolo dashboard
   var titleEl = document.getElementById('lega-dash-title');
   if (titleEl) titleEl.textContent = (legaNames[leagueKey] || _dynLegaLabel || _realLK).toUpperCase();
-  // Logo: solo da Firebase via loadLeagueLogos() - NO localStorage, NO hardcode
-  // var _admLogoUrl = _admTK ? localStorage.getItem('adm_logo_lega_'+_admTK+'_'+_realLK) : null;
-  // var _logoFinal = (_admLogoUrl ? _normalizeImgUrl(_admLogoUrl) : '') || (typeof LOGOS!=='undefined' ? (LOGOS[leagueKey]||LOGOS[_realLK]||LOGOS['it']||'') : '');
-  // console.log('🔍 DEBUG Logo lega:', {_admLogoUrl, _logoFinal, LOGOS_it: LOGOS['it'], leagueKey, _realLK});
-  // var bcLogoEl = document.getElementById('breadcrumb-logo');
-  // if (bcLogoEl && _logoFinal) bcLogoEl.src = _logoFinal;
-  // var lgLogoEl = document.getElementById('league-logo');
-  // if (lgLogoEl && _logoFinal) lgLogoEl.src = _logoFinal;
+  // Logo della lega: carica da Firebase
+  if (_admTK && _realLK) {
+    var fbPath = 'data/images/loghi/leghe/'+_admTK+'_'+_realLK;
+    fbDB.ref(fbPath).once('value', function(snapshot) {
+      var fbLogo = snapshot.val();
+      if (fbLogo) {
+        fbLogo = _normalizeImgUrl(fbLogo);
+        var bcLogoEl = document.getElementById('breadcrumb-logo');
+        var lgLogoEl = document.getElementById('league-logo');
+        if (bcLogoEl) bcLogoEl.src = fbLogo;
+        if (lgLogoEl) lgLogoEl.src = fbLogo;
+        console.log('🖼️ Logo lega caricato:', fbLogo);
+      }
+    });
+  }
 }
 
 
@@ -4115,7 +4164,7 @@ function enterTSM() {
     var av = document.getElementById('tsm-user-av');
     var nm = document.getElementById('tsm-user-name');
     if (av) av.textContent = u.ruolo==='admin' ? 'AD' : (u.nome||'?').split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'??';
-    if (nm) nm.textContent = u.ruolo==='admin' ? 'Admin' : (u.nome||'').split(' ')[0];
+    if (nm) nm.textContent = u.ruolo==='admin' ? 'Admin' : (u.nome||'');
   } catch(e) {}
   TEAMS_ROSE = TSM_ROSE_IT || {};
   INFERMERIA = TSM_INFERMERIA_IT || [];
@@ -4729,8 +4778,9 @@ function loadDataFromFirebase() {
     }
   });
 
-  // Carica logo principale
-  fbLoadKey('data/images/loghi/tornei/main', function(val) {
+  // Carica logo principale (fbLoadKey aggiunge 'data/' automaticamente)
+  fbLoadKey('images/loghi/main', function(val) {
+    console.log('📥 Logo principale caricato:', val);
     if (val) {
       localStorage.setItem('adm_logo_main', val);
       if (typeof _applyLogoMain === 'function') _applyLogoMain(val);
@@ -6847,24 +6897,31 @@ function admEditTrofeoUrl(ti) {
 }
 function admEditLogoTorneo(ti) {
   var t = ADMIN_TORNEI[ti]; if(!t) return;
-  var current = localStorage.getItem('adm_logo_torneo_'+t.key) || '';
-  var url = prompt('URL Logo Torneo per "'+t.label+'":', current);
+  var url = prompt('URL Logo Torneo per "'+t.label+'":', '');
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
+  console.log('🎬 admEditLogoTorneo() chiamata - URL:', url);
   if (url) {
-    localStorage.setItem('adm_logo_torneo_'+t.key, url);
-    gsSaveKey('adm_logo_torneo_'+t.key, url);
-    fbDB.ref('data/images/loghi/tornei/'+t.key).set(url).catch(e => console.error('Logo save error:', e));
+    console.log('💾 Salvando logo a data/images/loghi/main');
+    fbDB.ref('data/images/loghi/main').set(url).then(() => {
+      console.log('✅ Logo salvato con successo');
+      updateLogosTornei();
+    }).catch(e => {
+      console.error('❌ Logo save error:', e);
+    });
   }
   else {
-    localStorage.removeItem('adm_logo_torneo_'+t.key);
-    gsSaveKey('adm_logo_torneo_'+t.key, '');
-    fbDB.ref('data/images/loghi/tornei/'+t.key).remove().catch(e => console.error('Logo remove error:', e));
+    console.log('🗑️ Rimuovendo logo da data/images/loghi/main');
+    fbDB.ref('data/images/loghi/main').remove().then(() => {
+      console.log('✅ Logo rimosso');
+      updateLogosTornei();
+    }).catch(e => {
+      console.error('❌ Logo remove error:', e);
+    });
   }
-  updateLogosTornei();
   var msg = document.createElement('div');
-  msg.textContent = url ? '✅ URL logo torneo salvato' : '✅ URL rimosso';
+  msg.textContent = url ? '✅ URL logo torneo salvato in data/images/loghi/main' : '✅ URL rimosso';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},2000);
@@ -6927,22 +6984,29 @@ function admResetTrofei() {
   setTimeout(function(){msg.remove();},3000);
 }
 function admEditLogoMain() {
-  var current = localStorage.getItem('adm_logo_main') || '';
-  var url = prompt('URL Logo Principale App (splash + topbar):', current);
+  var url = prompt('URL Logo Principale App (splash + topbar):', '');
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  // Salva il logo in Firebase
+  console.log('🎬 admEditLogoMain() - Salvando a data/images/loghi/main:', url);
+  // Salva il logo in Firebase a percorso corretto
   if (url) {
-    fbDB.ref('data/images/loghi/tornei/main').set(url).catch(e => console.error('Logo save error:', e));
+    fbDB.ref('data/images/loghi/main').set(url).then(() => {
+      console.log('✅ Logo salvato a data/images/loghi/main');
+      _applyLogoMain(url);
+      updateLogosTornei();
+    }).catch(e => console.error('❌ Logo save error:', e));
   } else {
-    fbDB.ref('data/images/loghi/tornei/main').set('').catch(e => console.error('Logo clear error:', e));
+    fbDB.ref('data/images/loghi/main').set('').then(() => {
+      console.log('✅ Logo rimosso');
+      _applyLogoMain('');
+      updateLogosTornei();
+    }).catch(e => console.error('❌ Logo clear error:', e));
   }
-  _applyLogoMain(url);
   var prev = document.getElementById('adm-logo-main-preview');
   if (prev) prev.src = url || '';
   var msg = document.createElement('div');
-  msg.textContent = url ? '✅ Logo app salvato' : '✅ Logo rimosso';
+  msg.textContent = url ? '✅ Logo app salvato a data/images/loghi/main' : '✅ Logo rimosso';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},2000);
@@ -6950,15 +7014,22 @@ function admEditLogoMain() {
 function admEditTrofeoLega(ti, li) {
   var t = ADMIN_TORNEI[ti]; if(!t) return;
   var l = t.leghe[li]; if(!l) return;
-  var current = localStorage.getItem('adm_trofeo_lega_'+t.key+'_'+l.key) || '';
-  var url = prompt('URL Trofeo per "'+l.label+'":', current);
+  var url = prompt('URL Trofeo per "'+l.label+'":', '');
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  if (url) { localStorage.setItem('adm_trofeo_lega_'+t.key+'_'+l.key, url); gsSaveKey('adm_trofeo_lega_'+t.key+'_'+l.key, url); }
-  else { localStorage.removeItem('adm_trofeo_lega_'+t.key+'_'+l.key); gsSaveKey('adm_trofeo_lega_'+t.key+'_'+l.key, ''); }
+  var fbPath = 'data/images/trofei/'+t.key+'_'+l.key;
+  if (url) {
+    fbDB.ref(fbPath).set(url).then(() => {
+      console.log('✅ Trofeo salvato a ' + fbPath);
+    });
+  } else {
+    fbDB.ref(fbPath).remove().then(() => {
+      console.log('✅ Trofeo rimosso');
+    });
+  }
   var msg = document.createElement('div');
-  msg.textContent = url ? '✅ URL trofeo lega salvato' : '✅ URL rimosso';
+  msg.textContent = url ? '✅ URL trofeo lega salvato a data/images/trofei/' : '✅ URL rimosso';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#f59e0b;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},2000);
@@ -8998,7 +9069,7 @@ function enterLeague(tournament, leagueKey) {
     var av = document.getElementById('lega-user-av');
     var nm = document.getElementById('lega-user-name');
     if (av) av.textContent = u.ruolo==='admin' ? 'AD' : (u.nome||'?').split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'??';
-    if (nm) nm.textContent = u.ruolo==='admin' ? 'Admin' : (u.nome||'').split(' ')[0];
+    if (nm) nm.textContent = u.ruolo==='admin' ? 'Admin' : (u.nome||'');
   } catch(e) {}
   if (leagueKey === 'tsm_it') { enterTSM(); return; }
   // ILM e ILC non ancora disponibili lato utente
@@ -10074,29 +10145,49 @@ function updateLogosTornei() {
       var img = card.querySelector('.t-logo-area img');
       if (!img) return;
 
-      // Carica da Firebase: nuovo percorso, poi vecchio, poi localStorage
-      fbDB.ref('data/images/loghi/tornei/'+m[1]).once('value', snapshot => {
+      // Carica da Firebase: main (nuovo) → tornei/[key] (vecchio) → images/ (vecchissimo) → localStorage
+      fbDB.ref('data/images/loghi/main').once('value', snapshot => {
         var url = snapshot.val();
+        console.log('📊 Logo main:', url);
         if (!url) {
-          fbDB.ref('images/loghi/'+m[1]).once('value', snapshot2 => {
-            url = snapshot2.val() || localStorage.getItem('adm_logo_torneo_'+m[1]);
-            setLogoImg(url);
+          fbDB.ref('data/images/loghi/tornei/'+m[1]).once('value', snapshot1 => {
+            url = snapshot1.val();
+            console.log('📊 Logo tornei/'+m[1]+':', url);
+            if (!url) {
+              fbDB.ref('images/loghi/'+m[1]).once('value', snapshot2 => {
+                url = snapshot2.val() || localStorage.getItem('adm_logo_torneo_'+m[1]);
+                console.log('📊 Logo images/'+m[1]+':', url);
+                setLogoImg(url);
+              });
+            } else {
+              setLogoImg(url);
+            }
           });
         } else {
           setLogoImg(url);
         }
       }).catch(e => {
+        console.error('❌ Firebase error:', e);
         var url = localStorage.getItem('adm_logo_torneo_'+m[1]);
         setLogoImg(url);
       });
       function setLogoImg(url) {
+        console.log('🖼️ setLogoImg() - img element:', img, 'url:', url);
         if (url) {
           img.style.display = '';
           img.src = url;
-          img.onerror = function() { this.style.display = 'none'; };
+          console.log('✅ Assegnato src:', url);
+          img.onerror = function() {
+            console.log('❌ Errore caricamento immagine');
+            this.style.display = 'none';
+          };
+          img.onload = function() {
+            console.log('✅ Immagine caricata');
+          };
         } else {
           img.style.display = 'none';
           img.src = '';
+          console.log('⚪ URL vuoto');
         }
       }
     });
@@ -10235,7 +10326,8 @@ function selectTournament(key, el) {
     html += '<div onclick="enterLeague(\''+key+'\',\''+lega.key+'\')" style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:8px;" '
           + 'onmouseover="this.style.borderColor=\''+dati.color+'\';this.style.background=\''+dati.color+'1a\'" '
           + 'onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--card)\'">'
-          + (logo ? '<img src="'+logo+'" data-flag="'+lega.flag+'" data-lega-key="'+lega.key+'" onerror="this.outerHTML=\'<div style=&quot;font-size:28px&quot;>\'+this.dataset.flag+\'</div>\'" style="width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))">' : '<div style="font-size:28px">'+lega.flag+'</div>')
+          + '<img src="'+logo+'" data-flag="'+lega.flag+'" data-lega-key="'+lega.key+'" onerror="this.style.display=\'none\'; if(!this.nextElementSibling) { var d=document.createElement(\'div\'); d.style.cssText=\'font-size:28px\'; d.textContent=this.dataset.flag; this.parentNode.insertBefore(d, this.nextSibling); }" style="width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));">'
+          + '<div style="display:none;font-size:28px">'+lega.flag+'</div>'
           + '<div style="font-size:12px;font-weight:700;color:var(--text)">'+lega.label+'</div>'
           + (_nClub ? '<div style="font-size:10px;color:var(--text2)">'+_nClub+' club</div>' : '')
           + '</div>';
@@ -10275,9 +10367,32 @@ function loadLeagueLogos(torneoKey, leghe) {
       if (fbLogo) {
         fbLogo = _normalizeImgUrl(fbLogo);
         var imgEls = document.querySelectorAll('img[data-lega-key="'+lega.key+'"]');
-        console.log('🖼️ Logo trovato per '+lega.key+': '+fbLogo);
-        imgEls.forEach(function(img) { img.src = fbLogo; });
+        console.log('🖼️ Logo trovato per '+lega.key+': '+fbLogo, 'elementi trovati:', imgEls.length);
+        imgEls.forEach(function(img) {
+          img.src = fbLogo;
+          img.style.display = '';  // Mostra l'elemento se era stato nascosto
+        });
       }
+    }
+  });
+}
+
+// FUNZIONE DEBUG: Sposta logo torneo dal percorso vecchio a quello nuovo
+function debugMuoviLogoTorneoMain() {
+  var oldPath = 'data/adm_logo_torneo_slim';
+  var newPath = 'data/images/loghi/main';
+  fbDB.ref(oldPath).once('value', function(snapshot) {
+    var logo = snapshot.val();
+    if (logo) {
+      console.log('📁 Spostando logo da', oldPath, 'a', newPath);
+      fbDB.ref(newPath).set(logo).then(() => {
+        fbDB.ref(oldPath).remove().then(() => {
+          alert('✅ Logo spostato a ' + newPath);
+          console.log('✅ Logo spostato');
+        });
+      });
+    } else {
+      alert('⚠️ Nessun logo trovato a ' + oldPath);
     }
   });
 }
@@ -10395,36 +10510,41 @@ function _updateLegaDashboard(leagueKey) {
   if (nameEl) nameEl.textContent = legaNames[leagueKey] || _dynLegaLabel || _realLK.toUpperCase();
   var nTeams = Object.keys(TEAMS_ROSE).length;
   if (subEl) subEl.textContent = nTeams + ' squadre · Mantra';
-  // Trofeo
+  // Trofeo: carica da Firebase
   var trophyEl = document.getElementById('lega-dash-trophy');
-  if (trophyEl) {
+  if (trophyEl && _admTK && _realLK) {
     trophyEl.src = '';
-    var _trofeoUrl = (_admTK ? localStorage.getItem('adm_trofeo_lega_'+_admTK+'_'+_realLK) : null)
-      || (_admTK ? localStorage.getItem('adm_trofeo_url_'+_admTK) : null);
-    if (_trofeoUrl) {
-      trophyEl.src = _normalizeImgUrl(_trofeoUrl);
-    } else if (_admTK && typeof gsCall === 'function' && typeof GS_URL !== 'undefined' && GS_URL) {
-      (function(el, tk, lk) {
-        gsCall({action:'getKey', key:'adm_trofeo_lega_'+tk+'_'+lk}, function(err, res) {
-          if (!err && res && res.ok && res.data) { localStorage.setItem('adm_trofeo_lega_'+tk+'_'+lk, res.data); el.src = _normalizeImgUrl(res.data); }
-        });
-      })(trophyEl, _admTK, _realLK);
-    } else if (typeof TROPHY_MAP !== 'undefined') {
-      var trophyName = trophyMap[_realLK];
-      if (trophyName && TROPHY_MAP[trophyName]) trophyEl.src = TROPHY_MAP[trophyName];
-    }
+    var fbPath = 'data/images/trofei/'+_admTK+'_'+_realLK;
+    fbDB.ref(fbPath).once('value', function(snapshot) {
+      var fbTrophy = snapshot.val();
+      if (fbTrophy) {
+        fbTrophy = _normalizeImgUrl(fbTrophy);
+        trophyEl.src = fbTrophy;
+        console.log('🏆 Trofeo caricato:', fbTrophy);
+      } else if (typeof TROPHY_MAP !== 'undefined') {
+        var trophyName = trophyMap[_realLK];
+        if (trophyName && TROPHY_MAP[trophyName]) trophyEl.src = TROPHY_MAP[trophyName];
+      }
+    });
   }
   // Titolo dashboard
   var titleEl = document.getElementById('lega-dash-title');
   if (titleEl) titleEl.textContent = (legaNames[leagueKey] || _dynLegaLabel || _realLK).toUpperCase();
-  // Logo: solo da Firebase via loadLeagueLogos() - NO localStorage, NO hardcode
-  // var _admLogoUrl = _admTK ? localStorage.getItem('adm_logo_lega_'+_admTK+'_'+_realLK) : null;
-  // var _logoFinal = (_admLogoUrl ? _normalizeImgUrl(_admLogoUrl) : '') || (typeof LOGOS!=='undefined' ? (LOGOS[leagueKey]||LOGOS[_realLK]||LOGOS['it']||'') : '');
-  // console.log('🔍 DEBUG Logo lega:', {_admLogoUrl, _logoFinal, LOGOS_it: LOGOS['it'], leagueKey, _realLK});
-  // var bcLogoEl = document.getElementById('breadcrumb-logo');
-  // if (bcLogoEl && _logoFinal) bcLogoEl.src = _logoFinal;
-  // var lgLogoEl = document.getElementById('league-logo');
-  // if (lgLogoEl && _logoFinal) lgLogoEl.src = _logoFinal;
+  // Logo della lega: carica da Firebase
+  if (_admTK && _realLK) {
+    var fbPath = 'data/images/loghi/leghe/'+_admTK+'_'+_realLK;
+    fbDB.ref(fbPath).once('value', function(snapshot) {
+      var fbLogo = snapshot.val();
+      if (fbLogo) {
+        fbLogo = _normalizeImgUrl(fbLogo);
+        var bcLogoEl = document.getElementById('breadcrumb-logo');
+        var lgLogoEl = document.getElementById('league-logo');
+        if (bcLogoEl) bcLogoEl.src = fbLogo;
+        if (lgLogoEl) lgLogoEl.src = fbLogo;
+        console.log('🖼️ Logo lega caricato:', fbLogo);
+      }
+    });
+  }
 }
 
 
@@ -10438,7 +10558,7 @@ function enterTSM() {
     var av = document.getElementById('tsm-user-av');
     var nm = document.getElementById('tsm-user-name');
     if (av) av.textContent = u.ruolo==='admin' ? 'AD' : (u.nome||'?').split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'??';
-    if (nm) nm.textContent = u.ruolo==='admin' ? 'Admin' : (u.nome||'').split(' ')[0];
+    if (nm) nm.textContent = u.ruolo==='admin' ? 'Admin' : (u.nome||'');
   } catch(e) {}
   TEAMS_ROSE = TSM_ROSE_IT || {};
   INFERMERIA = TSM_INFERMERIA_IT || [];
@@ -12596,24 +12716,31 @@ function admEditTrofeoUrl(ti) {
 }
 function admEditLogoTorneo(ti) {
   var t = ADMIN_TORNEI[ti]; if(!t) return;
-  var current = localStorage.getItem('adm_logo_torneo_'+t.key) || '';
-  var url = prompt('URL Logo Torneo per "'+t.label+'":', current);
+  var url = prompt('URL Logo Torneo per "'+t.label+'":', '');
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
+  console.log('🎬 admEditLogoTorneo() chiamata - URL:', url);
   if (url) {
-    localStorage.setItem('adm_logo_torneo_'+t.key, url);
-    gsSaveKey('adm_logo_torneo_'+t.key, url);
-    fbDB.ref('data/images/loghi/tornei/'+t.key).set(url).catch(e => console.error('Logo save error:', e));
+    console.log('💾 Salvando logo a data/images/loghi/main');
+    fbDB.ref('data/images/loghi/main').set(url).then(() => {
+      console.log('✅ Logo salvato con successo');
+      updateLogosTornei();
+    }).catch(e => {
+      console.error('❌ Logo save error:', e);
+    });
   }
   else {
-    localStorage.removeItem('adm_logo_torneo_'+t.key);
-    gsSaveKey('adm_logo_torneo_'+t.key, '');
-    fbDB.ref('data/images/loghi/tornei/'+t.key).remove().catch(e => console.error('Logo remove error:', e));
+    console.log('🗑️ Rimuovendo logo da data/images/loghi/main');
+    fbDB.ref('data/images/loghi/main').remove().then(() => {
+      console.log('✅ Logo rimosso');
+      updateLogosTornei();
+    }).catch(e => {
+      console.error('❌ Logo remove error:', e);
+    });
   }
-  updateLogosTornei();
   var msg = document.createElement('div');
-  msg.textContent = url ? '✅ URL logo torneo salvato' : '✅ URL rimosso';
+  msg.textContent = url ? '✅ URL logo torneo salvato in data/images/loghi/main' : '✅ URL rimosso';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},2000);
@@ -12676,22 +12803,29 @@ function admResetTrofei() {
   setTimeout(function(){msg.remove();},3000);
 }
 function admEditLogoMain() {
-  var current = localStorage.getItem('adm_logo_main') || '';
-  var url = prompt('URL Logo Principale App (splash + topbar):', current);
+  var url = prompt('URL Logo Principale App (splash + topbar):', '');
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  // Salva il logo in Firebase
+  console.log('🎬 admEditLogoMain() - Salvando a data/images/loghi/main:', url);
+  // Salva il logo in Firebase a percorso corretto
   if (url) {
-    fbDB.ref('data/images/loghi/tornei/main').set(url).catch(e => console.error('Logo save error:', e));
+    fbDB.ref('data/images/loghi/main').set(url).then(() => {
+      console.log('✅ Logo salvato a data/images/loghi/main');
+      _applyLogoMain(url);
+      updateLogosTornei();
+    }).catch(e => console.error('❌ Logo save error:', e));
   } else {
-    fbDB.ref('data/images/loghi/tornei/main').set('').catch(e => console.error('Logo clear error:', e));
+    fbDB.ref('data/images/loghi/main').set('').then(() => {
+      console.log('✅ Logo rimosso');
+      _applyLogoMain('');
+      updateLogosTornei();
+    }).catch(e => console.error('❌ Logo clear error:', e));
   }
-  _applyLogoMain(url);
   var prev = document.getElementById('adm-logo-main-preview');
   if (prev) prev.src = url || '';
   var msg = document.createElement('div');
-  msg.textContent = url ? '✅ Logo app salvato' : '✅ Logo rimosso';
+  msg.textContent = url ? '✅ Logo app salvato a data/images/loghi/main' : '✅ Logo rimosso';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},2000);
@@ -12699,15 +12833,22 @@ function admEditLogoMain() {
 function admEditTrofeoLega(ti, li) {
   var t = ADMIN_TORNEI[ti]; if(!t) return;
   var l = t.leghe[li]; if(!l) return;
-  var current = localStorage.getItem('adm_trofeo_lega_'+t.key+'_'+l.key) || '';
-  var url = prompt('URL Trofeo per "'+l.label+'":', current);
+  var url = prompt('URL Trofeo per "'+l.label+'":', '');
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  if (url) { localStorage.setItem('adm_trofeo_lega_'+t.key+'_'+l.key, url); gsSaveKey('adm_trofeo_lega_'+t.key+'_'+l.key, url); }
-  else { localStorage.removeItem('adm_trofeo_lega_'+t.key+'_'+l.key); gsSaveKey('adm_trofeo_lega_'+t.key+'_'+l.key, ''); }
+  var fbPath = 'data/images/trofei/'+t.key+'_'+l.key;
+  if (url) {
+    fbDB.ref(fbPath).set(url).then(() => {
+      console.log('✅ Trofeo salvato a ' + fbPath);
+    });
+  } else {
+    fbDB.ref(fbPath).remove().then(() => {
+      console.log('✅ Trofeo rimosso');
+    });
+  }
   var msg = document.createElement('div');
-  msg.textContent = url ? '✅ URL trofeo lega salvato' : '✅ URL rimosso';
+  msg.textContent = url ? '✅ URL trofeo lega salvato a data/images/trofei/' : '✅ URL rimosso';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#f59e0b;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},2000);
@@ -14668,7 +14809,7 @@ function enterLeague(tournament, leagueKey) {
     var av = document.getElementById('lega-user-av');
     var nm = document.getElementById('lega-user-name');
     if (av) av.textContent = u.ruolo==='admin' ? 'AD' : (u.nome||'?').split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'??';
-    if (nm) nm.textContent = u.ruolo==='admin' ? 'Admin' : (u.nome||'').split(' ')[0];
+    if (nm) nm.textContent = u.ruolo==='admin' ? 'Admin' : (u.nome||'');
   } catch(e) {}
   if (leagueKey === 'tsm_it') { enterTSM(); return; }
   // ILM e ILC non ancora disponibili lato utente
@@ -15644,6 +15785,9 @@ function doLogin(){
     if(btn){btn.textContent='Accedi';btn.disabled=false;}
     if (ok) {
       var user = userOrError;
+      // Salva user in localStorage per i check di login
+      localStorage.setItem('current_user', JSON.stringify(user));
+      console.log('LOGIN: current_user salvato in localStorage ✅');
       // Salva credenziali solo se "Ricordami" è spuntato
       var remember = document.getElementById('login-remember');
       console.log('LOGIN: remember checkbox checked?', remember && remember.checked);
@@ -15661,12 +15805,13 @@ function doLogin(){
       }
       closeLoginModal();
       var initials = user.ruolo==='admin' ? 'AD' : (user.nome||'?').split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'??';
-      var firstName = user.ruolo==='admin' ? 'Admin' : (user.nome||'').split(' ')[0];
+      var fullName = user.ruolo==='admin' ? 'Admin' : (user.nome||'');
       var chip = document.getElementById('login-btn');
       if(chip){
-        chip.innerHTML='<div class="user-av">'+initials+'</div><div style="font-size:12px;font-weight:600">'+firstName+'</div>';
+        chip.innerHTML='<div class="user-av">'+initials+'</div><div style="font-size:12px;font-weight:600">'+fullName+'</div>';
         chip.onclick=function(){ openLogoutModal(); };
         chip.style.cursor='pointer';
+        chip.style.background='linear-gradient(135deg,#10b981,#059669)';
         var nameEl=document.getElementById('user-profile-name');
         if(nameEl) nameEl.textContent=user.nome||user.username;
       }
