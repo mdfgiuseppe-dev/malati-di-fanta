@@ -1,4 +1,4 @@
-const CACHE_NAME = 'malati-di-fanta-v55';
+const CACHE_NAME = 'malati-di-fanta-v56';
 const urlsToCache = [
   '/malati-di-fanta/',
   '/malati-di-fanta/index.html',
@@ -19,7 +19,7 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
+            caches.delete(cacheName);
           }
         })
       );
