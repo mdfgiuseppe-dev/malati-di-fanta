@@ -1,4 +1,4 @@
-﻿<!-- build:20261017_2240 -->
+﻿<!-- build:20261017_2242 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -15924,6 +15924,15 @@ function openLoginModal() {
 </div>
 
 <script>
+// Stila automaticamente il chip della lega quando esiste
+var legaChipStyler = setInterval(function() {
+  var chip = document.getElementById('lega-user-chip');
+  if (chip) {
+    chip.style.setProperty('background', 'linear-gradient(135deg,#10b981,#059669)', 'important');
+    clearInterval(legaChipStyler);
+  }
+}, 50);
+
 document.addEventListener('DOMContentLoaded', function() {
   var splash = document.getElementById('page-splash');
   var dashboard = document.getElementById('page-dashboard');
