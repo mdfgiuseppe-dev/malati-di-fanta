@@ -1,4 +1,4 @@
-﻿<!-- build:20261017_2305 -->
+﻿<!-- build:20261017_2309 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -15930,6 +15930,21 @@ var legaChipStyler = setInterval(function() {
     clearInterval(legaChipStyler);
   }
 }, 50);
+
+var tournamentNameStyler = setInterval(function() {
+  var names = document.querySelectorAll('.t-name');
+  if (names.length > 0) {
+    names.forEach(function(el) {
+      el.style.setProperty('text-align', 'center', 'important');
+      el.style.setProperty('display', 'flex', 'important');
+      el.style.setProperty('justify-content', 'center', 'important');
+      el.style.setProperty('align-items', 'center', 'important');
+      el.style.setProperty('width', '100%', 'important');
+      el.style.setProperty('min-height', '30px', 'important');
+    });
+    clearInterval(tournamentNameStyler);
+  }
+}, 100);
 
 document.addEventListener('DOMContentLoaded', function() {
   var splash = document.getElementById('page-splash');
