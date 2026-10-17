@@ -1,4 +1,4 @@
-﻿<!-- build:20261017_2238 -->
+﻿<!-- build:20261017_2240 -->
 <!DOCTYPE html>
 <html lang="it" data-theme="dark">
 <head>
@@ -9071,8 +9071,13 @@ function enterLeague(tournament, leagueKey) {
     var nm = document.getElementById('lega-user-name');
     if (av) av.textContent = u.ruolo==='admin' ? 'AD' : (u.nome||'?').split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'??';
     if (nm) nm.textContent = u.ruolo==='admin' ? 'Admin' : (u.nome||'');
-    var chip = document.getElementById('lega-user-chip');
-    if (chip) chip.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+    setTimeout(function(){
+      var chip = document.getElementById('lega-user-chip');
+      if (chip) {
+        chip.style.background = 'linear-gradient(135deg,#10b981,#059669) !important';
+        chip.style.setProperty('background', 'linear-gradient(135deg,#10b981,#059669)', 'important');
+      }
+    }, 100);
   } catch(e) {}
   if (leagueKey === 'tsm_it') { enterTSM(); return; }
   // ILM e ILC non ancora disponibili lato utente
@@ -14813,8 +14818,13 @@ function enterLeague(tournament, leagueKey) {
     var nm = document.getElementById('lega-user-name');
     if (av) av.textContent = u.ruolo==='admin' ? 'AD' : (u.nome||'?').split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'??';
     if (nm) nm.textContent = u.ruolo==='admin' ? 'Admin' : (u.nome||'');
-    var chip = document.getElementById('lega-user-chip');
-    if (chip) chip.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+    setTimeout(function(){
+      var chip = document.getElementById('lega-user-chip');
+      if (chip) {
+        chip.style.background = 'linear-gradient(135deg,#10b981,#059669) !important';
+        chip.style.setProperty('background', 'linear-gradient(135deg,#10b981,#059669)', 'important');
+      }
+    }, 100);
   } catch(e) {}
   if (leagueKey === 'tsm_it') { enterTSM(); return; }
   // ILM e ILC non ancora disponibili lato utente
