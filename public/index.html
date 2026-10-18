@@ -408,8 +408,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
   /* Card tornei: 2 colonne invece di 5 */
   .tournaments { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
-  .t-logo-area { height: 80px !important; }
-  .t-logo-area img { max-height: 50px !important; }
+  .t-logo-area { height: 100px !important; }
+  .t-logo-area img { max-height: 70px !important; }
   .t-name { font-size: 18px !important; text-align: center !important; display: flex !important; justify-content: center !important; align-items: center !important; width: 100% !important; height: 50px !important; }
   .t-body { padding: 10px !important; display: flex; flex-direction: column; align-items: center; width: 100%; }
   .t-stats { display: none; }
@@ -565,12 +565,12 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     background:var(--tc,#3b82f6);opacity:0;transition:opacity .22s;}
   .t-card.active::after,.t-card:hover::after{opacity:1;}
 
-  .t-logo-area{height:90px;display:flex;align-items:center;justify-content:center;
+  .t-logo-area{height:110px;display:flex;align-items:center;justify-content:center;
     background:linear-gradient(160deg,color-mix(in srgb,var(--tc,#3b82f6) 12%,var(--bg2)),var(--bg2));
     border-bottom:1px solid var(--border);position:relative;overflow:hidden;}
   .t-logo-area::before{content:'';position:absolute;inset:0;
     background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--tc,#3b82f6) 18%,transparent),transparent 70%);}
-  .t-logo-area img{height:74px;width:auto;object-fit:contain;position:relative;z-index:1;
+  .t-logo-area img{height:90px;width:auto;object-fit:contain;position:relative;z-index:1;
     filter:drop-shadow(0 2px 8px rgba(0,0,0,0.4));}
   .t-name{font-family:'Bebas Neue';font-size:18px;letter-spacing:1.2px;line-height:1.15;margin-bottom:5px;display:flex;justify-content:center;align-items:center;width:100%;text-align:center;}
   .t-mode-row{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;justify-content:center;}
