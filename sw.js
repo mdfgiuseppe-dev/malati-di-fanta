@@ -1,4 +1,4 @@
-const CACHE_NAME = 'malati-di-fanta-v' + Date.now();
+const CACHE_NAME = 'mdf-cache-' + Math.random();
 const urlsToCache = [
   '/malati-di-fanta/',
   '/malati-di-fanta/index.html',
