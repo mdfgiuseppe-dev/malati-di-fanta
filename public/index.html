@@ -6623,6 +6623,22 @@ function admWizardConfirm() {
   admSaveTornei();
 
   var torneoLabel = _wzData.label;
+  var torneoKey = _wzData.key;
+
+  // Salva le squadre in Firebase per ogni lega
+  _wzData.leghe.forEach(function(lega) {
+    var squadreList = (_wzData.squadrePerLega[lega.key] || []).filter(function(s) { return s.trim(); });
+    var squadreObj = {};
+    squadreList.forEach(function(squadra, idx) {
+      squadreObj[squadra.trim()] = { nome: squadra.trim(), crediti: _wzData.crediti || 250 };
+    });
+    // Salva in Firebase: data/teams/{torneo}_{lega}
+    var path = 'data/teams/' + torneoKey + '_' + lega.key;
+    fbDB.ref(path).set(squadreObj).catch(function(err) {
+      console.error('❌ Errore salvataggio squadre:', path, err);
+    });
+    console.log('✅ Squadre salvate in Firebase:', path, squadreObj);
+  });
 
   // Reset wizard
   _wzData = { key:'', label:'', formato:'classic', giornate:34, nSquadre:10, crediti:250, color:'#3b82f6', leghe:[], squadrePerLega:{} };
@@ -6635,7 +6651,7 @@ function admWizardConfirm() {
   admAggiornaDashboard();
 
   var msg = document.createElement('div');
-  msg.textContent = '✅ Torneo "'+torneoLabel+'" creato! Ora crea le leghe.';
+  msg.textContent = '✅ Torneo "'+torneoLabel+'" creato con squadre! Ora configura le leghe.';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},3000);
@@ -12638,6 +12654,22 @@ function admWizardConfirm() {
   admSaveTornei();
 
   var torneoLabel = _wzData.label;
+  var torneoKey = _wzData.key;
+
+  // Salva le squadre in Firebase per ogni lega
+  _wzData.leghe.forEach(function(lega) {
+    var squadreList = (_wzData.squadrePerLega[lega.key] || []).filter(function(s) { return s.trim(); });
+    var squadreObj = {};
+    squadreList.forEach(function(squadra, idx) {
+      squadreObj[squadra.trim()] = { nome: squadra.trim(), crediti: _wzData.crediti || 250 };
+    });
+    // Salva in Firebase: data/teams/{torneo}_{lega}
+    var path = 'data/teams/' + torneoKey + '_' + lega.key;
+    fbDB.ref(path).set(squadreObj).catch(function(err) {
+      console.error('❌ Errore salvataggio squadre:', path, err);
+    });
+    console.log('✅ Squadre salvate in Firebase:', path, squadreObj);
+  });
 
   // Reset wizard
   _wzData = { key:'', label:'', formato:'classic', giornate:34, nSquadre:10, crediti:250, color:'#3b82f6', leghe:[], squadrePerLega:{} };
@@ -12650,7 +12682,7 @@ function admWizardConfirm() {
   admAggiornaDashboard();
 
   var msg = document.createElement('div');
-  msg.textContent = '✅ Torneo "'+torneoLabel+'" creato! Ora crea le leghe.';
+  msg.textContent = '✅ Torneo "'+torneoLabel+'" creato con squadre! Ora configura le leghe.';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},3000);
