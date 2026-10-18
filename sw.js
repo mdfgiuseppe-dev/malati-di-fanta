@@ -6,11 +6,8 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
-      .then(() => self.skipWaiting())
-  );
+  // Disabilita completamente il caching
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', event => {
