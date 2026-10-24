@@ -5183,8 +5183,11 @@ function openAdminLogin() {
     // Carica password da localStorage (se "Ricordami" era spuntato)
     var saved = localStorage.getItem('_adminRemember');
     if (saved) {
-      inp.value = saved;
-      if (rem) rem.checked = true;
+      try {
+        var creds = JSON.parse(saved);
+        inp.value = creds.psw || '';
+        if (rem) rem.checked = true;
+      } catch(e) { inp.value = ''; }
     } else {
       inp.value = '';
       if (rem) rem.checked = false;
@@ -5205,7 +5208,7 @@ function checkAdminLogin() {
     var rem = document.getElementById('admin-remember');
     console.log('ADMIN: remember checkbox checked?', rem && rem.checked);
     if (rem && rem.checked) {
-      localStorage.setItem('_adminRemember', psw);
+      localStorage.setItem('_adminRemember', JSON.stringify({psw: psw}));
     } else {
       localStorage.removeItem('_adminRemember');
     }
@@ -11232,8 +11235,11 @@ function openAdminLogin() {
     // Carica password da localStorage (se "Ricordami" era spuntato)
     var saved = localStorage.getItem('_adminRemember');
     if (saved) {
-      inp.value = saved;
-      if (rem) rem.checked = true;
+      try {
+        var creds = JSON.parse(saved);
+        inp.value = creds.psw || '';
+        if (rem) rem.checked = true;
+      } catch(e) { inp.value = ''; }
     } else {
       inp.value = '';
       if (rem) rem.checked = false;
@@ -11254,7 +11260,7 @@ function checkAdminLogin() {
     var rem = document.getElementById('admin-remember');
     console.log('ADMIN: remember checkbox checked?', rem && rem.checked);
     if (rem && rem.checked) {
-      localStorage.setItem('_adminRemember', psw);
+      localStorage.setItem('_adminRemember', JSON.stringify({psw: psw}));
     } else {
       localStorage.removeItem('_adminRemember');
     }
