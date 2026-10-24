@@ -7115,16 +7115,25 @@ function admEditLogoLega(ti, li) {
   setTimeout(function(){msg.remove();},2000);
 }
 function admEditLogoTorneoStatic(key, label) {
-  var current = localStorage.getItem('adm_logo_torneo_'+key) || '';
-  var url = prompt('URL Logo "'+label+'":', current);
-  if (url === null) return;
-  url = url.trim();
-  url = _normalizeImgUrl(url);
-  if (url) { localStorage.setItem('adm_logo_torneo_'+key, url); gsSaveKey('adm_logo_torneo_'+key, url); }
-  else { localStorage.removeItem('adm_logo_torneo_'+key); gsSaveKey('adm_logo_torneo_'+key, ''); }
-  var prev = document.getElementById('adm-logo-torneo-'+key+'-prev');
-  if (prev) prev.src = url || '';
-  updateLogosTornei();
+  fbDB.ref('data/images/tornei/'+key).once('value', function(snap) {
+    var current = snap.val() || '';
+    var url = prompt('URL Logo "'+label+'":', current);
+    if (url === null) return;
+    url = url.trim();
+    url = _normalizeImgUrl(url);
+    // Salva su Firebase
+    if (url) {
+      fbDB.ref('data/images/tornei/'+key).set(url).then(() => {
+        console.log('✅ Logo '+key+' salvato su Firebase');
+      });
+    } else {
+      fbDB.ref('data/images/tornei/'+key).remove().then(() => {
+        console.log('✅ Logo '+key+' rimosso da Firebase');
+      });
+    }
+    var prev = document.getElementById('adm-logo-torneo-'+key+'-prev');
+    if (prev) prev.src = url || '';
+    updateLogosTornei();
   var msg = document.createElement('div');
   msg.textContent = url ? '✅ Logo torneo salvato' : '✅ Logo rimosso';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
@@ -12935,16 +12944,25 @@ function admEditLogoLega(ti, li) {
   setTimeout(function(){msg.remove();},2000);
 }
 function admEditLogoTorneoStatic(key, label) {
-  var current = localStorage.getItem('adm_logo_torneo_'+key) || '';
-  var url = prompt('URL Logo "'+label+'":', current);
-  if (url === null) return;
-  url = url.trim();
-  url = _normalizeImgUrl(url);
-  if (url) { localStorage.setItem('adm_logo_torneo_'+key, url); gsSaveKey('adm_logo_torneo_'+key, url); }
-  else { localStorage.removeItem('adm_logo_torneo_'+key); gsSaveKey('adm_logo_torneo_'+key, ''); }
-  var prev = document.getElementById('adm-logo-torneo-'+key+'-prev');
-  if (prev) prev.src = url || '';
-  updateLogosTornei();
+  fbDB.ref('data/images/tornei/'+key).once('value', function(snap) {
+    var current = snap.val() || '';
+    var url = prompt('URL Logo "'+label+'":', current);
+    if (url === null) return;
+    url = url.trim();
+    url = _normalizeImgUrl(url);
+    // Salva su Firebase
+    if (url) {
+      fbDB.ref('data/images/tornei/'+key).set(url).then(() => {
+        console.log('✅ Logo '+key+' salvato su Firebase');
+      });
+    } else {
+      fbDB.ref('data/images/tornei/'+key).remove().then(() => {
+        console.log('✅ Logo '+key+' rimosso da Firebase');
+      });
+    }
+    var prev = document.getElementById('adm-logo-torneo-'+key+'-prev');
+    if (prev) prev.src = url || '';
+    updateLogosTornei();
   var msg = document.createElement('div');
   msg.textContent = url ? '✅ Logo torneo salvato' : '✅ Logo rimosso';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
