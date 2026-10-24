@@ -4758,6 +4758,80 @@ function fbLoadKey(key, callback) {
   });
 }
 
+// ═════════════════════════════════════════════════════════════════
+// PARSING ROBUSTO TORNEI - Gestisce qualunque formato Firebase
+// ═════════════════════════════════════════════════════════════════
+// Funzione generica: converte cualunque formato Firebase a array
+function parseFirebaseArray(data) {
+  if (!data) return [];
+
+  let parsed;
+
+  // 1. Se è una stringa JSON → parseizza
+  if (typeof data === 'string') {
+    try {
+      parsed = JSON.parse(data);
+    } catch(e) {
+      console.error('❌ Errore parsing JSON:', e);
+      return [];
+    }
+  } else {
+    parsed = data;
+  }
+
+  // 2. Se è un oggetto numerato {0: {...}, 1: {...}} → converti a array
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    const keys = Object.keys(parsed).sort(function(a,b){return parseInt(a)-parseInt(b);});
+    const isNumericObject = keys.length > 0 && keys.every(function(k){return /^\d+$/.test(k);});
+    if (isNumericObject) {
+      parsed = keys.map(function(k){return parsed[k];});
+    }
+  }
+
+  // 3. Assicura che sia un array
+  if (!Array.isArray(parsed)) {
+    console.warn('⚠️ Dati non è un array, reset:', parsed);
+    return [];
+  }
+
+  return parsed;
+}
+
+function parseTorneiData(data) {
+  const arr = parseFirebaseArray(data);
+
+  return arr.map(function(t) {
+    if (!t || typeof t !== 'object') return null;
+
+    // Assicura che abbia le proprietà minime
+    const torneo = {
+      key: t.key || 'unknown',
+      label: t.label || t.key || 'Torneo',
+      formato: t.formato || 'classic',
+      color: t.color || '#6366f1',
+      leghe: []
+    };
+
+    // Normalizza leghe
+    if (Array.isArray(t.leghe)) {
+      torneo.leghe = t.leghe.map(function(l) {
+        if (!l || typeof l !== 'object') return null;
+        return {
+          key: l.key || 'unknown',
+          label: l.label || l.key || 'Lega'
+        };
+      }).filter(function(l){return l !== null;});
+    }
+
+    return torneo;
+  }).filter(function(t){return t !== null;});
+}
+
+// Versione per admin_tornei (uguale a parseTorneiData per coerenza)
+function parseAdminTorneiData(data) {
+  return parseTorneiData(data);
+}
+
 // Carica dati critici da Firebase all'avvio
 function loadDataFromFirebase() {
   // Inizializza password admin al primo caricamento
@@ -4767,11 +4841,13 @@ function loadDataFromFirebase() {
   fbLoadKey('admin_tornei', function(val) {
     if (val) {
       try {
-        var tornei = typeof val === 'string' ? JSON.parse(val) : val;
-        localStorage.setItem('admin_tornei', JSON.stringify(tornei));
-        if (typeof ADMIN_TORNEI !== 'undefined') {
-          ADMIN_TORNEI.length = 0;
-          tornei.forEach(function(t) { ADMIN_TORNEI.push(t); });
+        var tornei = parseAdminTorneiData(val);
+        if (tornei.length > 0) {
+          localStorage.setItem('admin_tornei', JSON.stringify(tornei));
+          if (typeof ADMIN_TORNEI !== 'undefined') {
+            ADMIN_TORNEI.length = 0;
+            tornei.forEach(function(t) { ADMIN_TORNEI.push(t); });
+          }
         }
       } catch(e) { console.error('Error parsing admin_tornei:', e); }
     }
@@ -4790,7 +4866,7 @@ function loadDataFromFirebase() {
   fbLoadKey('users/list', function(val) {
     if (val) {
       try {
-        var utenti = typeof val === 'string' ? JSON.parse(val) : val;
+        var utenti = parseFirebaseArray(val);
         ADMIN_USERS.length = 0;
         utenti.forEach(function(u) { ADMIN_USERS.push(u); });
       } catch(e) { console.error('Error parsing users:', e); }
@@ -4820,7 +4896,7 @@ function fbLoginUser(username, password, callback) {
       callback(false, {error: 'Nessun utente trovato'});
       return;
     }
-    var users = typeof val === 'string' ? JSON.parse(val) : val;
+    var users = parseFirebaseArray(val);
     if (!Array.isArray(users)) { users = []; }
     console.log('👥 Array di utenti:', users.length, 'utenti');
 
@@ -4850,7 +4926,7 @@ function fbLoginUser(username, password, callback) {
 function loadPendingRequests(callback) {
   fbLoadKey('pending_requests', function(val) {
     if (val) {
-      callback(typeof val === 'string' ? JSON.parse(val) : val);
+      callback(parseFirebaseArray(val));
     } else {
       callback([]);
     }
@@ -5020,19 +5096,17 @@ function createFirebaseStructure() {
 }
 // DISABILITATO: ha cancellato i loghi
 // setTimeout(createFirebaseStructure, 2000);
-fbLoadKey('tornei', function(data) {
-  if (data) {
-    try {
-      ADMIN_TORNEI = JSON.parse(data);
-      if (typeof syncLeaguesDataFromAdmin === 'function') syncLeaguesDataFromAdmin();
-      if (typeof renderTournamentCards === 'function') renderTournamentCards();
-      if (typeof admRenderTornei === 'function') admRenderTornei();
-      setTimeout(function() {
-        if (typeof updateLogosTornei === 'function') updateLogosTornei();
-      }, 100);
-    } catch(e) { console.error('Errore parsing tornei da Firebase:', e); }
-  }
-});
+// Firebase disabled - load from localStorage only
+var _at = JSON.parse(localStorage.getItem('admin_tornei') || '[]');
+if (_at && _at.length) {
+  ADMIN_TORNEI = _at;
+  if (typeof syncLeaguesDataFromAdmin === 'function') syncLeaguesDataFromAdmin();
+  if (typeof renderTournamentCards === 'function') renderTournamentCards();
+  if (typeof admRenderTornei === 'function') admRenderTornei();
+  setTimeout(function() {
+    if (typeof updateLogosTornei === 'function') updateLogosTornei();
+  }, 100);
+}
 
 // Utenti (caricati da Firebase)
 var ADMIN_USERS = [];
@@ -7604,7 +7678,7 @@ function admAddUser() {
   // Ricarica ADMIN_USERS da Firebase per verificare gli username attuali
   fbLoadKey('users/list', function(usersFromFb) {
     console.log('📥 Utenti caricati da Firebase:', usersFromFb);
-    var fbUsers = (typeof usersFromFb === 'string' ? JSON.parse(usersFromFb) : usersFromFb) || [];
+    var fbUsers = parseFirebaseArray(usersFromFb) || [];
     if (!Array.isArray(fbUsers)) fbUsers = [];
     if (fbUsers.find(function(u){ return u.username===username; })) { alert('Username già esistente'); window._addingUser = false; return; }
 
@@ -9099,8 +9173,11 @@ function enterLeague(tournament, leagueKey) {
     fbLoadKey('tornei', function(data) {
       if (data) {
         try {
-          ADMIN_TORNEI = JSON.parse(data);
-        } catch(e) {}
+          var parsed = parseTorneiData(data);
+          if (parsed.length > 0) {
+            ADMIN_TORNEI = parsed;
+          }
+        } catch(e) { console.error('Error parsing tornei:', e); }
       }
       setTimeout(function(){
         _updateLegaDashboard(tournament+'_'+currentLeagueKey);
@@ -11125,19 +11202,17 @@ function createFirebaseStructure() {
 }
 // DISABILITATO: ha cancellato i loghi
 // setTimeout(createFirebaseStructure, 2000);
-fbLoadKey('tornei', function(data) {
-  if (data) {
-    try {
-      ADMIN_TORNEI = JSON.parse(data);
-      if (typeof syncLeaguesDataFromAdmin === 'function') syncLeaguesDataFromAdmin();
-      if (typeof renderTournamentCards === 'function') renderTournamentCards();
-      if (typeof admRenderTornei === 'function') admRenderTornei();
-      setTimeout(function() {
-        if (typeof updateLogosTornei === 'function') updateLogosTornei();
-      }, 100);
-    } catch(e) { console.error('Errore parsing tornei da Firebase:', e); }
-  }
-});
+// Firebase disabled - load from localStorage only
+var _at = JSON.parse(localStorage.getItem('admin_tornei') || '[]');
+if (_at && _at.length) {
+  ADMIN_TORNEI = _at;
+  if (typeof syncLeaguesDataFromAdmin === 'function') syncLeaguesDataFromAdmin();
+  if (typeof renderTournamentCards === 'function') renderTournamentCards();
+  if (typeof admRenderTornei === 'function') admRenderTornei();
+  setTimeout(function() {
+    if (typeof updateLogosTornei === 'function') updateLogosTornei();
+  }, 100);
+}
 
 // Utenti (caricati da Firebase)
 var ADMIN_USERS = [];
@@ -13430,7 +13505,7 @@ function admAddUser() {
   // Ricarica ADMIN_USERS da Firebase per verificare gli username attuali
   fbLoadKey('users/list', function(usersFromFb) {
     console.log('📥 Utenti caricati da Firebase:', usersFromFb);
-    var fbUsers = (typeof usersFromFb === 'string' ? JSON.parse(usersFromFb) : usersFromFb) || [];
+    var fbUsers = parseFirebaseArray(usersFromFb) || [];
     if (!Array.isArray(fbUsers)) fbUsers = [];
     if (fbUsers.find(function(u){ return u.username===username; })) { alert('Username già esistente'); window._addingUser = false; return; }
 
@@ -14846,8 +14921,11 @@ function enterLeague(tournament, leagueKey) {
     fbLoadKey('tornei', function(data) {
       if (data) {
         try {
-          ADMIN_TORNEI = JSON.parse(data);
-        } catch(e) {}
+          var parsed = parseTorneiData(data);
+          if (parsed.length > 0) {
+            ADMIN_TORNEI = parsed;
+          }
+        } catch(e) { console.error('Error parsing tornei:', e); }
       }
       setTimeout(function(){
         _updateLegaDashboard(tournament+'_'+currentLeagueKey);
