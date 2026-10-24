@@ -7067,9 +7067,10 @@ function admEditLogoTorneo(ti) {
   url = url.trim();
   url = _normalizeImgUrl(url);
   console.log('🎬 admEditLogoTorneo() chiamata - URL:', url);
+  var fbPath = 'data/images/tornei/'+t.key;
   if (url) {
-    console.log('💾 Salvando logo a data/images/loghi/main');
-    fbDB.ref('data/images/loghi/main').set(url).then(() => {
+    console.log('💾 Salvando logo a '+fbPath);
+    fbDB.ref(fbPath).set(url).then(() => {
       console.log('✅ Logo salvato con successo');
       updateLogosTornei();
     }).catch(e => {
@@ -7077,8 +7078,8 @@ function admEditLogoTorneo(ti) {
     });
   }
   else {
-    console.log('🗑️ Rimuovendo logo da data/images/loghi/main');
-    fbDB.ref('data/images/loghi/main').remove().then(() => {
+    console.log('🗑️ Rimuovendo logo da '+fbPath);
+    fbDB.ref(fbPath).remove().then(() => {
       console.log('✅ Logo rimosso');
       updateLogosTornei();
     }).catch(e => {
@@ -7086,7 +7087,7 @@ function admEditLogoTorneo(ti) {
     });
   }
   var msg = document.createElement('div');
-  msg.textContent = url ? '✅ URL logo torneo salvato in data/images/loghi/main' : '✅ URL rimosso';
+  msg.textContent = url ? '✅ URL logo torneo salvato in '+fbPath : '✅ URL rimosso';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},2000);
@@ -12897,9 +12898,10 @@ function admEditLogoTorneo(ti) {
   url = url.trim();
   url = _normalizeImgUrl(url);
   console.log('🎬 admEditLogoTorneo() chiamata - URL:', url);
+  var fbPath = 'data/images/tornei/'+t.key;
   if (url) {
-    console.log('💾 Salvando logo a data/images/loghi/main');
-    fbDB.ref('data/images/loghi/main').set(url).then(() => {
+    console.log('💾 Salvando logo a '+fbPath);
+    fbDB.ref(fbPath).set(url).then(() => {
       console.log('✅ Logo salvato con successo');
       updateLogosTornei();
     }).catch(e => {
@@ -12907,8 +12909,8 @@ function admEditLogoTorneo(ti) {
     });
   }
   else {
-    console.log('🗑️ Rimuovendo logo da data/images/loghi/main');
-    fbDB.ref('data/images/loghi/main').remove().then(() => {
+    console.log('🗑️ Rimuovendo logo da '+fbPath);
+    fbDB.ref(fbPath).remove().then(() => {
       console.log('✅ Logo rimosso');
       updateLogosTornei();
     }).catch(e => {
@@ -12916,7 +12918,7 @@ function admEditLogoTorneo(ti) {
     });
   }
   var msg = document.createElement('div');
-  msg.textContent = url ? '✅ URL logo torneo salvato in data/images/loghi/main' : '✅ URL rimosso';
+  msg.textContent = url ? '✅ URL logo torneo salvato in '+fbPath : '✅ URL rimosso';
   msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},2000);
