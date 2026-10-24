@@ -3742,8 +3742,11 @@ var currentTournament = null;
 
 // Aggiorna contatori leghe e club nella dashboard
 function updateLogosTornei() {
+  console.log('🔄 updateLogosTornei() eseguita');
+  var cards = document.querySelectorAll('.t-card');
+  console.log('📦 Found .t-card elements:', cards.length);
   try {
-    document.querySelectorAll('.t-card').forEach(function(card) {
+    cards.forEach(function(card) {
       var oc = card.getAttribute('onclick') || '';
       var m = oc.match(/selectTournament\('([^']+)'/);
       if (!m) return;
@@ -10322,8 +10325,11 @@ var currentTournament = null;
 
 // Aggiorna contatori leghe e club nella dashboard
 function updateLogosTornei() {
+  console.log('🔄 updateLogosTornei() eseguita');
+  var cards = document.querySelectorAll('.t-card');
+  console.log('📦 Found .t-card elements:', cards.length);
   try {
-    document.querySelectorAll('.t-card').forEach(function(card) {
+    cards.forEach(function(card) {
       var oc = card.getAttribute('onclick') || '';
       var m = oc.match(/selectTournament\('([^']+)'/);
       if (!m) return;
