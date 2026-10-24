@@ -4764,31 +4764,90 @@ function fbLoadKey(key, callback) {
 }
 
 // ═════════════════════════════════════════════════════════════════
-// PARSING ROBUSTO TORNEI - Gestisce qualunque formato Firebase
+// PARSING TORNEI DA data/tornei
 // ═════════════════════════════════════════════════════════════════
-// Tornei default se non esistono in Firebase
-function getDefaultTornei() {
-  return [
-    {
-      key: 'slim',
-      label: 'Scudetto Slim',
-      formato: 'mantra',
-      color: '#3bf748',
-      leghe: [
-        {key: 'it', label: 'Italia'},
-        {key: 'fr', label: 'Francia'}
-      ]
-    },
-    {
-      key: 'tsm',
-      label: 'TSM',
-      formato: 'classic',
-      color: '#ef4444',
-      leghe: [
-        {key: 'it', label: 'Italia'}
-      ]
+// Metadati dei tornei (codificati, caricati da data/tornei per le leghe)
+var TORNEI_METADATA = {
+  slim: { label: 'Scudetto Slim', formato: 'mantra', color: '#3bf748' },
+  tsm: { label: 'TSM', formato: 'classic', color: '#ef4444' },
+  tdm: { label: 'TDM', formato: 'classic', color: '#3b82f6' },
+  ilm: { label: 'ILM', formato: 'classic', color: '#8b5cf6' },
+  ilc: { label: 'ILC', formato: 'classic', color: '#f59e0b' }
+};
+
+// Leghe label da codice (chiavi in data/tornei sono chiavi lingua: it, fr, en, ecc.)
+var LEGHE_LABELS = {
+  'it': 'Italia',
+  'fr': 'Francia',
+  'en': 'Inghilterra',
+  'de': 'Germania',
+  'es': 'Spagna',
+  'pt': 'Portogallo',
+  'nl': 'Olanda',
+  'tr': 'Turchia'
+};
+
+// Carica tornei da data/tornei e costruisce ADMIN_TORNEI
+function loadTorneiFromFirebase() {
+  console.log('📥 Carico tornei da data/tornei...');
+  fbLoadKey('tornei', function(val) {
+    console.log('📥 data/tornei caricato:', val);
+    if (!val || typeof val !== 'object') {
+      console.error('❌ data/tornei non trovato o non è oggetto');
+      return;
     }
-  ];
+
+    var tornei = [];
+
+    // Per ogni torneo in data/tornei
+    Object.keys(val).forEach(function(tkey) {
+      var meta = TORNEI_METADATA[tkey];
+      if (!meta) {
+        console.warn('⚠️ Nessun metadata per torneo:', tkey);
+        return; // skip tornei senza metadata
+      }
+
+      var tdata = val[tkey];
+      var leghe = [];
+
+      // Estrai le leghe (chiavi delle lingue)
+      if (tdata && typeof tdata === 'object') {
+        Object.keys(tdata).forEach(function(lkey) {
+          leghe.push({
+            key: lkey,
+            label: LEGHE_LABELS[lkey] || lkey.toUpperCase()
+          });
+        });
+      }
+
+      tornei.push({
+        key: tkey,
+        label: meta.label,
+        formato: meta.formato,
+        color: meta.color,
+        leghe: leghe
+      });
+    });
+
+    console.log('✅ Tornei caricati:', tornei.length);
+
+    if (tornei.length > 0) {
+      // Popola ADMIN_TORNEI
+      ADMIN_TORNEI.length = 0;
+      tornei.forEach(function(t) { ADMIN_TORNEI.push(t); });
+      console.log('✅ ADMIN_TORNEI popolato:', ADMIN_TORNEI.length);
+
+      // Ricarica UI
+      if (typeof renderTournamentCards === 'function') {
+        renderTournamentCards();
+        console.log('✅ renderTournamentCards() eseguito');
+      }
+      if (typeof syncLeaguesDataFromAdmin === 'function') {
+        syncLeaguesDataFromAdmin();
+        console.log('✅ syncLeaguesDataFromAdmin() eseguito');
+      }
+    }
+  });
 }
 
 // Funzione generica: converte cualunque formato Firebase a array
@@ -4868,52 +4927,8 @@ function loadDataFromFirebase() {
   // Inizializza password admin al primo caricamento
   // Admin password gestito in localStorage, non su Firebase
 
-  // Carica admin_tornei
-  console.log('🔄 fbLoadKey("admin_tornei") in corso...');
-  fbLoadKey('admin_tornei', function(val) {
-    console.log('📥 Callback fbLoadKey("admin_tornei") eseguito con val:', val);
-    var tornei;
-
-    if (val) {
-      try {
-        tornei = parseAdminTorneiData(val);
-      } catch(e) {
-        console.error('Error parsing admin_tornei:', e);
-        tornei = getDefaultTornei();
-      }
-    } else {
-      // Fallback: se admin_tornei non esiste in Firebase, crea dalla struttura default
-      console.log('⚠️ admin_tornei non esiste in Firebase, creo da default...');
-      tornei = getDefaultTornei();
-      fbDB.ref('data/admin_tornei').set(tornei).catch(function(err) {
-        console.error('Errore saving admin_tornei:', err);
-      });
-    }
-
-    if (tornei && tornei.length > 0) {
-      console.log('✅ tornei caricati, lunghezza:', tornei.length);
-      if (typeof ADMIN_TORNEI !== 'undefined') {
-        ADMIN_TORNEI.length = 0;
-        tornei.forEach(function(t) { ADMIN_TORNEI.push(t); });
-        console.log('✅ ADMIN_TORNEI popolato:', ADMIN_TORNEI.length, 'elementi');
-      }
-      // Ricarica UI dopo popolare ADMIN_TORNEI
-      console.log('📍 Chiamo renderTournamentCards()...');
-      if (typeof renderTournamentCards === 'function') {
-        renderTournamentCards();
-        console.log('✅ renderTournamentCards() eseguito');
-      } else {
-        console.error('❌ renderTournamentCards non è una funzione!');
-      }
-      console.log('📍 Chiamo syncLeaguesDataFromAdmin()...');
-      if (typeof syncLeaguesDataFromAdmin === 'function') {
-        syncLeaguesDataFromAdmin();
-        console.log('✅ syncLeaguesDataFromAdmin() eseguito');
-      }
-    } else {
-      console.error('❌ tornei è vuoto o undefined:', tornei);
-    }
-  });
+  // Carica tornei da data/tornei
+  loadTorneiFromFirebase();
 
   // Carica logo principale (fbLoadKey aggiunge 'data/' automaticamente)
   fbLoadKey('images/loghi/main', function(val) {
