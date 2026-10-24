@@ -7336,6 +7336,8 @@ function admSaveUsers() {
 }
 
 function admRenderUtenti() {
+  var el = document.getElementById('adm-utenti-body'); if(!el) return;
+
   // Popola select lega nel form aggiungi utente
   var selLega = document.getElementById('adm-new-user-lega');
   if (selLega) {
@@ -13107,6 +13109,8 @@ function admSaveUsers() {
 }
 
 function admRenderUtenti() {
+  var el = document.getElementById('adm-utenti-body'); if(!el) return;
+
   // Popola select lega nel form aggiungi utente
   var selLega = document.getElementById('adm-new-user-lega');
   if (selLega) {
