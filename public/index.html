@@ -9749,8 +9749,7 @@ document.addEventListener('DOMContentLoaded',function(){
     });
   })();
   // Firebase only: no need for GSheets sync
-  // Genera card tornei dinamicamente
-  renderTournamentCards();
+  // renderTournamentCards() viene chiamato dal callback di Firebase quando ADMIN_TORNEI è caricato
   // Carica logo principale app da localStorage/GSheets
   var _logoMain = localStorage.getItem('adm_logo_main');
   if (_logoMain) _applyLogoMain(_logoMain);
@@ -15494,8 +15493,7 @@ document.addEventListener('DOMContentLoaded',function(){
     });
   })();
   // Firebase only: no need for GSheets sync
-  // Genera card tornei dinamicamente
-  renderTournamentCards();
+  // renderTournamentCards() viene chiamato dal callback di Firebase quando ADMIN_TORNEI è caricato
   // Carica logo principale app da localStorage/GSheets
   var _logoMain = localStorage.getItem('adm_logo_main');
   if (_logoMain) _applyLogoMain(_logoMain);
