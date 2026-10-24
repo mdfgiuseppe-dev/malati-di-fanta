@@ -1,4 +1,4 @@
-const CACHE_NAME = 'malati-di-fanta-' + new Date().getTime() + '-v3';
+const CACHE_NAME = 'malati-di-fanta-' + Math.random() + '-v4';
 
 self.addEventListener('install', event => {
   event.waitUntil(
