@@ -4797,6 +4797,18 @@ function loadTorneiFromFirebase() {
       return;
     }
 
+    // Se val è un array numerato {0: {...}, 1: {...}}, convertilo a oggetto
+    if (Array.isArray(val)) {
+      console.warn('⚠️ data/tornei è un array, convertendo...');
+      var obj = {};
+      val.forEach(function(item) {
+        if (item && typeof item === 'object') {
+          Object.assign(obj, item);
+        }
+      });
+      val = obj;
+    }
+
     var tornei = [];
 
     // Per ogni torneo in data/tornei
