@@ -4816,9 +4816,11 @@ function loadTorneiFromFirebase() {
 
     // Per ogni torneo in data/tornei
     console.log('   TORNEI_METADATA:', TORNEI_METADATA);
+    console.log('   TORNEI_METADATA keys:', Object.keys(TORNEI_METADATA));
     Object.keys(val).forEach(function(tkey) {
+      console.log('   iterando torneo:', JSON.stringify(tkey), 'tipo:', typeof tkey);
       var meta = TORNEI_METADATA[tkey];
-      console.log('   cercando metadata per', tkey, ':', meta);
+      console.log('   cercando TORNEI_METADATA[' + tkey + ']:', meta);
       if (!meta) {
         console.warn('⚠️ Nessun metadata per torneo:', tkey);
         return; // skip tornei senza metadata
