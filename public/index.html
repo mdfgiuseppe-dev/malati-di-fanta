@@ -77,7 +77,6 @@ function idbSave(key, value, callback) {
     const tx = idbInstance.transaction([IDB_STORE], 'readwrite');
     const store = tx.objectStore(IDB_STORE);
     const req = store.put(value, key);
-    req.onsuccess = () => { console.log('💾 IDB salvo:', key); if (callback) callback(true); };
     req.onerror = () => { if (callback) callback(false); };
   });
 }
@@ -88,7 +87,6 @@ function idbLoad(key, callback) {
     const tx = idbInstance.transaction([IDB_STORE], 'readonly');
     const store = tx.objectStore(IDB_STORE);
     const req = store.get(key);
-    req.onsuccess = () => { console.log('📖 IDB carico:', key, req.result); if (callback) callback(req.result); };
     req.onerror = () => { if (callback) callback(null); };
   });
 }
@@ -99,7 +97,6 @@ function idbRemove(key, callback) {
     const tx = idbInstance.transaction([IDB_STORE], 'readwrite');
     const store = tx.objectStore(IDB_STORE);
     const req = store.delete(key);
-    req.onsuccess = () => { console.log('🗑️ IDB cancello:', key); if (callback) callback(true); };
     req.onerror = () => { if (callback) callback(false); };
   });
 }
@@ -3742,9 +3739,7 @@ var currentTournament = null;
 
 // Aggiorna contatori leghe e club nella dashboard
 function updateLogosTornei() {
-  console.log('🔄 updateLogosTornei() eseguita');
   var cards = document.querySelectorAll('.t-card');
-  console.log('📦 Found .t-card elements:', cards.length);
   try {
     cards.forEach(function(card) {
       var oc = card.getAttribute('onclick') || '';
@@ -3756,11 +3751,9 @@ function updateLogosTornei() {
       // Carica da Firebase: tornei/[key] (PRIMO) → images/ (vecchio) → localStorage
       fbDB.ref('data/images/loghi/tornei/'+m[1]).once('value', snapshot => {
         var url = snapshot.val();
-        console.log('📊 Logo tornei/'+m[1]+':', url);
         if (!url) {
           fbDB.ref('images/loghi/'+m[1]).once('value', snapshot2 => {
             url = snapshot2.val() || localStorage.getItem('adm_logo_torneo_'+m[1]);
-            console.log('📊 Logo images/'+m[1]+':', url);
             setLogoImg(url);
           });
         } else {
@@ -3772,22 +3765,17 @@ function updateLogosTornei() {
         setLogoImg(url);
       });
       function setLogoImg(url) {
-        console.log('🖼️ setLogoImg() - img element:', img, 'url:', url);
         if (url) {
           img.style.display = '';
           img.src = url;
-          console.log('✅ Assegnato src:', url);
           img.onerror = function() {
-            console.log('❌ Errore caricamento immagine');
             this.style.display = 'none';
           };
           img.onload = function() {
-            console.log('✅ Immagine caricata');
           };
         } else {
           img.style.display = 'none';
           img.src = '';
-          console.log('⚪ URL vuoto');
         }
       }
     });
@@ -3854,7 +3842,6 @@ try {
 } catch(e) {}
 
 function renderTournamentCards() {
-  console.log('🎨 renderTournamentCards() eseguito, ADMIN_TORNEI:', ADMIN_TORNEI);
   var container = document.getElementById('tournaments-container');
   if (!container) {
     console.error('❌ Container tournaments-container non trovato!');
@@ -3862,7 +3849,6 @@ function renderTournamentCards() {
   }
   var colors = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#6366f1','#f97316'];
   var tornei = (typeof ADMIN_TORNEI !== 'undefined') ? ADMIN_TORNEI : [];
-  console.log('📊 tornei in renderTournamentCards:', tornei.length);
   tornei.sort(function(a, b) { return (a.label || '').localeCompare(b.label || ''); });
   var html = '';
   tornei.forEach(function(t, idx) {
@@ -3949,14 +3935,11 @@ function loadLeagueLogos(torneoKey, leghe) {
   leghe.forEach(function(lega) {
     var fbPath = 'data/images/loghi/leghe/'+torneoKey+'_'+lega.key;
     var fbPathOld = 'images/loghi_leghe/'+torneoKey+'_'+lega.key;
-    console.log('🔍 Caricando logo da Firebase per:', {lega: lega.key, fbPath, fbPathOld});
     fbDB.ref(fbPath).once('value', function(snapshot) {
       var fbLogo = snapshot.val();
-      console.log('📊 Valore Firebase per '+fbPath+':', fbLogo);
       if (!fbLogo) {
         fbDB.ref(fbPathOld).once('value', function(snapshot2) {
           fbLogo = snapshot2.val();
-          console.log('📊 Valore Firebase old path per '+fbPathOld+':', fbLogo);
           if (fbLogo) {
             setLeagueImg(fbLogo);
           } else {
@@ -3972,7 +3955,6 @@ function loadLeagueLogos(torneoKey, leghe) {
       if (fbLogo) {
         fbLogo = _normalizeImgUrl(fbLogo);
         var imgEls = document.querySelectorAll('img[data-lega-key="'+lega.key+'"]');
-        console.log('🖼️ Logo trovato per '+lega.key+': '+fbLogo, 'elementi trovati:', imgEls.length);
         imgEls.forEach(function(img) {
           img.src = fbLogo;
           img.style.display = '';  // Mostra l'elemento se era stato nascosto
@@ -3989,11 +3971,9 @@ function debugMuoviLogoTorneoMain() {
   fbDB.ref(oldPath).once('value', function(snapshot) {
     var logo = snapshot.val();
     if (logo) {
-      console.log('📁 Spostando logo da', oldPath, 'a', newPath);
       fbDB.ref(newPath).set(logo).then(() => {
         fbDB.ref(oldPath).remove().then(() => {
           alert('✅ Logo spostato a ' + newPath);
-          console.log('✅ Logo spostato');
         });
       });
     } else {
@@ -4009,11 +3989,9 @@ function debugMuoviLoghiTornei() {
   fbDB.ref(oldPath).once('value', function(snapshot) {
     var logo = snapshot.val();
     if (logo) {
-      console.log('📁 Spostando logo da', oldPath, 'a', newPath);
       fbDB.ref(newPath).set(logo).then(() => {
         fbDB.ref(oldPath).remove().then(() => {
           alert('✅ Logo spostato a ' + newPath);
-          console.log('✅ Logo spostato');
         });
       });
     } else {
@@ -4034,14 +4012,12 @@ function debugCreateFirebaseStructure() {
 
   var promises = [];
   Object.keys(structure).forEach(path => {
-    console.log('📁 Creando path:', path);
     promises.push(
       fbDB.ref(path).set({_init: true}).catch(e => console.error('Errore:', path, e))
     );
   });
 
   Promise.all(promises).then(() => {
-    console.log('✅ Struttura Firebase creata');
     alert('✅ Struttura Firebase creata:\n- data/images/loghi/squadre/\n- data/images/loghi/tornei/\n- data/images/loghi/leghe/\n- data/images/trofei/\n- data/images/vari/');
   }).catch(e => {
     console.error('❌ Errore creazione struttura:', e);
@@ -4052,9 +4028,7 @@ function debugCreateFirebaseStructure() {
 // FUNZIONE DEBUG: Cancella TUTTI i loghi di leghe da Firebase
 function debugCancellaLoghiLeghe() {
   var path = 'data/images/loghi/leghe';
-  console.log('🗑️ Cancellando loghi da Firebase:', path);
   fbDB.ref(path).remove().then(() => {
-    console.log('✅ Loghi leghe cancellati');
     alert('✅ Tutti i loghi leghe cancellati da Firebase');
   }).catch(e => {
     console.error('❌ Errore cancellazione:', e);
@@ -4125,7 +4099,6 @@ function _updateLegaDashboard(leagueKey) {
       if (fbTrophy) {
         fbTrophy = _normalizeImgUrl(fbTrophy);
         trophyEl.src = fbTrophy;
-        console.log('🏆 Trofeo caricato:', fbTrophy);
       } else if (typeof TROPHY_MAP !== 'undefined') {
         var trophyName = trophyMap[_realLK];
         if (trophyName && TROPHY_MAP[trophyName]) trophyEl.src = TROPHY_MAP[trophyName];
@@ -4146,7 +4119,6 @@ function _updateLegaDashboard(leagueKey) {
         var lgLogoEl = document.getElementById('league-logo');
         if (bcLogoEl) bcLogoEl.src = fbLogo;
         if (lgLogoEl) lgLogoEl.src = fbLogo;
-        console.log('🖼️ Logo lega caricato:', fbLogo);
       }
     });
   }
@@ -4784,9 +4756,7 @@ var LEGHE_LABELS = {
 
 // Carica tornei da data/tornei e costruisce ADMIN_TORNEI
 function loadTorneiFromFirebase() {
-  console.log('📥 Carico tornei da data/tornei...');
   fbLoadKey('tornei', function(val) {
-    console.log('📥 RAW data/tornei da Firebase:', val);
     if (val && typeof val === 'object') {
       console.log('   Object.keys(raw):', Object.keys(val).join('|'));
       Object.keys(val).forEach(function(k) {
@@ -4850,27 +4820,22 @@ function loadTorneiFromFirebase() {
       });
     });
 
-    console.log('✅ Tornei caricati:', tornei.length);
 
     if (tornei.length > 0) {
       // Popola ADMIN_TORNEI
       ADMIN_TORNEI.length = 0;
       tornei.forEach(function(t) { ADMIN_TORNEI.push(t); });
-      console.log('✅ ADMIN_TORNEI popolato:', ADMIN_TORNEI.length);
 
       // Ricarica UI
       if (typeof renderTournamentCards === 'function') {
         renderTournamentCards();
-        console.log('✅ renderTournamentCards() eseguito');
       }
       if (typeof syncLeaguesDataFromAdmin === 'function') {
         syncLeaguesDataFromAdmin();
-        console.log('✅ syncLeaguesDataFromAdmin() eseguito');
       }
       // Carica loghi delle card DOPO che le card sono renderizzate
       if (typeof updateLogosTornei === 'function') {
         updateLogosTornei();
-        console.log('✅ updateLogosTornei() eseguito (dopo renderizzazione)');
       }
     }
   });
@@ -4949,7 +4914,6 @@ function parseAdminTorneiData(data) {
 
 // Carica dati critici da Firebase all'avvio
 function loadDataFromFirebase() {
-  console.log('🔥 loadDataFromFirebase() chiamato...');
   // Inizializza password admin al primo caricamento
   // Admin password gestito in localStorage, non su Firebase
 
@@ -4958,7 +4922,6 @@ function loadDataFromFirebase() {
 
   // Carica logo principale (fbLoadKey aggiunge 'data/' automaticamente)
   fbLoadKey('images/loghi/main', function(val) {
-    console.log('📥 Logo principale caricato:', val);
     if (val) {
       localStorage.setItem('adm_logo_main', val);
       if (typeof _applyLogoMain === 'function') _applyLogoMain(val);
@@ -4991,35 +4954,27 @@ function loadDataFromFirebase() {
 
 // Login user (verifica su Firebase users)
 function fbLoginUser(username, password, callback) {
-  console.log('🔐 fbLoginUser() cercando:', username);
   fbLoadKey('users/list', function(val) {
-    console.log('📊 Users caricati da Firebase:', val);
     if (!val) {
-      console.log('❌ Nessun utente trovato');
       callback(false, {error: 'Nessun utente trovato'});
       return;
     }
     var users = parseFirebaseArray(val);
     if (!Array.isArray(users)) { users = []; }
-    console.log('👥 Array di utenti:', users.length, 'utenti');
 
     var matchedUser = null;
     for (var i = 0; i < users.length; i++) {
       if (users[i].username && users[i].username.toLowerCase() === username.toLowerCase() && users[i].password === password) {
         matchedUser = users[i];
-        console.log('✅ Utente trovato:', matchedUser.username);
         break;
       }
     }
 
     if (!matchedUser) {
-      console.log('❌ Credenziali non valide');
       callback(false, {error: 'Credenziali non valide'});
     } else if (matchedUser.attivo === false) {
-      console.log('❌ Utente disattivato');
       callback(false, {error: 'Utente disattivato'});
     } else {
-      console.log('✅ Login SUCCESS - salvo credenziali');
       callback(true, {username: matchedUser.username, nome: matchedUser.nome, lega: matchedUser.lega, role: 'user'});
     }
   });
@@ -5151,7 +5106,6 @@ var ADMIN_TORNEI = [];
 
 // Crea struttura Firebase organizzata
 function createFirebaseStructure() {
-  console.log('📁 Creazione struttura Firebase...');
 
   // Crea cartelle placeholder
   var structure = [
@@ -5165,7 +5119,6 @@ function createFirebaseStructure() {
   structure.forEach(function(path) {
     fbDB.ref(path).set(null, function(err) {
       if (!err) {
-        console.log('✅ Creata: ' + path);
       }
     });
   });
@@ -5175,7 +5128,6 @@ function createFirebaseStructure() {
     if (snapshot.exists()) {
       fbDB.ref('data/images/loghi/tornei/slim').set(snapshot.val());
       fbDB.ref('images/loghi/slm').remove();
-      console.log('✅ Logo spostato: data/images/loghi/tornei/slim');
     }
   });
 
@@ -5183,7 +5135,6 @@ function createFirebaseStructure() {
     if (snapshot.exists()) {
       fbDB.ref('data/images/loghi/tornei/main').set(snapshot.val());
       fbDB.ref('images/loghi/main').remove();
-      console.log('✅ Logo spostato: data/images/loghi/tornei/main');
     }
   });
 
@@ -5192,7 +5143,6 @@ function createFirebaseStructure() {
   fbDB.ref('images/loghi').remove();
   fbDB.ref('data/adm_logo_torneo_slim').remove();
 
-  console.log('✅ Struttura creata!');
 }
 // DISABILITATO: ha cancellato i loghi
 // setTimeout(createFirebaseStructure, 2000);
@@ -5226,7 +5176,6 @@ function openAdminLogin() {
       if (saved) {
         inp.value = saved;
         if (rem) rem.checked = true;
-        console.log('📖 Admin password carica da IndexedDB');
       } else {
         inp.value = '';
         if (rem) rem.checked = false;
@@ -5249,7 +5198,6 @@ function checkAdminLogin() {
     console.log('ADMIN: remember checkbox checked?', rem && rem.checked);
     if (rem && rem.checked) {
       idbSave('_adminRemember', psw, function() {
-        console.log('ADMIN: password salvata in IndexedDB ✅');
       });
     } else {
       idbRemove('_adminRemember');
@@ -6545,7 +6493,6 @@ function showAdminSection(id, el) {
   });
   if (id==='tornei') admRenderTornei();
   if (id==='utenti') {
-    console.log('🔴 showAdminSection utenti TRIGGERATO');
     // Carica utenti da GSheets prima di renderizzare
     if (false && GS_ONLINE) {
       gsCall({action:'getUtenti'}, function(err, data) {
@@ -6563,7 +6510,6 @@ function showAdminSection(id, el) {
         });
       });
     } else {
-      console.log('🟢 Chiamata admRenderUtenti()');
       admRenderUtenti();
     }
   }
@@ -6596,7 +6542,6 @@ function showAdminSection(id, el) {
 }
 
 function admInitPage() {
-  console.log('⭐ admInitPage() CHIAMATA');
   showAdminSection('utenti', document.getElementById('adm-nav-utenti'));
 }
 
@@ -7074,21 +7019,16 @@ function admEditLogoTorneo(ti) {
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  console.log('🎬 admEditLogoTorneo() chiamata - URL:', url);
   var fbPath = 'data/images/loghi/tornei/'+t.key;
   if (url) {
-    console.log('💾 Salvando logo a '+fbPath);
     fbDB.ref(fbPath).set(url).then(() => {
-      console.log('✅ Logo salvato con successo');
       updateLogosTornei();
     }).catch(e => {
       console.error('❌ Logo save error:', e);
     });
   }
   else {
-    console.log('🗑️ Rimuovendo logo da '+fbPath);
     fbDB.ref(fbPath).remove().then(() => {
-      console.log('✅ Logo rimosso');
       updateLogosTornei();
     }).catch(e => {
       console.error('❌ Logo remove error:', e);
@@ -7133,11 +7073,9 @@ function admEditLogoTorneoStatic(key, label) {
     // Salva su Firebase
     if (url) {
       fbDB.ref('data/images/loghi/tornei/'+key).set(url).then(() => {
-        console.log('✅ Logo '+key+' salvato su Firebase');
       });
     } else {
       fbDB.ref('data/images/loghi/tornei/'+key).remove().then(() => {
-        console.log('✅ Logo '+key+' rimosso da Firebase');
       });
     }
     var prev = document.getElementById('adm-logo-torneo-'+key+'-prev');
@@ -7172,17 +7110,14 @@ function admEditLogoMain() {
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  console.log('🎬 admEditLogoMain() - Salvando a data/images/loghi/main:', url);
   // Salva il logo in Firebase a percorso corretto
   if (url) {
     fbDB.ref('data/images/loghi/main').set(url).then(() => {
-      console.log('✅ Logo salvato a data/images/loghi/main');
       _applyLogoMain(url);
       updateLogosTornei();
     }).catch(e => console.error('❌ Logo save error:', e));
   } else {
     fbDB.ref('data/images/loghi/main').set('').then(() => {
-      console.log('✅ Logo rimosso');
       _applyLogoMain('');
       updateLogosTornei();
     }).catch(e => console.error('❌ Logo clear error:', e));
@@ -7205,11 +7140,9 @@ function admEditTrofeoLega(ti, li) {
   var fbPath = 'data/images/trofei/'+t.key+'_'+l.key;
   if (url) {
     fbDB.ref(fbPath).set(url).then(() => {
-      console.log('✅ Trofeo salvato a ' + fbPath);
     });
   } else {
     fbDB.ref(fbPath).remove().then(() => {
-      console.log('✅ Trofeo rimosso');
     });
   }
   var msg = document.createElement('div');
@@ -7312,7 +7245,6 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
   fbDB.ref('data/rose/'+torneo.key+'_'+legaKey).set(rose);
   fbDB.ref('data/crediti/'+torneo.key+'_'+legaKey).set(cr);
   fbDB.ref('data/calendario/'+torneo.key+'_'+legaKey).set(cal);
-  console.log('✅ Squadre salvate su Firebase: data/rose/'+torneo.key+'_'+legaKey);
 
   localStorage.setItem('adm_rose_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
   localStorage.setItem('adm_rose_import_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
@@ -7396,8 +7328,6 @@ function admSaveUsers() {
 }
 
 function admRenderUtenti() {
-  console.log('🔵 admRenderUtenti() CHIAMATA');
-  var el = document.getElementById('adm-users-list'); if(!el) { console.log('❌ adm-users-list non trovato'); return; }
   // Popola select lega nel form aggiungi utente
   var selLega = document.getElementById('adm-new-user-lega');
   if (selLega) {
@@ -7413,12 +7343,9 @@ function admRenderUtenti() {
   }
 
   // Sezione richieste pendenti - Carica PRIMA dei controlli su ADMIN_USERS
-  console.log('📋 INIZIO: Sezione richieste pendenti');
   var pendingEl = document.getElementById('adm-pending-list');
   var countEl = document.getElementById('adm-pending-count');
-  console.log('📋 pendingEl:', pendingEl, 'countEl:', countEl);
 
-  console.log('📋 Chiamo fbLoadKey...');
   fbDB.ref('pending_requests').once('value', function(snapshot) {
     console.log('fbLoadKey pending_requests snapshot:', snapshot.val());
     var pending = [];
@@ -7591,12 +7518,9 @@ function admRenderUtenti() {
     +'</tbody></table>';
 
   // Sezione richieste pendenti - Carica da Firebase
-  console.log('📋 INIZIO: Sezione richieste pendenti');
   var pendingEl = document.getElementById('adm-pending-list');
   var countEl = document.getElementById('adm-pending-count');
-  console.log('📋 pendingEl:', pendingEl, 'countEl:', countEl);
 
-  console.log('📋 Chiamo fbLoadKey...');
   fbDB.ref('pending_requests').once('value', function(snapshot) {
     console.log('fbLoadKey pending_requests snapshot:', snapshot.val());
     var pending = [];
@@ -7772,7 +7696,6 @@ function admPreFillFromRequest(idx) {
 }
 
 function admAddUser() {
-  if (window._addingUser) { console.log('⏳ Operazione in corso, attendere...'); return; }
   window._addingUser = true;
 
   var cognome = document.getElementById('adm-new-user-cognome').value.trim();
@@ -7785,22 +7708,17 @@ function admAddUser() {
   var lega = document.getElementById('adm-new-user-lega').value;
   if (!cognome || !nome || !username || !password) { alert('Compila tutti i campi obbligatori'); window._addingUser = false; return; }
 
-  console.log('🔍 Verifico username e carico utenti da Firebase...');
   // Ricarica ADMIN_USERS da Firebase per verificare gli username attuali
   fbLoadKey('users/list', function(usersFromFb) {
-    console.log('📥 Utenti caricati da Firebase:', usersFromFb);
     var fbUsers = parseFirebaseArray(usersFromFb) || [];
     if (!Array.isArray(fbUsers)) fbUsers = [];
     if (fbUsers.find(function(u){ return u.username===username; })) { alert('Username già esistente'); window._addingUser = false; return; }
 
     var newUser = { nome:nomeCompleto, username:username, password:password, email:email, phone:phone, lega:lega, attivo:true };
     ADMIN_USERS.push(newUser);
-    console.log('👤 Nuovo utente aggiunto a ADMIN_USERS:', newUser);
 
     // Aspetta che il salvataggio su Firebase sia completato
-    console.log('💾 Inizio salvataggio su Firebase...');
     admSaveUsers().then(function() {
-      console.log('✅ Salvataggio completato! Ora cancello richieste pendenti...');
       // Rimuovi dalle richieste pendenti su Firebase se il nome corrisponde
       var nomeCompletoLower = nomeCompleto.toLowerCase().trim();
       fbDB.ref('pending_requests').once('value', function(snapshot) {
@@ -7814,7 +7732,6 @@ function admAddUser() {
               var nc = ((req.cognome||'') + ' ' + (req.nome||'')).toLowerCase().trim();
               var ni = ((req.nome||'') + ' ' + (req.cognome||'')).toLowerCase().trim();
               if (nc === nomeCompletoLower || ni === nomeCompletoLower) {
-                console.log('🗑️ Cancellando richiesta:', key, req);
                 deletePromises.push(fbDB.ref('pending_requests/' + key).remove());
               }
             }
@@ -7823,13 +7740,11 @@ function admAddUser() {
 
         // Se viene da "+ Registra", cancella anche usando la chiave salvata
         if (window._pendingRequestKeyToDelete) {
-          console.log('🗑️ Cancellando richiesta salvata:', window._pendingRequestKeyToDelete);
           deletePromises.push(fbDB.ref('pending_requests/' + window._pendingRequestKeyToDelete).remove());
           window._pendingRequestKeyToDelete = null;
         }
 
         Promise.all(deletePromises).then(function() {
-          console.log('✅ Tutte le richieste cancellate!');
           document.getElementById('adm-new-user-cognome').value='';
           document.getElementById('adm-new-user-nome').value='';
           document.getElementById('adm-new-user-username').value='';
@@ -10330,9 +10245,7 @@ var currentTournament = null;
 
 // Aggiorna contatori leghe e club nella dashboard
 function updateLogosTornei() {
-  console.log('🔄 updateLogosTornei() eseguita');
   var cards = document.querySelectorAll('.t-card');
-  console.log('📦 Found .t-card elements:', cards.length);
   try {
     cards.forEach(function(card) {
       var oc = card.getAttribute('onclick') || '';
@@ -10344,11 +10257,9 @@ function updateLogosTornei() {
       // Carica da Firebase: tornei/[key] (PRIMO) → images/ (vecchio) → localStorage
       fbDB.ref('data/images/loghi/tornei/'+m[1]).once('value', snapshot => {
         var url = snapshot.val();
-        console.log('📊 Logo tornei/'+m[1]+':', url);
         if (!url) {
           fbDB.ref('images/loghi/'+m[1]).once('value', snapshot2 => {
             url = snapshot2.val() || localStorage.getItem('adm_logo_torneo_'+m[1]);
-            console.log('📊 Logo images/'+m[1]+':', url);
             setLogoImg(url);
           });
         } else {
@@ -10360,22 +10271,17 @@ function updateLogosTornei() {
         setLogoImg(url);
       });
       function setLogoImg(url) {
-        console.log('🖼️ setLogoImg() - img element:', img, 'url:', url);
         if (url) {
           img.style.display = '';
           img.src = url;
-          console.log('✅ Assegnato src:', url);
           img.onerror = function() {
-            console.log('❌ Errore caricamento immagine');
             this.style.display = 'none';
           };
           img.onload = function() {
-            console.log('✅ Immagine caricata');
           };
         } else {
           img.style.display = 'none';
           img.src = '';
-          console.log('⚪ URL vuoto');
         }
       }
     });
@@ -10442,7 +10348,6 @@ try {
 } catch(e) {}
 
 function renderTournamentCards() {
-  console.log('🎨 renderTournamentCards() eseguito, ADMIN_TORNEI:', ADMIN_TORNEI);
   var container = document.getElementById('tournaments-container');
   if (!container) {
     console.error('❌ Container tournaments-container non trovato!');
@@ -10450,7 +10355,6 @@ function renderTournamentCards() {
   }
   var colors = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#6366f1','#f97316'];
   var tornei = (typeof ADMIN_TORNEI !== 'undefined') ? ADMIN_TORNEI : [];
-  console.log('📊 tornei in renderTournamentCards:', tornei.length);
   tornei.sort(function(a, b) { return (a.label || '').localeCompare(b.label || ''); });
   var html = '';
   tornei.forEach(function(t, idx) {
@@ -10537,14 +10441,11 @@ function loadLeagueLogos(torneoKey, leghe) {
   leghe.forEach(function(lega) {
     var fbPath = 'data/images/loghi/leghe/'+torneoKey+'_'+lega.key;
     var fbPathOld = 'images/loghi_leghe/'+torneoKey+'_'+lega.key;
-    console.log('🔍 Caricando logo da Firebase per:', {lega: lega.key, fbPath, fbPathOld});
     fbDB.ref(fbPath).once('value', function(snapshot) {
       var fbLogo = snapshot.val();
-      console.log('📊 Valore Firebase per '+fbPath+':', fbLogo);
       if (!fbLogo) {
         fbDB.ref(fbPathOld).once('value', function(snapshot2) {
           fbLogo = snapshot2.val();
-          console.log('📊 Valore Firebase old path per '+fbPathOld+':', fbLogo);
           if (fbLogo) {
             setLeagueImg(fbLogo);
           } else {
@@ -10560,7 +10461,6 @@ function loadLeagueLogos(torneoKey, leghe) {
       if (fbLogo) {
         fbLogo = _normalizeImgUrl(fbLogo);
         var imgEls = document.querySelectorAll('img[data-lega-key="'+lega.key+'"]');
-        console.log('🖼️ Logo trovato per '+lega.key+': '+fbLogo, 'elementi trovati:', imgEls.length);
         imgEls.forEach(function(img) {
           img.src = fbLogo;
           img.style.display = '';  // Mostra l'elemento se era stato nascosto
@@ -10577,11 +10477,9 @@ function debugMuoviLogoTorneoMain() {
   fbDB.ref(oldPath).once('value', function(snapshot) {
     var logo = snapshot.val();
     if (logo) {
-      console.log('📁 Spostando logo da', oldPath, 'a', newPath);
       fbDB.ref(newPath).set(logo).then(() => {
         fbDB.ref(oldPath).remove().then(() => {
           alert('✅ Logo spostato a ' + newPath);
-          console.log('✅ Logo spostato');
         });
       });
     } else {
@@ -10597,11 +10495,9 @@ function debugMuoviLoghiTornei() {
   fbDB.ref(oldPath).once('value', function(snapshot) {
     var logo = snapshot.val();
     if (logo) {
-      console.log('📁 Spostando logo da', oldPath, 'a', newPath);
       fbDB.ref(newPath).set(logo).then(() => {
         fbDB.ref(oldPath).remove().then(() => {
           alert('✅ Logo spostato a ' + newPath);
-          console.log('✅ Logo spostato');
         });
       });
     } else {
@@ -10622,14 +10518,12 @@ function debugCreateFirebaseStructure() {
 
   var promises = [];
   Object.keys(structure).forEach(path => {
-    console.log('📁 Creando path:', path);
     promises.push(
       fbDB.ref(path).set({_init: true}).catch(e => console.error('Errore:', path, e))
     );
   });
 
   Promise.all(promises).then(() => {
-    console.log('✅ Struttura Firebase creata');
     alert('✅ Struttura Firebase creata:\n- data/images/loghi/squadre/\n- data/images/loghi/tornei/\n- data/images/loghi/leghe/\n- data/images/trofei/\n- data/images/vari/');
   }).catch(e => {
     console.error('❌ Errore creazione struttura:', e);
@@ -10640,9 +10534,7 @@ function debugCreateFirebaseStructure() {
 // FUNZIONE DEBUG: Cancella TUTTI i loghi di leghe da Firebase
 function debugCancellaLoghiLeghe() {
   var path = 'data/images/loghi/leghe';
-  console.log('🗑️ Cancellando loghi da Firebase:', path);
   fbDB.ref(path).remove().then(() => {
-    console.log('✅ Loghi leghe cancellati');
     alert('✅ Tutti i loghi leghe cancellati da Firebase');
   }).catch(e => {
     console.error('❌ Errore cancellazione:', e);
@@ -10713,7 +10605,6 @@ function _updateLegaDashboard(leagueKey) {
       if (fbTrophy) {
         fbTrophy = _normalizeImgUrl(fbTrophy);
         trophyEl.src = fbTrophy;
-        console.log('🏆 Trofeo caricato:', fbTrophy);
       } else if (typeof TROPHY_MAP !== 'undefined') {
         var trophyName = trophyMap[_realLK];
         if (trophyName && TROPHY_MAP[trophyName]) trophyEl.src = TROPHY_MAP[trophyName];
@@ -10734,7 +10625,6 @@ function _updateLegaDashboard(leagueKey) {
         var lgLogoEl = document.getElementById('league-logo');
         if (bcLogoEl) bcLogoEl.src = fbLogo;
         if (lgLogoEl) lgLogoEl.src = fbLogo;
-        console.log('🖼️ Logo lega caricato:', fbLogo);
       }
     });
   }
@@ -11264,7 +11154,6 @@ var ADMIN_TORNEI = [];
 
 // Crea struttura Firebase organizzata
 function createFirebaseStructure() {
-  console.log('📁 Creazione struttura Firebase...');
 
   // Crea cartelle placeholder
   var structure = [
@@ -11278,7 +11167,6 @@ function createFirebaseStructure() {
   structure.forEach(function(path) {
     fbDB.ref(path).set(null, function(err) {
       if (!err) {
-        console.log('✅ Creata: ' + path);
       }
     });
   });
@@ -11288,7 +11176,6 @@ function createFirebaseStructure() {
     if (snapshot.exists()) {
       fbDB.ref('data/images/loghi/tornei/slim').set(snapshot.val());
       fbDB.ref('images/loghi/slm').remove();
-      console.log('✅ Logo spostato: data/images/loghi/tornei/slim');
     }
   });
 
@@ -11296,7 +11183,6 @@ function createFirebaseStructure() {
     if (snapshot.exists()) {
       fbDB.ref('data/images/loghi/tornei/main').set(snapshot.val());
       fbDB.ref('images/loghi/main').remove();
-      console.log('✅ Logo spostato: data/images/loghi/tornei/main');
     }
   });
 
@@ -11305,7 +11191,6 @@ function createFirebaseStructure() {
   fbDB.ref('images/loghi').remove();
   fbDB.ref('data/adm_logo_torneo_slim').remove();
 
-  console.log('✅ Struttura creata!');
 }
 // DISABILITATO: ha cancellato i loghi
 // setTimeout(createFirebaseStructure, 2000);
@@ -11339,7 +11224,6 @@ function openAdminLogin() {
       if (saved) {
         inp.value = saved;
         if (rem) rem.checked = true;
-        console.log('📖 Admin password carica da IndexedDB');
       } else {
         inp.value = '';
         if (rem) rem.checked = false;
@@ -11362,7 +11246,6 @@ function checkAdminLogin() {
     console.log('ADMIN: remember checkbox checked?', rem && rem.checked);
     if (rem && rem.checked) {
       idbSave('_adminRemember', psw, function() {
-        console.log('ADMIN: password salvata in IndexedDB ✅');
       });
     } else {
       idbRemove('_adminRemember');
@@ -12908,21 +12791,16 @@ function admEditLogoTorneo(ti) {
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  console.log('🎬 admEditLogoTorneo() chiamata - URL:', url);
   var fbPath = 'data/images/loghi/tornei/'+t.key;
   if (url) {
-    console.log('💾 Salvando logo a '+fbPath);
     fbDB.ref(fbPath).set(url).then(() => {
-      console.log('✅ Logo salvato con successo');
       updateLogosTornei();
     }).catch(e => {
       console.error('❌ Logo save error:', e);
     });
   }
   else {
-    console.log('🗑️ Rimuovendo logo da '+fbPath);
     fbDB.ref(fbPath).remove().then(() => {
-      console.log('✅ Logo rimosso');
       updateLogosTornei();
     }).catch(e => {
       console.error('❌ Logo remove error:', e);
@@ -12967,11 +12845,9 @@ function admEditLogoTorneoStatic(key, label) {
     // Salva su Firebase
     if (url) {
       fbDB.ref('data/images/loghi/tornei/'+key).set(url).then(() => {
-        console.log('✅ Logo '+key+' salvato su Firebase');
       });
     } else {
       fbDB.ref('data/images/loghi/tornei/'+key).remove().then(() => {
-        console.log('✅ Logo '+key+' rimosso da Firebase');
       });
     }
     var prev = document.getElementById('adm-logo-torneo-'+key+'-prev');
@@ -13006,17 +12882,14 @@ function admEditLogoMain() {
   if (url === null) return;
   url = url.trim();
   url = _normalizeImgUrl(url);
-  console.log('🎬 admEditLogoMain() - Salvando a data/images/loghi/main:', url);
   // Salva il logo in Firebase a percorso corretto
   if (url) {
     fbDB.ref('data/images/loghi/main').set(url).then(() => {
-      console.log('✅ Logo salvato a data/images/loghi/main');
       _applyLogoMain(url);
       updateLogosTornei();
     }).catch(e => console.error('❌ Logo save error:', e));
   } else {
     fbDB.ref('data/images/loghi/main').set('').then(() => {
-      console.log('✅ Logo rimosso');
       _applyLogoMain('');
       updateLogosTornei();
     }).catch(e => console.error('❌ Logo clear error:', e));
@@ -13039,11 +12912,9 @@ function admEditTrofeoLega(ti, li) {
   var fbPath = 'data/images/trofei/'+t.key+'_'+l.key;
   if (url) {
     fbDB.ref(fbPath).set(url).then(() => {
-      console.log('✅ Trofeo salvato a ' + fbPath);
     });
   } else {
     fbDB.ref(fbPath).remove().then(() => {
-      console.log('✅ Trofeo rimosso');
     });
   }
   var msg = document.createElement('div');
@@ -13146,7 +13017,6 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
   fbDB.ref('data/rose/'+torneo.key+'_'+legaKey).set(rose);
   fbDB.ref('data/crediti/'+torneo.key+'_'+legaKey).set(cr);
   fbDB.ref('data/calendario/'+torneo.key+'_'+legaKey).set(cal);
-  console.log('✅ Squadre salvate su Firebase: data/rose/'+torneo.key+'_'+legaKey);
 
   localStorage.setItem('adm_rose_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
   localStorage.setItem('adm_rose_import_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
@@ -13230,8 +13100,6 @@ function admSaveUsers() {
 }
 
 function admRenderUtenti() {
-  console.log('🔵 admRenderUtenti() CHIAMATA');
-  var el = document.getElementById('adm-users-list'); if(!el) { console.log('❌ adm-users-list non trovato'); return; }
   // Popola select lega nel form aggiungi utente
   var selLega = document.getElementById('adm-new-user-lega');
   if (selLega) {
@@ -13247,12 +13115,9 @@ function admRenderUtenti() {
   }
 
   // Sezione richieste pendenti - Carica PRIMA dei controlli su ADMIN_USERS
-  console.log('📋 INIZIO: Sezione richieste pendenti');
   var pendingEl = document.getElementById('adm-pending-list');
   var countEl = document.getElementById('adm-pending-count');
-  console.log('📋 pendingEl:', pendingEl, 'countEl:', countEl);
 
-  console.log('📋 Chiamo fbLoadKey...');
   fbDB.ref('pending_requests').once('value', function(snapshot) {
     console.log('fbLoadKey pending_requests snapshot:', snapshot.val());
     var pending = [];
@@ -13425,12 +13290,9 @@ function admRenderUtenti() {
     +'</tbody></table>';
 
   // Sezione richieste pendenti - Carica da Firebase
-  console.log('📋 INIZIO: Sezione richieste pendenti');
   var pendingEl = document.getElementById('adm-pending-list');
   var countEl = document.getElementById('adm-pending-count');
-  console.log('📋 pendingEl:', pendingEl, 'countEl:', countEl);
 
-  console.log('📋 Chiamo fbLoadKey...');
   fbDB.ref('pending_requests').once('value', function(snapshot) {
     console.log('fbLoadKey pending_requests snapshot:', snapshot.val());
     var pending = [];
@@ -13606,7 +13468,6 @@ function admPreFillFromRequest(idx) {
 }
 
 function admAddUser() {
-  if (window._addingUser) { console.log('⏳ Operazione in corso, attendere...'); return; }
   window._addingUser = true;
 
   var cognome = document.getElementById('adm-new-user-cognome').value.trim();
@@ -13619,22 +13480,17 @@ function admAddUser() {
   var lega = document.getElementById('adm-new-user-lega').value;
   if (!cognome || !nome || !username || !password) { alert('Compila tutti i campi obbligatori'); window._addingUser = false; return; }
 
-  console.log('🔍 Verifico username e carico utenti da Firebase...');
   // Ricarica ADMIN_USERS da Firebase per verificare gli username attuali
   fbLoadKey('users/list', function(usersFromFb) {
-    console.log('📥 Utenti caricati da Firebase:', usersFromFb);
     var fbUsers = parseFirebaseArray(usersFromFb) || [];
     if (!Array.isArray(fbUsers)) fbUsers = [];
     if (fbUsers.find(function(u){ return u.username===username; })) { alert('Username già esistente'); window._addingUser = false; return; }
 
     var newUser = { nome:nomeCompleto, username:username, password:password, email:email, phone:phone, lega:lega, attivo:true };
     ADMIN_USERS.push(newUser);
-    console.log('👤 Nuovo utente aggiunto a ADMIN_USERS:', newUser);
 
     // Aspetta che il salvataggio su Firebase sia completato
-    console.log('💾 Inizio salvataggio su Firebase...');
     admSaveUsers().then(function() {
-      console.log('✅ Salvataggio completato! Ora cancello richieste pendenti...');
       // Rimuovi dalle richieste pendenti su Firebase se il nome corrisponde
       var nomeCompletoLower = nomeCompleto.toLowerCase().trim();
       fbDB.ref('pending_requests').once('value', function(snapshot) {
@@ -13648,7 +13504,6 @@ function admAddUser() {
               var nc = ((req.cognome||'') + ' ' + (req.nome||'')).toLowerCase().trim();
               var ni = ((req.nome||'') + ' ' + (req.cognome||'')).toLowerCase().trim();
               if (nc === nomeCompletoLower || ni === nomeCompletoLower) {
-                console.log('🗑️ Cancellando richiesta:', key, req);
                 deletePromises.push(fbDB.ref('pending_requests/' + key).remove());
               }
             }
@@ -13657,13 +13512,11 @@ function admAddUser() {
 
         // Se viene da "+ Registra", cancella anche usando la chiave salvata
         if (window._pendingRequestKeyToDelete) {
-          console.log('🗑️ Cancellando richiesta salvata:', window._pendingRequestKeyToDelete);
           deletePromises.push(fbDB.ref('pending_requests/' + window._pendingRequestKeyToDelete).remove());
           window._pendingRequestKeyToDelete = null;
         }
 
         Promise.all(deletePromises).then(function() {
-          console.log('✅ Tutte le richieste cancellate!');
           document.getElementById('adm-new-user-cognome').value='';
           document.getElementById('adm-new-user-nome').value='';
           document.getElementById('adm-new-user-username').value='';
@@ -15978,12 +15831,10 @@ function closeLoginModal(){
   var e=document.getElementById('login-error');if(e)e.style.display='none';
 }
 function doLogin(){
-  console.log('🔍 doLogin() CHIAMATO');
   var uOriginal = (document.getElementById('login-user')?document.getElementById('login-user').value||'':'').trim();
   var u = uOriginal.toLowerCase();
   var p=(document.getElementById('login-pass')?document.getElementById('login-pass').value||'':'').trim();
   var e=document.getElementById('login-error');
-  console.log('📝 Username:', u, 'Password length:', p.length);
   if(!u||!p){if(e){e.textContent='Inserisci username e password.';e.style.display='block';}return;}
 
   var btn=document.querySelector('#login-modal button[onclick]');
@@ -15995,7 +15846,6 @@ function doLogin(){
       var user = userOrError;
       // Salva user in localStorage per i check di login
       localStorage.setItem('current_user', JSON.stringify(user));
-      console.log('LOGIN: current_user salvato in localStorage ✅');
       // Salva credenziali solo se "Ricordami" è spuntato
       var remember = document.getElementById('login-remember');
       console.log('LOGIN: remember checkbox checked?', remember && remember.checked);
@@ -16003,7 +15853,6 @@ function doLogin(){
         // Salva in IndexedDB per persistenza dopo refresh (con username originale per display)
         idbSave('saved_credentials', {u:u, uDisplay:uOriginal, p:p}, function() {
           idbSave('saved_user_data', user, function() {
-            console.log('LOGIN: credenziali salvate in IndexedDB ✅');
           });
         });
       } else {
@@ -16045,7 +15894,6 @@ function loadSavedCredentials() {
         if (userField) userField.value = creds.uDisplay || creds.u;
         if (passField) passField.value = creds.p;
         if (rememberField) rememberField.checked = true;
-        console.log('📖 Credenziali caricate da IndexedDB');
       } catch(e) { console.log('Errore caricamento credenziali:', e); }
     }
   });
@@ -16151,7 +15999,6 @@ document.addEventListener('DOMContentLoaded', function() {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js', { scope: '/malati-di-fanta/' })
     .then(reg => {
-      console.log('✅ Service Worker registrato', reg);
 
       reg.onupdatefound = function() {
         var newWorker = reg.installing;
@@ -16165,7 +16012,6 @@ if ('serviceWorker' in navigator) {
         };
       };
     })
-    .catch(err => console.log('❌ Service Worker errore:', err));
 }
 </script>
 
