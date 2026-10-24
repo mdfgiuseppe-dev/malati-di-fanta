@@ -3750,23 +3750,15 @@ function updateLogosTornei() {
       var img = card.querySelector('.t-logo-area img');
       if (!img) return;
 
-      // Carica da Firebase: tornei/[key] (PRIMO) → main (fallback) → images/ (vecchio) → localStorage
+      // Carica da Firebase: tornei/[key] (PRIMO) → images/ (vecchio) → localStorage
       fbDB.ref('data/images/tornei/'+m[1]).once('value', snapshot => {
         var url = snapshot.val();
         console.log('📊 Logo tornei/'+m[1]+':', url);
         if (!url) {
-          fbDB.ref('data/images/loghi/main').once('value', snapshot1 => {
-            url = snapshot1.val();
-            console.log('📊 Logo main (fallback):', url);
-            if (!url) {
-              fbDB.ref('images/loghi/'+m[1]).once('value', snapshot2 => {
-                url = snapshot2.val() || localStorage.getItem('adm_logo_torneo_'+m[1]);
-                console.log('📊 Logo images/'+m[1]+':', url);
-                setLogoImg(url);
-              });
-            } else {
-              setLogoImg(url);
-            }
+          fbDB.ref('images/loghi/'+m[1]).once('value', snapshot2 => {
+            url = snapshot2.val() || localStorage.getItem('adm_logo_torneo_'+m[1]);
+            console.log('📊 Logo images/'+m[1]+':', url);
+            setLogoImg(url);
           });
         } else {
           setLogoImg(url);
@@ -10327,23 +10319,15 @@ function updateLogosTornei() {
       var img = card.querySelector('.t-logo-area img');
       if (!img) return;
 
-      // Carica da Firebase: tornei/[key] (PRIMO) → main (fallback) → images/ (vecchio) → localStorage
+      // Carica da Firebase: tornei/[key] (PRIMO) → images/ (vecchio) → localStorage
       fbDB.ref('data/images/tornei/'+m[1]).once('value', snapshot => {
         var url = snapshot.val();
         console.log('📊 Logo tornei/'+m[1]+':', url);
         if (!url) {
-          fbDB.ref('data/images/loghi/main').once('value', snapshot1 => {
-            url = snapshot1.val();
-            console.log('📊 Logo main (fallback):', url);
-            if (!url) {
-              fbDB.ref('images/loghi/'+m[1]).once('value', snapshot2 => {
-                url = snapshot2.val() || localStorage.getItem('adm_logo_torneo_'+m[1]);
-                console.log('📊 Logo images/'+m[1]+':', url);
-                setLogoImg(url);
-              });
-            } else {
-              setLogoImg(url);
-            }
+          fbDB.ref('images/loghi/'+m[1]).once('value', snapshot2 => {
+            url = snapshot2.val() || localStorage.getItem('adm_logo_torneo_'+m[1]);
+            console.log('📊 Logo images/'+m[1]+':', url);
+            setLogoImg(url);
           });
         } else {
           setLogoImg(url);
