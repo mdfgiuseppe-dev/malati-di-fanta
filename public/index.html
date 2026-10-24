@@ -4867,6 +4867,11 @@ function loadTorneiFromFirebase() {
         syncLeaguesDataFromAdmin();
         console.log('✅ syncLeaguesDataFromAdmin() eseguito');
       }
+      // Carica loghi delle card DOPO che le card sono renderizzate
+      if (typeof updateLogosTornei === 'function') {
+        updateLogosTornei();
+        console.log('✅ updateLogosTornei() eseguito (dopo renderizzazione)');
+      }
     }
   });
 }
