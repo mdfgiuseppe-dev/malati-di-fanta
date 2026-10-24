@@ -7251,6 +7251,8 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
   fbDB.ref('data/rose/'+torneo.key+'_'+legaKey).set(rose);
   fbDB.ref('data/crediti/'+torneo.key+'_'+legaKey).set(cr);
   fbDB.ref('data/calendario/'+torneo.key+'_'+legaKey).set(cal);
+  // Salva squadre su Firebase (percorso strutturato per tornei)
+  fbDB.ref('data/tornei/'+torneo.key+'/'+legaKey+'/squadre').set(squadre);
 
   localStorage.setItem('adm_rose_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
   localStorage.setItem('adm_rose_import_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
@@ -13020,6 +13022,8 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
   fbDB.ref('data/rose/'+torneo.key+'_'+legaKey).set(rose);
   fbDB.ref('data/crediti/'+torneo.key+'_'+legaKey).set(cr);
   fbDB.ref('data/calendario/'+torneo.key+'_'+legaKey).set(cal);
+  // Salva squadre su Firebase (percorso strutturato per tornei)
+  fbDB.ref('data/tornei/'+torneo.key+'/'+legaKey+'/squadre').set(squadre);
 
   localStorage.setItem('adm_rose_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
   localStorage.setItem('adm_rose_import_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
