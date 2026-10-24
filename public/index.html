@@ -4859,11 +4859,14 @@ function parseAdminTorneiData(data) {
 
 // Carica dati critici da Firebase all'avvio
 function loadDataFromFirebase() {
+  console.log('🔥 loadDataFromFirebase() chiamato...');
   // Inizializza password admin al primo caricamento
   // Admin password gestito in localStorage, non su Firebase
 
   // Carica admin_tornei
+  console.log('🔄 fbLoadKey("admin_tornei") in corso...');
   fbLoadKey('admin_tornei', function(val) {
+    console.log('📥 Callback fbLoadKey("admin_tornei") eseguito con val:', val);
     var tornei;
 
     if (val) {
