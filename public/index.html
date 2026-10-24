@@ -5167,16 +5167,15 @@ function openAdminLogin() {
     var inp = document.getElementById('admin-psw-input');
     var rem = document.getElementById('admin-remember');
 
-    // Carica password da IndexedDB (se "Ricordami" era spuntato)
-    idbLoad('_adminRemember', function(saved) {
-      if (saved) {
-        inp.value = saved;
-        if (rem) rem.checked = true;
-      } else {
-        inp.value = '';
-        if (rem) rem.checked = false;
-      }
-    });
+    // Carica password da localStorage (se "Ricordami" era spuntato)
+    var saved = localStorage.getItem('_adminRemember');
+    if (saved) {
+      inp.value = saved;
+      if (rem) rem.checked = true;
+    } else {
+      inp.value = '';
+      if (rem) rem.checked = false;
+    }
 
     document.getElementById('admin-login-err').style.display='none';
     setTimeout(function(){ inp.focus(); },100);
@@ -5193,11 +5192,9 @@ function checkAdminLogin() {
     var rem = document.getElementById('admin-remember');
     console.log('ADMIN: remember checkbox checked?', rem && rem.checked);
     if (rem && rem.checked) {
-      idbSave('_adminRemember', psw, function() {
-      });
+      localStorage.setItem('_adminRemember', psw);
     } else {
-      idbRemove('_adminRemember');
-      console.log('ADMIN: password NON salvata');
+      localStorage.removeItem('_adminRemember');
     }
     closeAdminLogin();
     showPage('admin');
@@ -11215,16 +11212,15 @@ function openAdminLogin() {
     var inp = document.getElementById('admin-psw-input');
     var rem = document.getElementById('admin-remember');
 
-    // Carica password da IndexedDB (se "Ricordami" era spuntato)
-    idbLoad('_adminRemember', function(saved) {
-      if (saved) {
-        inp.value = saved;
-        if (rem) rem.checked = true;
-      } else {
-        inp.value = '';
-        if (rem) rem.checked = false;
-      }
-    });
+    // Carica password da localStorage (se "Ricordami" era spuntato)
+    var saved = localStorage.getItem('_adminRemember');
+    if (saved) {
+      inp.value = saved;
+      if (rem) rem.checked = true;
+    } else {
+      inp.value = '';
+      if (rem) rem.checked = false;
+    }
 
     document.getElementById('admin-login-err').style.display='none';
     setTimeout(function(){ inp.focus(); },100);
@@ -11241,11 +11237,9 @@ function checkAdminLogin() {
     var rem = document.getElementById('admin-remember');
     console.log('ADMIN: remember checkbox checked?', rem && rem.checked);
     if (rem && rem.checked) {
-      idbSave('_adminRemember', psw, function() {
-      });
+      localStorage.setItem('_adminRemember', psw);
     } else {
-      idbRemove('_adminRemember');
-      console.log('ADMIN: password NON salvata');
+      localStorage.removeItem('_adminRemember');
     }
     closeAdminLogin();
     showPage('admin');
@@ -15846,15 +15840,12 @@ function doLogin(){
       var remember = document.getElementById('login-remember');
       console.log('LOGIN: remember checkbox checked?', remember && remember.checked);
       if (remember && remember.checked) {
-        // Salva in IndexedDB per persistenza dopo refresh (con username originale per display)
-        idbSave('saved_credentials', {u:u, uDisplay:uOriginal, p:p}, function() {
-          idbSave('saved_user_data', user, function() {
-          });
-        });
+        // Salva in localStorage
+        localStorage.setItem('saved_credentials', JSON.stringify({u:u, uDisplay:uOriginal, p:p}));
+        localStorage.setItem('saved_user_data', JSON.stringify(user));
       } else {
-        idbRemove('saved_credentials');
-        idbRemove('saved_user_data');
-        console.log('LOGIN: credenziali NON salvate');
+        localStorage.removeItem('saved_credentials');
+        localStorage.removeItem('saved_user_data');
       }
       closeLoginModal();
       var initials = user.ruolo==='admin' ? 'AD' : (user.nome||'?').split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'??';
@@ -15879,20 +15870,19 @@ function doLogin(){
 
 // Pre-compila form di login con credenziali salvate
 function loadSavedCredentials() {
-  idbLoad('saved_credentials', function(saved) {
-    if (saved) {
-      try {
-        var creds = saved;
-        var userField = document.getElementById('login-user');
-        var passField = document.getElementById('login-pass');
-        var rememberField = document.getElementById('login-remember');
-        // Usa uDisplay (originale con maiuscole) se disponibile, altrimenti u
-        if (userField) userField.value = creds.uDisplay || creds.u;
-        if (passField) passField.value = creds.p;
-        if (rememberField) rememberField.checked = true;
-      } catch(e) { console.log('Errore caricamento credenziali:', e); }
-    }
-  });
+  var saved = localStorage.getItem('saved_credentials');
+  if (saved) {
+    try {
+      var creds = JSON.parse(saved);
+      var userField = document.getElementById('login-user');
+      var passField = document.getElementById('login-pass');
+      var rememberField = document.getElementById('login-remember');
+      // Usa uDisplay (originale con maiuscole) se disponibile, altrimenti u
+      if (userField) userField.value = creds.uDisplay || creds.u;
+      if (passField) passField.value = creds.p;
+      if (rememberField) rememberField.checked = true;
+    } catch(e) { console.log('Errore caricamento credenziali:', e); }
+  }
 }
 
 // Carica credenziali salvate quando si apre il modal di login
