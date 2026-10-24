@@ -7134,11 +7134,12 @@ function admEditLogoTorneoStatic(key, label) {
     var prev = document.getElementById('adm-logo-torneo-'+key+'-prev');
     if (prev) prev.src = url || '';
     updateLogosTornei();
-  var msg = document.createElement('div');
-  msg.textContent = url ? '✅ Logo torneo salvato' : '✅ Logo rimosso';
-  msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
-  document.body.appendChild(msg);
-  setTimeout(function(){msg.remove();},2000);
+    var msg = document.createElement('div');
+    msg.textContent = url ? '✅ Logo torneo salvato' : '✅ Logo rimosso';
+    msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
+    document.body.appendChild(msg);
+    setTimeout(function(){msg.remove();},2000);
+  });
 }
 function admResetTrofei() {
   if (!confirm('Sei sicuro? Tutti i trofei verranno cancellati da localStorage e GSheets.')) return;
@@ -12963,11 +12964,12 @@ function admEditLogoTorneoStatic(key, label) {
     var prev = document.getElementById('adm-logo-torneo-'+key+'-prev');
     if (prev) prev.src = url || '';
     updateLogosTornei();
-  var msg = document.createElement('div');
-  msg.textContent = url ? '✅ Logo torneo salvato' : '✅ Logo rimosso';
-  msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
-  document.body.appendChild(msg);
-  setTimeout(function(){msg.remove();},2000);
+    var msg = document.createElement('div');
+    msg.textContent = url ? '✅ Logo torneo salvato' : '✅ Logo rimosso';
+    msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
+    document.body.appendChild(msg);
+    setTimeout(function(){msg.remove();},2000);
+  });
 }
 function admResetTrofei() {
   if (!confirm('Sei sicuro? Tutti i trofei verranno cancellati da localStorage e GSheets.')) return;
