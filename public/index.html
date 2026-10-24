@@ -3751,7 +3751,7 @@ function updateLogosTornei() {
       if (!img) return;
 
       // Carica da Firebase: tornei/[key] (PRIMO) → main (fallback) → images/ (vecchio) → localStorage
-      fbDB.ref('data/images/loghi/tornei/'+m[1]).once('value', snapshot => {
+      fbDB.ref('data/images/tornei/'+m[1]).once('value', snapshot => {
         var url = snapshot.val();
         console.log('📊 Logo tornei/'+m[1]+':', url);
         if (!url) {
@@ -4010,7 +4010,7 @@ function debugMuoviLogoTorneoMain() {
 // FUNZIONE DEBUG: Sposta loghi tornei dal percorso vecchio a quello nuovo
 function debugMuoviLoghiTornei() {
   var oldPath = 'data/adm_logo_torneo_slim';
-  var newPath = 'data/images/loghi/tornei/slim';
+  var newPath = 'data/images/tornei/slim';
   fbDB.ref(oldPath).once('value', function(snapshot) {
     var logo = snapshot.val();
     if (logo) {
@@ -4031,7 +4031,7 @@ function debugMuoviLoghiTornei() {
 function debugCreateFirebaseStructure() {
   var structure = {
     'data/images/loghi/squadre': {},
-    'data/images/loghi/tornei': {},
+    'data/images/tornei': {},
     'data/images/loghi/leghe': {},
     'data/images/trofei': {},
     'data/images/vari': {}
@@ -4047,7 +4047,7 @@ function debugCreateFirebaseStructure() {
 
   Promise.all(promises).then(() => {
     console.log('✅ Struttura Firebase creata');
-    alert('✅ Struttura Firebase creata:\n- data/images/loghi/squadre/\n- data/images/loghi/tornei/\n- data/images/loghi/leghe/\n- data/images/trofei/\n- data/images/vari/');
+    alert('✅ Struttura Firebase creata:\n- data/images/loghi/squadre/\n- data/images/tornei/\n- data/images/loghi/leghe/\n- data/images/trofei/\n- data/images/vari/');
   }).catch(e => {
     console.error('❌ Errore creazione struttura:', e);
     alert('❌ Errore: ' + e.message);
@@ -5156,7 +5156,7 @@ function createFirebaseStructure() {
   // Crea cartelle placeholder
   var structure = [
     'data/images/loghi/squadre',
-    'data/images/loghi/tornei',
+    'data/images/tornei',
     'data/images/loghi/leghe',
     'data/images/trofei',
     'data/images/vari'
@@ -5173,17 +5173,17 @@ function createFirebaseStructure() {
   // Sposta loghi tornei vecchi
   fbDB.ref('images/loghi/slm').once('value', snapshot => {
     if (snapshot.exists()) {
-      fbDB.ref('data/images/loghi/tornei/slim').set(snapshot.val());
+      fbDB.ref('data/images/tornei/slim').set(snapshot.val());
       fbDB.ref('images/loghi/slm').remove();
-      console.log('✅ Logo spostato: data/images/loghi/tornei/slim');
+      console.log('✅ Logo spostato: data/images/tornei/slim');
     }
   });
 
   fbDB.ref('images/loghi/main').once('value', snapshot => {
     if (snapshot.exists()) {
-      fbDB.ref('data/images/loghi/tornei/main').set(snapshot.val());
+      fbDB.ref('data/images/tornei/main').set(snapshot.val());
       fbDB.ref('images/loghi/main').remove();
-      console.log('✅ Logo spostato: data/images/loghi/tornei/main');
+      console.log('✅ Logo spostato: data/images/tornei/main');
     }
   });
 
@@ -10328,7 +10328,7 @@ function updateLogosTornei() {
       if (!img) return;
 
       // Carica da Firebase: tornei/[key] (PRIMO) → main (fallback) → images/ (vecchio) → localStorage
-      fbDB.ref('data/images/loghi/tornei/'+m[1]).once('value', snapshot => {
+      fbDB.ref('data/images/tornei/'+m[1]).once('value', snapshot => {
         var url = snapshot.val();
         console.log('📊 Logo tornei/'+m[1]+':', url);
         if (!url) {
@@ -10587,7 +10587,7 @@ function debugMuoviLogoTorneoMain() {
 // FUNZIONE DEBUG: Sposta loghi tornei dal percorso vecchio a quello nuovo
 function debugMuoviLoghiTornei() {
   var oldPath = 'data/adm_logo_torneo_slim';
-  var newPath = 'data/images/loghi/tornei/slim';
+  var newPath = 'data/images/tornei/slim';
   fbDB.ref(oldPath).once('value', function(snapshot) {
     var logo = snapshot.val();
     if (logo) {
@@ -10608,7 +10608,7 @@ function debugMuoviLoghiTornei() {
 function debugCreateFirebaseStructure() {
   var structure = {
     'data/images/loghi/squadre': {},
-    'data/images/loghi/tornei': {},
+    'data/images/tornei': {},
     'data/images/loghi/leghe': {},
     'data/images/trofei': {},
     'data/images/vari': {}
@@ -10624,7 +10624,7 @@ function debugCreateFirebaseStructure() {
 
   Promise.all(promises).then(() => {
     console.log('✅ Struttura Firebase creata');
-    alert('✅ Struttura Firebase creata:\n- data/images/loghi/squadre/\n- data/images/loghi/tornei/\n- data/images/loghi/leghe/\n- data/images/trofei/\n- data/images/vari/');
+    alert('✅ Struttura Firebase creata:\n- data/images/loghi/squadre/\n- data/images/tornei/\n- data/images/loghi/leghe/\n- data/images/trofei/\n- data/images/vari/');
   }).catch(e => {
     console.error('❌ Errore creazione struttura:', e);
     alert('❌ Errore: ' + e.message);
@@ -11263,7 +11263,7 @@ function createFirebaseStructure() {
   // Crea cartelle placeholder
   var structure = [
     'data/images/loghi/squadre',
-    'data/images/loghi/tornei',
+    'data/images/tornei',
     'data/images/loghi/leghe',
     'data/images/trofei',
     'data/images/vari'
@@ -11280,17 +11280,17 @@ function createFirebaseStructure() {
   // Sposta loghi tornei vecchi
   fbDB.ref('images/loghi/slm').once('value', snapshot => {
     if (snapshot.exists()) {
-      fbDB.ref('data/images/loghi/tornei/slim').set(snapshot.val());
+      fbDB.ref('data/images/tornei/slim').set(snapshot.val());
       fbDB.ref('images/loghi/slm').remove();
-      console.log('✅ Logo spostato: data/images/loghi/tornei/slim');
+      console.log('✅ Logo spostato: data/images/tornei/slim');
     }
   });
 
   fbDB.ref('images/loghi/main').once('value', snapshot => {
     if (snapshot.exists()) {
-      fbDB.ref('data/images/loghi/tornei/main').set(snapshot.val());
+      fbDB.ref('data/images/tornei/main').set(snapshot.val());
       fbDB.ref('images/loghi/main').remove();
-      console.log('✅ Logo spostato: data/images/loghi/tornei/main');
+      console.log('✅ Logo spostato: data/images/tornei/main');
     }
   });
 
