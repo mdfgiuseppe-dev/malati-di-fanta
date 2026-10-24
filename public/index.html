@@ -4792,6 +4792,7 @@ function loadTorneiFromFirebase() {
   console.log('📥 Carico tornei da data/tornei...');
   fbLoadKey('tornei', function(val) {
     console.log('📥 data/tornei caricato:', val);
+    console.log('   tipo:', typeof val, 'è array?', Array.isArray(val), 'chiavi:', val ? Object.keys(val) : 'null');
     if (!val || typeof val !== 'object') {
       console.error('❌ data/tornei non trovato o non è oggetto');
       return;
@@ -4803,10 +4804,12 @@ function loadTorneiFromFirebase() {
       var obj = {};
       val.forEach(function(item) {
         if (item && typeof item === 'object') {
+          console.log('   merging item:', item);
           Object.assign(obj, item);
         }
       });
       val = obj;
+      console.log('   dopo conversione, chiavi:', Object.keys(val));
     }
 
     var tornei = [];
