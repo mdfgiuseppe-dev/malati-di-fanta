@@ -4791,8 +4791,14 @@ var LEGHE_LABELS = {
 function loadTorneiFromFirebase() {
   console.log('📥 Carico tornei da data/tornei...');
   fbLoadKey('tornei', function(val) {
-    console.log('📥 data/tornei caricato:', val);
-    console.log('   tipo:', typeof val, 'è array?', Array.isArray(val), 'chiavi:', val ? Object.keys(val) : 'null');
+    console.log('📥 RAW data/tornei da Firebase:', val);
+    if (val && typeof val === 'object') {
+      console.log('   Object.keys(raw):', Object.keys(val).join('|'));
+      Object.keys(val).forEach(function(k) {
+        console.log('   chiave raw[' + k + '] lunghezza:', k.length, 'contenuto:', JSON.stringify(k));
+      });
+    }
+
     if (!val || typeof val !== 'object') {
       console.error('❌ data/tornei non trovato o non è oggetto');
       return;
