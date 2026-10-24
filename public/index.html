@@ -4761,6 +4761,31 @@ function fbLoadKey(key, callback) {
 // ═════════════════════════════════════════════════════════════════
 // PARSING ROBUSTO TORNEI - Gestisce qualunque formato Firebase
 // ═════════════════════════════════════════════════════════════════
+// Tornei default se non esistono in Firebase
+function getDefaultTornei() {
+  return [
+    {
+      key: 'slim',
+      label: 'Scudetto Slim',
+      formato: 'mantra',
+      color: '#3bf748',
+      leghe: [
+        {key: 'it', label: 'Italia'},
+        {key: 'fr', label: 'Francia'}
+      ]
+    },
+    {
+      key: 'tsm',
+      label: 'TSM',
+      formato: 'classic',
+      color: '#ef4444',
+      leghe: [
+        {key: 'it', label: 'Italia'}
+      ]
+    }
+  ];
+}
+
 // Funzione generica: converte cualunque formato Firebase a array
 function parseFirebaseArray(data) {
   if (!data) return [];
@@ -4839,19 +4864,32 @@ function loadDataFromFirebase() {
 
   // Carica admin_tornei
   fbLoadKey('admin_tornei', function(val) {
+    var tornei;
+
     if (val) {
       try {
-        var tornei = parseAdminTorneiData(val);
-        if (tornei.length > 0) {
-          if (typeof ADMIN_TORNEI !== 'undefined') {
-            ADMIN_TORNEI.length = 0;
-            tornei.forEach(function(t) { ADMIN_TORNEI.push(t); });
-          }
-          // Ricarica UI dopo popolare ADMIN_TORNEI da Firebase
-          if (typeof renderTournamentCards === 'function') renderTournamentCards();
-          if (typeof syncLeaguesDataFromAdmin === 'function') syncLeaguesDataFromAdmin();
-        }
-      } catch(e) { console.error('Error parsing admin_tornei:', e); }
+        tornei = parseAdminTorneiData(val);
+      } catch(e) {
+        console.error('Error parsing admin_tornei:', e);
+        tornei = getDefaultTornei();
+      }
+    } else {
+      // Fallback: se admin_tornei non esiste in Firebase, crea dalla struttura default
+      console.log('⚠️ admin_tornei non esiste in Firebase, creo da default...');
+      tornei = getDefaultTornei();
+      fbDB.ref('data/admin_tornei').set(tornei).catch(function(err) {
+        console.error('Errore saving admin_tornei:', err);
+      });
+    }
+
+    if (tornei && tornei.length > 0) {
+      if (typeof ADMIN_TORNEI !== 'undefined') {
+        ADMIN_TORNEI.length = 0;
+        tornei.forEach(function(t) { ADMIN_TORNEI.push(t); });
+      }
+      // Ricarica UI dopo popolare ADMIN_TORNEI
+      if (typeof renderTournamentCards === 'function') renderTournamentCards();
+      if (typeof syncLeaguesDataFromAdmin === 'function') syncLeaguesDataFromAdmin();
     }
   });
 
