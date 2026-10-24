@@ -4843,11 +4843,13 @@ function loadDataFromFirebase() {
       try {
         var tornei = parseAdminTorneiData(val);
         if (tornei.length > 0) {
-          localStorage.setItem('admin_tornei', JSON.stringify(tornei));
           if (typeof ADMIN_TORNEI !== 'undefined') {
             ADMIN_TORNEI.length = 0;
             tornei.forEach(function(t) { ADMIN_TORNEI.push(t); });
           }
+          // Ricarica UI dopo popolare ADMIN_TORNEI da Firebase
+          if (typeof renderTournamentCards === 'function') renderTournamentCards();
+          if (typeof syncLeaguesDataFromAdmin === 'function') syncLeaguesDataFromAdmin();
         }
       } catch(e) { console.error('Error parsing admin_tornei:', e); }
     }
@@ -5045,9 +5047,6 @@ function gsLoadMulte(torneo, lega, callback) {
 
 var ADMIN_PASSWORD = 'admin2026';
 
-// Struttura tornei (caricati da Firebase con fallback localStorage)
-var ADMIN_TORNEI = JSON.parse(localStorage.getItem('admin_tornei') || '[]');
-console.log('📦 localStorage keys:', Object.keys(localStorage).length > 0 ? Object.keys(localStorage) : '✅ EMPTY');
 
 // Crea struttura Firebase organizzata
 function createFirebaseStructure() {
@@ -11151,9 +11150,6 @@ function gsLoadMulte(torneo, lega, callback) {
 
 var ADMIN_PASSWORD = 'admin2026';
 
-// Struttura tornei (caricati da Firebase con fallback localStorage)
-var ADMIN_TORNEI = JSON.parse(localStorage.getItem('admin_tornei') || '[]');
-console.log('📦 localStorage keys:', Object.keys(localStorage).length > 0 ? Object.keys(localStorage) : '✅ EMPTY');
 
 // Crea struttura Firebase organizzata
 function createFirebaseStructure() {
