@@ -4916,6 +4916,19 @@ function loadDataFromFirebase() {
   // Carica tornei da data/tornei
   loadTorneiFromFirebase();
 
+  // Carica squadre SLIM Italia da Firebase
+  fbLoadKey('tornei/slim/it/squadre', function(val) {
+    if (val && typeof val === 'object') {
+      try {
+        var teams = parseFirebaseArray(val);
+        if (teams && teams.length > 0) {
+          SLIM_TEAMS_IT = teams;
+          SLIM_TEAMS = teams;
+        }
+      } catch(e) { console.warn('Errore caricamento squadre SLIM:', e); }
+    }
+  });
+
   // Carica logo principale (fbLoadKey aggiunge 'data/' automaticamente)
   fbLoadKey('images/loghi/main', function(val) {
     if (val) {
