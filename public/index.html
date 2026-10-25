@@ -4110,7 +4110,7 @@ function showAdminSection(id, el) {
   if (id==='stagioni') admRenderStagioni();
   if (id==='immagini') admRenderImmagini();
   if (id==='coppe') admInitCoppeSection();
-  if (id==='modulistica') admRenderModulistica();
+  if (id==='modulistica') admRenderModulistica(true);
   if (id==='multe') admInitSelettori('mul', true);
   if (id==='impostazioni') admInitImpostazioni();
   if (id==='scambi') admScInit();
@@ -4620,7 +4620,7 @@ function admSaveCreditiGestioneEl(el) {
 // ═══════════════════════════════════════════════════════
 // ADMIN — Modulistica
 // ═══════════════════════════════════════════════════════
-function admRenderModulistica() {
+function admRenderModulistica(reset) {
   _modMergeFromStorage();
   // Assicura che ogni torneo abbia la sua entry in MODULISTICA_DATA
   ADMIN_TORNEI.forEach(function(t) {
@@ -4641,7 +4641,7 @@ function admRenderModulistica() {
   // Popola select torneo
   var sel = document.getElementById('adm-mod-sel-torneo');
   if (sel) {
-    var prev = sel.value;
+    var prev = reset ? '' : sel.value;
     sel.innerHTML = '<option value="">-- Seleziona Torneo --</option>';
     ADMIN_TORNEI.forEach(function(t) {
       var o = document.createElement('option');
@@ -4649,11 +4649,9 @@ function admRenderModulistica() {
       o.textContent = t.label || t.key;
       sel.appendChild(o);
     });
-    // Ripristina selezione precedente o auto-seleziona se unico
+    // Mantiene la selezione solo nei ridisegni (aggiungi/elimina modulo)
     if (prev && ADMIN_TORNEI.find(function(t){return t.key===prev;})) {
       sel.value = prev;
-    } else if (ADMIN_TORNEI.length === 1) {
-      sel.value = ADMIN_TORNEI[0].key;
     }
   }
   admModRenderBody();
