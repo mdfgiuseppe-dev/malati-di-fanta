@@ -7394,9 +7394,6 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
   var squadre = [];
   inputs.forEach(function(inp){ if(inp.value.trim()) squadre.push(inp.value.trim()); });
   if (!squadre.length) { alert('Inserisci almeno una squadra'); return; }
-  // Firebase non accetta . # $ [ ] / nei nomi usati come chiavi (rose, crediti, calendario)
-  var _bad = squadre.filter(function(n){ return /[.#$\[\]\/]/.test(n); });
-  if (_bad.length) { alert('Questi nomi contengono caratteri non ammessi ( . # $ [ ] / ):\n\n' + _bad.join('\n') + '\n\nEsempio: scrivi "ST ETIENNE" invece di "ST. ETIENNE".'); return; }
   if (torneo.leghe.some(function(x){ return x.key === legaKey; })) { alert('Esiste già una lega con chiave "' + legaKey + '" in questo torneo.'); return; }
   legaLabel = String(legaLabel || legaKey).toUpperCase();
 
@@ -7420,9 +7417,9 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
     squadre.forEach(function(s){ cal[String(g)][s.toUpperCase()]=''; });
   }
   // Salva su Firebase
-  fbDB.ref('data/rose/'+torneo.key+'_'+legaKey).set(rose);
-  fbDB.ref('data/crediti/'+torneo.key+'_'+legaKey).set(cr);
-  fbDB.ref('data/calendario/'+torneo.key+'_'+legaKey).set(cal);
+  fbDB.ref('data/rose/'+torneo.key+'_'+legaKey).set(JSON.stringify(rose));
+  fbDB.ref('data/crediti/'+torneo.key+'_'+legaKey).set(JSON.stringify(cr));
+  fbDB.ref('data/calendario/'+torneo.key+'_'+legaKey).set(JSON.stringify(cal));
   // Salva squadre su Firebase (percorso strutturato per tornei)
   var _sqObj = {};
   squadre.forEach(function(n){ _sqObj[_fbSafeKey(n)] = String(n).toUpperCase(); });
@@ -8380,9 +8377,6 @@ function admCsPreview() {
     if((nN&&nN!==team)||nL) changes.push({old:team,newName:nN||team,newLogo:nL});
   });
   var el=document.getElementById('adm-cs-preview');
-  // Firebase non accetta . # $ [ ] / nei nomi squadra (usati come chiavi)
-  var _bad=changes.filter(function(c){return /[.#$\[\]\/]/.test(c.newName);}).map(function(c){return c.newName;});
-  if(_bad.length){el.innerHTML='<div style="color:#ef4444;font-size:12px;padding:12px;font-weight:700">⚠️ Nomi con caratteri non ammessi ( . # $ [ ] / ): '+_bad.join(', ')+'<br><span style="font-weight:400;color:var(--text2)">Esempio: scrivi "ST ETIENNE" invece di "ST. ETIENNE".</span></div>';return;}
   if(!changes.length){el.innerHTML='<div style="color:var(--text3);font-size:12px;padding:12px">Nessuna modifica. Compila i campi "Nuovo nome".</div>';return;}
   var h='<div class="card" style="padding:16px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.05)">'
     +'<div style="font-size:13px;font-weight:800;color:#f59e0b;margin-bottom:12px">👁 Anteprima — '+changes.length+' modifica/e</div>'
@@ -8424,7 +8418,6 @@ function admCsConfirm() {
     if((nN&&nN!==team)||nL) changes.push({old:team,newName:nN||team,newLogo:nL});
   });
   if(!changes.length) return;
-  if(changes.some(function(c){return /[.#$\[\]\/]/.test(c.newName);})){admCsPreview();return;}
   changes.forEach(function(c){
     var o=c.old, n=c.newName;
     var rk='adm_rose_'+torneoKey+'_'+legaKey;
@@ -8837,7 +8830,7 @@ function _calScSave(t,l,str){ window.FB_PUNTEGGI=window.FB_PUNTEGGI||{}; window.
 function _calTotSave(t,l,str){ window.FB_TOTALI=window.FB_TOTALI||{}; window.FB_TOTALI[t+'_'+l]=JSON.parse(str); fbDB.ref('data/totali/'+t+'_'+l).set(str); }
 function _calEsitiSave(t,l,cal){
   localStorage.setItem('adm_cal_'+t+'_'+l, JSON.stringify(cal));
-  fbDB.ref('data/calendario/'+t+'_'+l).set(cal);
+  fbDB.ref('data/calendario/'+t+'_'+l).set(JSON.stringify(cal));
   window.FB_CALENDARIO=window.FB_CALENDARIO||{};
   window.FB_CALENDARIO[t+'_'+l]=JSON.parse(JSON.stringify(cal));
 }
@@ -9152,7 +9145,7 @@ function admSaveCalGiornata(t,l,g) {
   // Sincronizza su GSheets
   gsSaveCalendario(t, l, cal);
   if (t !== 'slim' && t !== 'tsm') {
-    fbDB.ref('data/calendario/'+t+'_'+l).set(cal);
+    fbDB.ref('data/calendario/'+t+'_'+l).set(JSON.stringify(cal));
     window.FB_CALENDARIO = window.FB_CALENDARIO || {};
     window.FB_CALENDARIO[t+'_'+l] = JSON.parse(JSON.stringify(cal));
   }
