@@ -4925,6 +4925,13 @@ function parseAdminTorneiData(data) {
   return parseTorneiData(data);
 }
 
+// Nome squadra -> chiave valida per Firebase (no . # $ [ ] /)
+function _fbSafeKey(s) { return String(s).toUpperCase().replace(/[.#$\[\]\/]/g, '_'); }
+function getTeamLogo(torneoKey, legaKey, team) {
+  var m = window.FB_LOGHI_SQUADRE && window.FB_LOGHI_SQUADRE[torneoKey] && window.FB_LOGHI_SQUADRE[torneoKey][legaKey];
+  return (m && m[_fbSafeKey(team)]) || '';
+}
+
 // Carica dati critici da Firebase all'avvio
 function loadDataFromFirebase() {
   // Inizializza password admin al primo caricamento
@@ -4949,6 +4956,12 @@ function loadDataFromFirebase() {
       });
     });
     if (typeof updateDashboardCounters === 'function') updateDashboardCounters();
+  });
+
+  // Carica loghi squadre da data/images/loghi/squadre/{torneo}/{lega}/{SQUADRA}
+  window.FB_LOGHI_SQUADRE = window.FB_LOGHI_SQUADRE || {};
+  fbLoadKey('images/loghi/squadre', function(val) {
+    if (val && typeof val === 'object') window.FB_LOGHI_SQUADRE = val;
   });
 
   // Carica livelli stadio da data/stadio/{torneo}_{lega}
@@ -8093,7 +8106,7 @@ function admCsLoadSquadre() {
     +'<div style="padding:8px 0">';
   teams.forEach(function(team){
     var k=team.replace(/\s+/g,'-').toLowerCase();
-    var logoUrl=baseUrl+k+'.png';
+    var logoUrl=getTeamLogo(torneoKey,legaKey,team);
     var ki=team.replace(/\s+/g,'_');
     h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border)">'
       +'<img src="'+logoUrl+'" onerror="this.style.opacity=0.2" style="width:32px;height:32px;object-fit:contain;border-radius:4px;flex-shrink:0">'
@@ -8101,7 +8114,7 @@ function admCsLoadSquadre() {
       +'<div style="flex:1;min-width:0"><div style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:3px">Nuovo nome</div>'
       +'<input type="text" id="adm-cs-new-'+ki+'" placeholder="'+team+'" style="width:100%;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-weight:700;outline:none"></div>'
       +'<div style="flex:1;min-width:0"><div style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:3px">URL Logo</div>'
-      +'<input type="text" id="adm-cs-logo-'+ki+'" placeholder="'+logoUrl+'" style="width:100%;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:10px;outline:none"></div>'
+      +'<input type="text" id="adm-cs-logo-'+ki+'" placeholder="'+(logoUrl||'https://... (URL immagine logo)')+'" style="width:100%;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:10px;outline:none"></div>'
       +'</div>';
   });
   h+='</div></div>'
@@ -8178,6 +8191,13 @@ function admCsConfirm() {
     var sr=localStorage.getItem(sk)||localStorage.getItem('adm_stadio_'+torneoKey+'_'+legaKey);
     if(sr){try{var sta=admCsRenameKey(admCsRenameKey(JSON.parse(sr),o.toUpperCase(),n.toUpperCase()),o,n);localStorage.setItem(sk,JSON.stringify(sta));localStorage.setItem('adm_stadio_'+torneoKey+'_'+legaKey,JSON.stringify(sta));}catch(e){}}
     gsSaveKey('adm_stadio_', localStorage.getItem('adm_stadio_'));
+    if(c.newLogo){
+      fbDB.ref('data/images/loghi/squadre/'+torneoKey+'/'+legaKey+'/'+_fbSafeKey(o)).set(c.newLogo);
+      window.FB_LOGHI_SQUADRE = window.FB_LOGHI_SQUADRE || {};
+      window.FB_LOGHI_SQUADRE[torneoKey] = window.FB_LOGHI_SQUADRE[torneoKey] || {};
+      window.FB_LOGHI_SQUADRE[torneoKey][legaKey] = window.FB_LOGHI_SQUADRE[torneoKey][legaKey] || {};
+      window.FB_LOGHI_SQUADRE[torneoKey][legaKey][_fbSafeKey(o)] = c.newLogo;
+    }
     if(c.newLogo){localStorage.setItem('adm_logo_'+torneoKey+'_'+legaKey+'_'+n,c.newLogo);if(typeof FANTASY_LOGOS!=='undefined'){FANTASY_LOGOS[n]=c.newLogo;FANTASY_LOGOS[n.toUpperCase()]=c.newLogo;delete FANTASY_LOGOS[o];delete FANTASY_LOGOS[o.toUpperCase()];}}
     if(torneoKey==='slim'&&legaKey==='it'&&typeof SLIM_TEAMS_IT!=='undefined'){var i=SLIM_TEAMS_IT.indexOf(o);if(i>=0)SLIM_TEAMS_IT[i]=n;}
     if(typeof SLIM_TEAMS!=='undefined'){var i2=SLIM_TEAMS.indexOf(o);if(i2>=0)SLIM_TEAMS[i2]=n;}
@@ -13876,7 +13896,7 @@ function admCsLoadSquadre() {
     +'<div style="padding:8px 0">';
   teams.forEach(function(team){
     var k=team.replace(/\s+/g,'-').toLowerCase();
-    var logoUrl=baseUrl+k+'.png';
+    var logoUrl=getTeamLogo(torneoKey,legaKey,team);
     var ki=team.replace(/\s+/g,'_');
     h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border)">'
       +'<img src="'+logoUrl+'" onerror="this.style.opacity=0.2" style="width:32px;height:32px;object-fit:contain;border-radius:4px;flex-shrink:0">'
@@ -13884,7 +13904,7 @@ function admCsLoadSquadre() {
       +'<div style="flex:1;min-width:0"><div style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:3px">Nuovo nome</div>'
       +'<input type="text" id="adm-cs-new-'+ki+'" placeholder="'+team+'" style="width:100%;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-weight:700;outline:none"></div>'
       +'<div style="flex:1;min-width:0"><div style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:3px">URL Logo</div>'
-      +'<input type="text" id="adm-cs-logo-'+ki+'" placeholder="'+logoUrl+'" style="width:100%;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:10px;outline:none"></div>'
+      +'<input type="text" id="adm-cs-logo-'+ki+'" placeholder="'+(logoUrl||'https://... (URL immagine logo)')+'" style="width:100%;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:10px;outline:none"></div>'
       +'</div>';
   });
   h+='</div></div>'
@@ -13961,6 +13981,13 @@ function admCsConfirm() {
     var sr=localStorage.getItem(sk)||localStorage.getItem('adm_stadio_'+torneoKey+'_'+legaKey);
     if(sr){try{var sta=admCsRenameKey(admCsRenameKey(JSON.parse(sr),o.toUpperCase(),n.toUpperCase()),o,n);localStorage.setItem(sk,JSON.stringify(sta));localStorage.setItem('adm_stadio_'+torneoKey+'_'+legaKey,JSON.stringify(sta));}catch(e){}}
     gsSaveKey('adm_stadio_', localStorage.getItem('adm_stadio_'));
+    if(c.newLogo){
+      fbDB.ref('data/images/loghi/squadre/'+torneoKey+'/'+legaKey+'/'+_fbSafeKey(o)).set(c.newLogo);
+      window.FB_LOGHI_SQUADRE = window.FB_LOGHI_SQUADRE || {};
+      window.FB_LOGHI_SQUADRE[torneoKey] = window.FB_LOGHI_SQUADRE[torneoKey] || {};
+      window.FB_LOGHI_SQUADRE[torneoKey][legaKey] = window.FB_LOGHI_SQUADRE[torneoKey][legaKey] || {};
+      window.FB_LOGHI_SQUADRE[torneoKey][legaKey][_fbSafeKey(o)] = c.newLogo;
+    }
     if(c.newLogo){localStorage.setItem('adm_logo_'+torneoKey+'_'+legaKey+'_'+n,c.newLogo);if(typeof FANTASY_LOGOS!=='undefined'){FANTASY_LOGOS[n]=c.newLogo;FANTASY_LOGOS[n.toUpperCase()]=c.newLogo;delete FANTASY_LOGOS[o];delete FANTASY_LOGOS[o.toUpperCase()];}}
     if(torneoKey==='slim'&&legaKey==='it'&&typeof SLIM_TEAMS_IT!=='undefined'){var i=SLIM_TEAMS_IT.indexOf(o);if(i>=0)SLIM_TEAMS_IT[i]=n;}
     if(typeof SLIM_TEAMS!=='undefined'){var i2=SLIM_TEAMS.indexOf(o);if(i2>=0)SLIM_TEAMS[i2]=n;}
