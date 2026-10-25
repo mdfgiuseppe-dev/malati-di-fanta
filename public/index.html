@@ -3138,7 +3138,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     <div id="adm-s-societa" class="adm-section" style="display:none">
       <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px">Gestione <span style="color:#10b981">Società</span></div>
       <div style="font-size:11px;color:var(--text2);margin-bottom:20px">Per ogni squadra della lega: allenatori e, in futuro, gettoni e quote.</div>
-      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <div id="adm-soc-filters" style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
         <select id="adm-soc-torneo" onchange="admSocLoadLeghe()" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"><option value="">-- Seleziona Torneo --</option></select>
         <select id="adm-soc-lega" onchange="admSocRender()" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"><option value="">-- Seleziona Lega --</option></select>
       </div>
@@ -7611,7 +7611,6 @@ function admRenderUtenti() {
     +'<th style="padding:8px 14px;text-align:left">Password</th>'
     +'<th style="padding:8px 14px;text-align:left">Email</th>'
     +'<th style="padding:8px 14px;text-align:left">Telefono</th>'
-    +'<th style="padding:8px 14px;text-align:left">Squadre</th>'
     +'<th style="padding:8px 14px;text-align:center">Stato</th>'
     +'<th style="padding:8px 14px;text-align:center">Azioni</th>'
     +'</tr></thead><tbody>'
@@ -7631,7 +7630,6 @@ function admRenderUtenti() {
         +'<td style="padding:9px 14px;font-size:12px;color:var(--text2);font-family:monospace">'+u.password+'</td>'
         +'<td style="padding:9px 14px;font-size:12px;color:var(--text2)">'+(u.email||'—')+'</td>'
         +'<td style="padding:9px 14px;font-size:12px;color:var(--text2)">'+(u.phone||'—')+'</td>'
-        +'<td style="padding:9px 14px;font-size:11px;color:var(--text2)">'+(_userSquadreLabel(u)||'—')+'</td>'
         +'<td style="padding:9px 14px;text-align:center">'+statoBtn+'</td>'
         +'<td style="padding:9px 14px;text-align:center;display:flex;gap:6px;justify-content:center">'
         +'<button onclick="admEditUser('+ri+')" style="padding:4px 10px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#3b82f6;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">✏️ Modifica</button>'
@@ -7937,20 +7935,20 @@ function admEditUser(i) {
     +'</div>';
   modal.style.display = 'flex';
 }
-// Squadre allenate dall'utente (da data/tornei/{t}/{l}/allenatori), per la tabella utenti
-function _userSquadreLabel(u) {
-  var parts = [];
+// Squadre allenate dall'utente (da data/tornei/{t}/{l}/allenatori): [{ t, l, squadra, ruolo }]
+function _userSquadre(u) {
+  var out = [];
   ADMIN_TORNEI.forEach(function(t) {
-    t.leghe.forEach(function(l) {
+    t.leghe.slice().sort(function(a,b){ return a.label.localeCompare(b.label); }).forEach(function(l) {
       var al = (window.FB_ALLENATORI || {})[t.key+'_'+l.key] || {};
       Object.keys(al).forEach(function(k) {
         var a = al[k] || {}, sq = (FB_SQUADRE[t.key+'_'+l.key] || []).find(function(n){ return _fbSafeKey(n) === k; }) || k;
-        if (a.allenatore === u.username) parts.push(l.label+': '+sq+' (all.)');
-        if (a.vice === u.username) parts.push(l.label+': '+sq+' (vice)');
+        if (a.allenatore === u.username) out.push({ t: t, l: l, squadra: sq, ruolo: 'Allenatore' });
+        if (a.vice === u.username) out.push({ t: t, l: l, squadra: sq, ruolo: 'Allenatore in seconda' });
       });
     });
   });
-  return parts.join('<br>');
+  return out;
 }
 function admSaveEditUser(i) {
   var u = ADMIN_USERS[i];
@@ -8095,7 +8093,7 @@ function admConfirmImport(){
   if(cT&&cT.value===tk&&cL&&cL.value===lk) admLoadRoseSquadre();
 }
 // ADMIN — Gestione Società (schede per squadra: Allenatori; in futuro Gettoni, Quote)
-var ADM_SOC_TABS = [{ key: 'allenatori', label: '👔 Allenatori' }];
+var ADM_SOC_TABS = [{ key: 'allenatori', label: '👔 Allenatori' }, { key: 'utenti', label: '👤 Utenti' }];
 window._admSocTab = 'allenatori';
 function admSocInit() {
   var sel = document.getElementById('adm-soc-torneo'); if (!sel) return;
@@ -8103,26 +8101,55 @@ function admSocInit() {
   ADMIN_TORNEI.forEach(function(t){ var o = document.createElement('option'); o.value = t.key; o.textContent = t.label; sel.appendChild(o); });
   sel.onchange = admSocLoadLeghe;
   var lg = document.getElementById('adm-soc-lega'); if (lg) { lg.innerHTML = '<option value="">-- Seleziona Lega --</option>'; lg.onchange = admSocRender; }
+  admSocRender();
 }
 function admSocLoadLeghe() {
   var tk = document.getElementById('adm-soc-torneo').value;
   var sel = document.getElementById('adm-soc-lega');
   sel.innerHTML = '<option value="">-- Seleziona Lega --</option>';
-  document.getElementById('adm-soc-body').innerHTML = '';
-  document.getElementById('adm-soc-tabs').innerHTML = '';
-  var t = ADMIN_TORNEI.find(function(x){ return x.key === tk; }); if (!t) return;
-  t.leghe.slice().sort(function(a,b){ return a.label.localeCompare(b.label); }).forEach(function(l){ var o = document.createElement('option'); o.value = l.key; o.textContent = l.label; sel.appendChild(o); });
+  var t = ADMIN_TORNEI.find(function(x){ return x.key === tk; });
+  if (t) t.leghe.slice().sort(function(a,b){ return a.label.localeCompare(b.label); }).forEach(function(l){ var o = document.createElement('option'); o.value = l.key; o.textContent = l.label; sel.appendChild(o); });
+  admSocRender();
 }
 function admSocSetTab(k) { window._admSocTab = k; admSocRender(); }
 function admSocRender() {
   var tk = document.getElementById('adm-soc-torneo').value, lk = document.getElementById('adm-soc-lega').value;
   var tabs = document.getElementById('adm-soc-tabs'), body = document.getElementById('adm-soc-body');
-  if (!tk || !lk) { tabs.innerHTML = ''; body.innerHTML = ''; return; }
+  if (!tabs || !body) return;
   tabs.innerHTML = ADM_SOC_TABS.map(function(tb) {
     var on = window._admSocTab === tb.key;
     return '<button onclick="admSocSetTab(\''+tb.key+'\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(on?'rgba(16,185,129,.5)':'var(--border)')+';background:'+(on?'rgba(16,185,129,.15)':'var(--bg2)')+';color:'+(on?'#10b981':'var(--text2)')+'">'+tb.label+'</button>';
   }).join('');
+  // La scheda Utenti vale per tutti i tornei: i filtri torneo/lega non servono
+  var filt = document.getElementById('adm-soc-filters');
+  if (filt) filt.style.display = window._admSocTab === 'utenti' ? 'none' : 'flex';
+  if (window._admSocTab === 'utenti') { admSocRenderUtenti(body); return; }
+  if (!tk || !lk) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Seleziona torneo e lega.</div>'; return; }
   if (window._admSocTab === 'allenatori') admSocRenderAllenatori(tk, lk, body);
+}
+function admSocRenderUtenti(body) {
+  var users = ADMIN_USERS.slice().sort(function(a,b){ return _userFull(a).localeCompare(_userFull(b)); });
+  var cur = window._admSocUser || '';
+  var h = '<select onchange="window._admSocUser=this.value;admSocRender()" style="width:100%;max-width:360px;padding:8px 12px;margin-bottom:14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
+    +'<option value="">-- Seleziona Utente --</option>'
+    + users.map(function(u){ return '<option value="'+u.username+'"'+(cur===u.username?' selected':'')+'>'+_userFull(u)+(u.attivo===false?' (disattivato)':'')+'</option>'; }).join('')
+    +'</select>';
+  var u = users.find(function(x){ return x.username === cur; });
+  if (u) {
+    var sq = _userSquadre(u);
+    h += !sq.length ? '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nessuna squadra abbinata.</div>'
+      : '<div class="card" style="padding:0;overflow:hidden">' + sq.map(function(x) {
+        var lg = getTeamLogo(x.t.key, x.l.key, x.squadra);
+        var vice = x.ruolo !== 'Allenatore';
+        return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">'
+          +(lg?'<img src="'+lg+'" onerror="this.style.display=\'none\'" style="width:28px;height:28px;object-fit:contain">':'')
+          +'<div style="flex:1"><div style="font-weight:700;font-size:13px">'+x.squadra+'</div>'
+          +'<div style="font-size:10px;color:var(--text3)">'+x.t.label+' – '+x.l.label+'</div></div>'
+          +'<span style="font-size:9px;font-weight:800;padding:3px 10px;border-radius:20px;text-transform:uppercase;'+(vice?'background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.2)':'background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.2)')+'">'+x.ruolo+'</span>'
+          +'</div>';
+      }).join('') + '</div>';
+  }
+  body.innerHTML = h;
 }
 function admSocRenderAllenatori(tk, lk, body) {
   var teams = admGetTeams(tk, lk);
