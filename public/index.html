@@ -8709,6 +8709,39 @@ function admLoadCalBody() {
 
 // ── Calendario: dati su Firebase (schedule, punteggi, esiti) ──
 function _teamCase(name) { return String(name || '').toUpperCase(); }
+// Abbinamento nome squadra da file → nome ufficiale: esatto, poi normalizzato (accenti, punteggiatura, parole minori), poi simile (solo se fuzzy)
+var _TEAM_STOP = ['DE','DEL','DELLA','DI','DA','LA','LE','EL','LOS','LAS','THE','FC','CF','AC','AS','SC','SS','US','CD','UD','SD','RC','CALCIO','CLUB'];
+function _teamNorm(s) {
+  var w = String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\./g, '').replace(/[^A-Z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+  var f = w.filter(function(x){ return _TEAM_STOP.indexOf(x) < 0; });
+  return (f.length ? f : w).join(' ');
+}
+function _lev(a, b) {
+  var p = [], i, j;
+  for (j = 0; j <= b.length; j++) p[j] = j;
+  for (i = 1; i <= a.length; i++) {
+    var prev = p[0]; p[0] = i;
+    for (j = 1; j <= b.length; j++) { var tmp = p[j]; p[j] = Math.min(p[j] + 1, p[j-1] + 1, prev + (a[i-1] === b[j-1] ? 0 : 1)); prev = tmp; }
+  }
+  return p[b.length];
+}
+function _matchTeam(name, teams, fuzzy) {
+  var raw = String(name || '').trim(); if (!raw) return null;
+  var u = raw.toUpperCase();
+  var ex = teams.find(function(x){ return x.toUpperCase() === u; });
+  if (ex) return { name: ex, approx: false };
+  var n = _teamNorm(raw); if (!n) return null;
+  var nm = teams.filter(function(x){ return _teamNorm(x) === n; });
+  if (nm.length === 1) return { name: nm[0], approx: true };
+  if (!fuzzy) return null;
+  var a = n.replace(/ /g, ''), best = null, bs = 0, second = 0;
+  teams.forEach(function(x){
+    var b = _teamNorm(x).replace(/ /g, ''); if (!b) return;
+    var sc = 1 - _lev(a, b) / Math.max(a.length, b.length);
+    if (sc > bs) { second = bs; bs = sc; best = x; } else if (sc > second) second = sc;
+  });
+  return (best && bs >= 0.8 && bs - second >= 0.1) ? { name: best, approx: true } : null;
+}
 function _calSchRaw(t,l){ var s=window.FB_SCHEDULE&&window.FB_SCHEDULE[t+'_'+l]; return s?JSON.stringify(s):null; }
 function _calSchSave(t,l,str){ window.FB_SCHEDULE=window.FB_SCHEDULE||{}; window.FB_SCHEDULE[t+'_'+l]=JSON.parse(str); fbDB.ref('data/calendario_schedule/'+t+'_'+l).set(str); }
 function _calScRaw(t,l){ var s=window.FB_PUNTEGGI&&window.FB_PUNTEGGI[t+'_'+l]; return s?JSON.stringify(s):null; }
@@ -8828,16 +8861,20 @@ function admProcessCalScheduleXlsx(input){
       var wb=XLSX.read(e.target.result,{type:'array'});
       var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
       var schedule={},leftG=null,rightG=null;
+      var _teamsC=admGetTeams(t,l),_apx={},_miss={};
+      function _mt(n){var r=_matchTeam(n,_teamsC,true);if(!r){_miss[n.toUpperCase()]=1;return n.toUpperCase();}if(r.approx)_apx[n.toUpperCase()]=r.name;return r.name;}
       rows.forEach(function(row){
         var c0=(row[0]||'').toString().trim(),c6=(row[6]||'').toString().trim();
         var mL=c0.match(/(\d+)/),mR=c6.match(/(\d+)/);
         if(/giornata/i.test(c0)&&mL){leftG=parseInt(mL[1]);if(!schedule[leftG])schedule[leftG]=[];}
         if(/giornata/i.test(c6)&&mR){rightG=parseInt(mR[1]);if(!schedule[rightG])schedule[rightG]=[];}
-        if(!/giornata/i.test(c0)){var hl=c0,al=(row[3]||'').toString().trim();if(hl&&al&&leftG)schedule[leftG].push({h:hl.toUpperCase(),a:al.toUpperCase()});}
-        if(!/giornata/i.test(c6)){var hr=c6,ar=(row[9]||'').toString().trim();if(hr&&ar&&rightG)schedule[rightG].push({h:hr.toUpperCase(),a:ar.toUpperCase()});}
+        if(!/giornata/i.test(c0)){var hl=c0,al=(row[3]||'').toString().trim();if(hl&&al&&leftG)schedule[leftG].push({h:_mt(hl),a:_mt(al)});}
+        if(!/giornata/i.test(c6)){var hr=c6,ar=(row[9]||'').toString().trim();if(hr&&ar&&rightG)schedule[rightG].push({h:_mt(hr),a:_mt(ar)});}
       });
       var nG=Object.keys(schedule).length;
       if(!nG){alert('Nessuna giornata trovata. Verifica il formato file (atteso: "Nª Giornata" in col A o G).');input.value='';return;}
+      var _apxK=Object.keys(_apx),_missK=Object.keys(_miss);
+      if((_apxK.length||_missK.length)&&!confirm((_apxK.length?'Nomi abbinati automaticamente:\n'+_apxK.map(function(k){return '⚠️ '+k+' → '+_apx[k];}).join('\n')+'\n\n':'')+(_missK.length?'❌ Nomi NON riconosciuti (salvati come nel file):\n'+_missK.join('\n')+'\n\n':'')+'Continuare?')){input.value='';return;}
       var existing=_calSchRaw(t,l);
       if(existing){var exP=JSON.parse(existing);var exN=Object.keys(exP.giornate||exP).length;if(!confirm('Schedule già presente ('+exN+' giornate). Sovrascrivere?')){input.value='';return;}}
       var ar=parseInt((document.getElementById('adm-cal-ar')||{}).value)||0;
@@ -8865,7 +8902,8 @@ function admProcessGiornataXlsx(input){
   var file=input.files[0];if(!file)return;
   var teams=admGetTeams(t,l);
   function _doProc(){
-  function _findT(name){var u=(name||'').toUpperCase();return teams.find(function(x){return x.toUpperCase()===u;});}
+  var _apxG={};
+  function _findT(name,fuzzy){var r=_matchTeam(name,teams,fuzzy);if(!r)return undefined;if(r.approx)_apxG[String(name).trim().toUpperCase()]=r.name;return r.name;}
   function _isAllCaps(s){return s.length>1&&s===s.toUpperCase()&&/[A-Z]/.test(s);}
   var reader=new FileReader();
   reader.onload=function(e){
@@ -8906,7 +8944,7 @@ function admProcessGiornataXlsx(input){
           var sc=null,ci=-1;
           for(var c=1;c<row.length;c++){var v=(row[c]||'').toString().trim();if(/^\d+-\d+$/.test(v)){sc=v;ci=c;break;}}
           if(!sc)return;
-          var t1=_findT((row[0]||'').toString().trim()),t2=_findT((row[ci+1]||'').toString().trim());
+          var t1=_findT((row[0]||'').toString().trim(),true),t2=_findT((row[ci+1]||'').toString().trim(),true);
           if(!t1||!t2)return;
           var tot1=null,tot2=null;
           for(var r=ri+1;r<Math.min(rows.length,ri+6);r++){var rr=rows[r];for(var c2=0;c2<rr.length;c2++){if(/^totale$/i.test((rr[c2]||'').toString().trim())){var tv=parseFloat(String(rr[c2+1]).replace(',','.'));if(!isNaN(tv)){if(c2<ci){if(tot1===null)tot1=tv;}else if(tot2===null)tot2=tv;}}}}
@@ -8926,6 +8964,8 @@ function admProcessGiornataXlsx(input){
       // Usa punteggio reale (scoreStr) per W/D/L; fallback a totali fantacalcio
       function _wd(m){if(m.scoreStr){var _sp=m.scoreStr.split('-');var _gh=parseInt(_sp[0])||0,_ga=parseInt(_sp[1])||0;return{w1:_gh>_ga,d:_gh===_ga};}return{w1:m.total1>m.total2,d:m.total1===m.total2};}
       var preview=matches.map(function(m){var _r=_wd(m),w1=_r.w1,d=_r.d;if(neutral)return m.team1+' '+m.total1.toFixed(2)+' - '+m.total2.toFixed(2)+' '+m.team2+' ('+(w1?'V/S':d?'P/P':'S/V')+')';var _h=_getHA(m);return m.team1+' '+m.total1.toFixed(2)+' - '+m.total2.toFixed(2)+' '+m.team2+' '+(_h.team1IsHome?(w1?'(VC/SF)':d?'(PC/PF)':'(SC/VF)'):(w1?'(VF/SC)':d?'(PF/PC)':'(SF/VC)'));}).join('\n');
+      var _apxGK=Object.keys(_apxG).filter(function(k){return matches.some(function(m){return m.team1===_apxG[k]||m.team2===_apxG[k];});});
+      if(_apxGK.length)preview='Nomi abbinati automaticamente:\n'+_apxGK.map(function(k){return '⚠️ '+k+' → '+_apxG[k];}).join('\n')+'\n\n'+preview;
       if(!confirm('Importare '+matches.length+' partite per G'+g+(neutral?' [NEUTRALE]':'')+'?\n\n'+preview)){input.value='';return;}
       var cal=admGetCalendar(t,l);
       if(!cal[String(g)])cal[String(g)]={};
