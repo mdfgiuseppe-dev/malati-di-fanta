@@ -8716,6 +8716,8 @@ function admGetCalendar(torneoKey, legaKey) {
     } else if (typeof ALL_SEASON_DATA!=='undefined' && ALL_SEASON_DATA[legaKey]) {
       base = JSON.parse(JSON.stringify(ALL_SEASON_DATA[legaKey].calendario || {}));
     }
+  } else if (window.FB_CALENDARIO && window.FB_CALENDARIO[torneoKey+'_'+legaKey]) {
+    base = JSON.parse(JSON.stringify(window.FB_CALENDARIO[torneoKey+'_'+legaKey]));
   }
   // Sovrapponi le modifiche Admin salvate (merge, non sostituzione)
   var stored = localStorage.getItem('adm_cal_'+torneoKey+'_'+legaKey);
@@ -8758,6 +8760,11 @@ function admSaveCalGiornata(t,l,g) {
   localStorage.setItem('adm_cal_'+t+'_'+l, JSON.stringify(cal));
   // Sincronizza su GSheets
   gsSaveCalendario(t, l, cal);
+  if (t !== 'slim' && t !== 'tsm') {
+    fbDB.ref('data/calendario/'+t+'_'+l).set(cal);
+    window.FB_CALENDARIO = window.FB_CALENDARIO || {};
+    window.FB_CALENDARIO[t+'_'+l] = JSON.parse(JSON.stringify(cal));
+  }
   var msg=document.createElement('div');msg.textContent='✅ Giornata '+g+' salvata'+(GS_ONLINE?' · Sincronizzato':'');msg.style.cssText='position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';document.body.appendChild(msg);setTimeout(function(){msg.remove();},2000);
 }
 
@@ -14292,6 +14299,8 @@ function admGetCalendar(torneoKey, legaKey) {
     } else if (typeof ALL_SEASON_DATA!=='undefined' && ALL_SEASON_DATA[legaKey]) {
       base = JSON.parse(JSON.stringify(ALL_SEASON_DATA[legaKey].calendario || {}));
     }
+  } else if (window.FB_CALENDARIO && window.FB_CALENDARIO[torneoKey+'_'+legaKey]) {
+    base = JSON.parse(JSON.stringify(window.FB_CALENDARIO[torneoKey+'_'+legaKey]));
   }
   // Sovrapponi le modifiche Admin salvate (merge, non sostituzione)
   var stored = localStorage.getItem('adm_cal_'+torneoKey+'_'+legaKey);
@@ -14334,6 +14343,11 @@ function admSaveCalGiornata(t,l,g) {
   localStorage.setItem('adm_cal_'+t+'_'+l, JSON.stringify(cal));
   // Sincronizza su GSheets
   gsSaveCalendario(t, l, cal);
+  if (t !== 'slim' && t !== 'tsm') {
+    fbDB.ref('data/calendario/'+t+'_'+l).set(cal);
+    window.FB_CALENDARIO = window.FB_CALENDARIO || {};
+    window.FB_CALENDARIO[t+'_'+l] = JSON.parse(JSON.stringify(cal));
+  }
   var msg=document.createElement('div');msg.textContent='✅ Giornata '+g+' salvata'+(GS_ONLINE?' · Sincronizzato':'');msg.style.cssText='position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';document.body.appendChild(msg);setTimeout(function(){msg.remove();},2000);
 }
 // ═══════════════════════════════════════════════════════
