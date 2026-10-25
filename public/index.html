@@ -3403,6 +3403,7 @@ function renderModulistica(torneoKey, containerId) {
       + '<div style="flex:1">'
       + '<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:4px">'+m.titolo+'</div>'
       + '<div style="font-size:11px;color:var(--text2);line-height:1.5">'+m.descrizione+'</div>'
+      + (m.immagine ? '<img src="'+_logoImgUrl(m.immagine)+'" style="width:100%;max-height:220px;object-fit:contain;margin:10px 0 4px;border-radius:8px" onerror="this.style.display=\'none\'">' : '')
       + (href
           ? '<div style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:'+hex+'">Apri modulo <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>'
           : '<div style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Link non configurato</div>')
@@ -3816,7 +3817,17 @@ function loadDataFromFirebase() {
   });
 
   // Carica altri dati critici
-  ['adm_stadio_table_global', 'admin_modulistica'].forEach(function(key) {
+  // Carica le schede moduli da data/form/{torneo}
+  fbLoadKey('form', function(val) {
+    if (!val || typeof val !== 'object') return;
+    Object.keys(val).forEach(function(k) {
+      var v = val[k];
+      if (typeof v === 'string') { try { v = JSON.parse(v); } catch(e) { v = null; } }
+      if (v && typeof v === 'object' && v.moduli) MODULISTICA_DATA[k] = v;
+    });
+  });
+
+  ['adm_stadio_table_global'].forEach(function(key) {
     fbLoadKey(key, function(val) {
       if (val) localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
       if (val && key === 'adm_stadio_table_global') {
@@ -4680,6 +4691,12 @@ function admModRenderBody() {
       +'<input type="text" value="'+(m.link==='#'?'':m.link)+'" placeholder="https://forms.google.com/..." '
       +'data-key="'+key+'" data-mi="'+mi+'" onchange="admUpdateModuloLinkEl(this)" '
       +'style="width:100%;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none;box-sizing:border-box">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-top:6px">'
+      +(m.immagine?'<img src="'+_logoImgUrl(m.immagine)+'" onerror="this.style.opacity=0.2" style="width:36px;height:36px;object-fit:contain;border-radius:4px;flex-shrink:0">':'<div style="width:36px;height:36px;border:1px dashed var(--border);border-radius:4px;flex-shrink:0"></div>')
+      +'<input type="text" value="'+(m.immagine||'')+'" placeholder="URL immagine (Google Drive o link diretto)" '
+      +'data-key="'+key+'" data-mi="'+mi+'" onchange="admUpdateModuloImgEl(this)" '
+      +'style="width:100%;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;outline:none;box-sizing:border-box">'
+      +'</div>'
       +'</div>'
       +'<button data-key="'+key+'" data-mi="'+mi+'" onclick="admDeleteModuloEl(this)" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:18px;flex-shrink:0;padding:4px" title="Rimuovi modulo">✕</button>'
       +'</div>';
@@ -4689,6 +4706,11 @@ function admModRenderBody() {
     +'<button onclick="admSaveModulistica()" style="padding:7px 16px;background:#10b981;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">💾 Salva</button>'
     +'</div></div>';
   el.innerHTML = h;
+}
+function admUpdateModuloImgEl(el) {
+  var key = el.dataset.key, mi = +el.dataset.mi;
+  if (MODULISTICA_DATA[key] && MODULISTICA_DATA[key].moduli[mi]) MODULISTICA_DATA[key].moduli[mi].immagine = _logoImgUrl(el.value);
+  admModRenderBody();
 }
 function admUpdateModuloLinkEl(el) {
   admUpdateModuloLink(el.dataset.key, +el.dataset.mi, el.value);
@@ -4704,8 +4726,9 @@ function admAddModulo(key) {
   admRenderModulistica();
 }
 function admSaveModulistica() {
-  localStorage.setItem('admin_modulistica', JSON.stringify(MODULISTICA_DATA));
-  gsSaveKey('admin_modulistica', JSON.stringify(MODULISTICA_DATA));
+  // Salva la scheda moduli del torneo selezionato in data/form/{torneo}
+  var key = (document.getElementById('adm-mod-sel-torneo') || {}).value || '';
+  if (key && MODULISTICA_DATA[key]) fbDB.ref('data/form/' + key).set(JSON.stringify(MODULISTICA_DATA[key]));
   admModRenderBody();
   var msg=document.createElement('div');msg.textContent='✅ Modulistica salvata';msg.style.cssText='position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';document.body.appendChild(msg);setTimeout(function(){msg.remove();},2000);
 }
