@@ -3698,6 +3698,14 @@ function _applyTorneoFeatures() {
     el.style.display = _torneoFeat(t, el.getAttribute('data-feat')) ? '' : 'none';
   });
 }
+// Fase della stagione reale in corso per il torneo: 'andata' (default) o 'ritorno'
+function _torneoFase(t) { return ((window.TORNEI_CONFIG || {})[t] || {}).fase === 'ritorno' ? 'ritorno' : 'andata'; }
+function admSetTorneoFase(t, v) {
+  window.TORNEI_CONFIG = window.TORNEI_CONFIG || {};
+  window.TORNEI_CONFIG[t] = window.TORNEI_CONFIG[t] || {};
+  window.TORNEI_CONFIG[t].fase = v === 'ritorno' ? 'ritorno' : 'andata';
+  fbDB.ref('data/tornei_config/' + t + '/fase').set(window.TORNEI_CONFIG[t].fase);
+}
 function admSetTorneoFeat(t, f, on) {
   window.TORNEI_CONFIG = window.TORNEI_CONFIG || {};
   window.TORNEI_CONFIG[t] = window.TORNEI_CONFIG[t] || {};
@@ -4699,6 +4707,9 @@ function admModRenderBody() {
       +'data-key="'+key+'" data-mi="'+mi+'" onchange="admUpdateModuloImgEl(this)" '
       +'style="width:100%;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;outline:none;box-sizing:border-box">'
       +'</div>'
+      +'<label style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:11px;font-weight:700;color:'+(m.gettone?'#f59e0b':'var(--text2)')+';cursor:pointer">'
+      +'<input type="checkbox"'+(m.gettone?' checked':'')+' data-key="'+key+'" data-mi="'+mi+'" onchange="admUpdateModuloGettoneEl(this)" style="width:15px;height:15px;cursor:pointer">'
+      +'🎫 Richiede gettone</label>'
       +'</div>'
       +'<button data-key="'+key+'" data-mi="'+mi+'" onclick="admDeleteModuloEl(this)" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:18px;flex-shrink:0;padding:4px" title="Rimuovi modulo">✕</button>'
       +'</div>';
@@ -4712,6 +4723,18 @@ function admModRenderBody() {
 function admUpdateModuloImgEl(el) {
   var key = el.dataset.key, mi = +el.dataset.mi;
   if (MODULISTICA_DATA[key] && MODULISTICA_DATA[key].moduli[mi]) MODULISTICA_DATA[key].moduli[mi].immagine = _logoImgUrl(el.value);
+  admModRenderBody();
+}
+// Modulo disponibile solo con gettone: gid = identificativo stabile del gettone (non cambia se rinomini il modulo)
+function _gettoneId(titolo) {
+  return String(titolo || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    .replace(/^utilizzo\s+(gettone\s+)?/, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'gettone';
+}
+function admUpdateModuloGettoneEl(el) {
+  var m = MODULISTICA_DATA[el.dataset.key] && MODULISTICA_DATA[el.dataset.key].moduli[+el.dataset.mi];
+  if (!m) return;
+  m.gettone = !!el.checked;
+  if (m.gettone && !m.gid) m.gid = _gettoneId(m.titolo);
   admModRenderBody();
 }
 function admUpdateModuloLinkEl(el) {
@@ -6914,6 +6937,13 @@ function admSelectTorneoDetail(val) {
     +'<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg2);border-radius:6px;margin-bottom:10px;font-size:12px;font-weight:700;cursor:pointer">'
     +'<input type="checkbox"'+(_torneoFeat(t.key,'sponsor')?' checked':'')+' onchange="admSetTorneoFeat(\''+t.key+'\',\'sponsor\',this.checked)" style="width:16px;height:16px;cursor:pointer">'
     +'🤝 Sponsor abilitati<span style="font-weight:400;font-size:10px;color:var(--text3);margin-left:auto">mostra la sezione Sponsor in app e in admin</span></label>'
+    +'<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg2);border-radius:6px;margin-bottom:10px;font-size:12px;font-weight:700">'
+    +'📆 Fase in corso'
+    +'<select onchange="admSetTorneoFase(\''+t.key+'\',this.value)" style="padding:4px 8px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-weight:700;outline:none;cursor:pointer">'
+    +'<option value="andata"'+(_torneoFase(t.key)==='andata'?' selected':'')+'>Andata</option>'
+    +'<option value="ritorno"'+(_torneoFase(t.key)==='ritorno'?' selected':'')+'>Ritorno</option>'
+    +'</select>'
+    +'<span style="font-weight:400;font-size:10px;color:var(--text3);margin-left:auto">girone reale: vale per i gettoni</span></div>'
     +'<div style="margin-bottom:10px">'+leghe+'</div>'
     +'<div style="display:flex;gap:8px">'
     +'<input id="adm-new-lega-label-'+ti+'" type="text" placeholder="Nome lega (es. Francia)" style="flex:1;padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none">'
