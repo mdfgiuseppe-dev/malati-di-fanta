@@ -5454,7 +5454,6 @@ function admSaveStadioEl(el) {
   // Salva nel localStorage admin e sincronizza con app
   // Salva sia la copia admin (fonte di verità per admin) che la copia app (lato utente)
   localStorage.setItem('adm_stadio_saved_'+t+'_'+l, JSON.stringify(stadio));
-  gsSaveKey('adm_stadio_saved_'+t+'_'+l, JSON.stringify(stadio));
   var appKey = (t==='tsm'&&l==='it') ? 'tsm_stadio_it' : (l==='it'?'slim_stadio':'slim_stadio_'+l);
   localStorage.setItem(appKey, JSON.stringify(stadio));
   fbDB.ref('data/stadio/'+t+'_'+l).set(JSON.stringify(stadio));
@@ -11530,7 +11529,6 @@ function admSaveStadioEl(el) {
   // Salva nel localStorage admin e sincronizza con app
   // Salva sia la copia admin (fonte di verità per admin) che la copia app (lato utente)
   localStorage.setItem('adm_stadio_saved_'+t+'_'+l, JSON.stringify(stadio));
-  gsSaveKey('adm_stadio_saved_'+t+'_'+l, JSON.stringify(stadio));
   var appKey = (t==='tsm'&&l==='it') ? 'tsm_stadio_it' : (l==='it'?'slim_stadio':'slim_stadio_'+l);
   localStorage.setItem(appKey, JSON.stringify(stadio));
   fbDB.ref('data/stadio/'+t+'_'+l).set(JSON.stringify(stadio));
