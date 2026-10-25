@@ -1069,7 +1069,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <div class="mnav-btn" onclick="showSection('classifica',this)">🏆 Classifica</div>
   <div class="mnav-btn" onclick="showSection('coppe',this)">🏆 Coppe</div>
   <div class="mnav-btn" onclick="showSection('stadio',this)">🏟️ Stadio</div>
-  <div class="mnav-btn" onclick="showSection('sponsor',this)">🤝 Sponsor</div>
+  <div class="mnav-btn" data-feat="sponsor" style="display:none" onclick="showSection('sponsor',this)">🤝 Sponsor</div>
   <div class="mnav-btn" onclick="showSection('multe',this)">⚠️ Multe</div>
   <div class="mnav-btn" onclick="showSection('modulistica',this)">📑 Moduli</div>
 </div>
@@ -1115,7 +1115,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11"/></svg>
     Stadio
   </div>
-  <div class="nav-item" onclick="showSection('sponsor',this)">
+  <div class="nav-item" data-feat="sponsor" style="display:none" onclick="showSection('sponsor',this)">
     <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
     Sponsor
   </div>
@@ -3694,6 +3694,23 @@ function _uLogo(team, size, above) {
   return url ? '<img src="'+url+'" onerror="this.style.display=\'none\'" style="width:'+size+'px;height:'+size+'px;object-fit:contain;flex-shrink:0;'+pos+'">' : '';
 }
 
+// Funzionalità opzionali per torneo (default: disabilitate)
+function _torneoFeat(t, f) { return !!((window.TORNEI_CONFIG || {})[t] || {})[f]; }
+// Mostra/nasconde le voci di menu utente marcate data-feat in base al torneo corrente
+function _applyTorneoFeatures() {
+  var t = window._currentTourneyKey;
+  document.querySelectorAll('[data-feat]').forEach(function(el) {
+    el.style.display = _torneoFeat(t, el.getAttribute('data-feat')) ? '' : 'none';
+  });
+}
+function admSetTorneoFeat(t, f, on) {
+  window.TORNEI_CONFIG = window.TORNEI_CONFIG || {};
+  window.TORNEI_CONFIG[t] = window.TORNEI_CONFIG[t] || {};
+  window.TORNEI_CONFIG[t][f] = !!on;
+  fbDB.ref('data/tornei_config/' + t + '/' + f).set(!!on);
+  _applyTorneoFeatures();
+}
+
 // Carica dati critici da Firebase all'avvio
 function loadDataFromFirebase() {
   // Inizializza password admin al primo caricamento
@@ -3725,6 +3742,13 @@ function loadDataFromFirebase() {
   window.FB_LOGHI_SQUADRE = window.FB_LOGHI_SQUADRE || {};
   fbLoadKey('images/loghi/squadre', function(val) {
     if (val && typeof val === 'object') window.FB_LOGHI_SQUADRE = val;
+  });
+
+  // Funzionalità abilitate per torneo da data/tornei_config/{torneo} (es. { sponsor: true })
+  window.TORNEI_CONFIG = window.TORNEI_CONFIG || {};
+  fbLoadKey('tornei_config', function(val) {
+    if (val && typeof val === 'object') window.TORNEI_CONFIG = val;
+    _applyTorneoFeatures();
   });
 
   // Carica livelli stadio da data/stadio/{torneo}_{lega}
@@ -4066,7 +4090,7 @@ function showAdminSection(id, el) {
     var catSel = document.getElementById('adm-cat-torneo');
     if (catSel) {
       catSel.innerHTML = '<option value="">-- Seleziona Torneo --</option>';
-      ADMIN_TORNEI.forEach(function(t){
+      ADMIN_TORNEI.filter(function(t){ return _torneoFeat(t.key,'sponsor'); }).forEach(function(t){
         var o=document.createElement('option');o.value=t.key;o.textContent=t.label;catSel.appendChild(o);
       });
     }
@@ -4338,7 +4362,10 @@ function admInitSelettori(prefix, resetAll) {
   var opt0 = document.createElement('option');
   opt0.value=''; opt0.textContent='-- Seleziona Torneo --';
   newSel.appendChild(opt0);
-  ADMIN_TORNEI.forEach(function(t) {
+  // Sponsor: solo tornei con sponsor abilitati
+  var _tList = prefix==='sp' ? ADMIN_TORNEI.filter(function(t){ return _torneoFeat(t.key,'sponsor'); }) : ADMIN_TORNEI;
+  if (prefix==='sp' && !_tList.length) opt0.textContent='-- Nessun torneo con sponsor abilitati --';
+  _tList.forEach(function(t) {
     var opt = document.createElement('option');
     opt.value = t.key; opt.textContent = t.label;
     if (!resetAll && t.key===prevVal) opt.selected=true;
@@ -6866,6 +6893,9 @@ function admSelectTorneoDetail(val) {
     +'<button onclick="admEditLogoTorneo('+ti+')" style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);color:#8b5cf6;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">🖼 Logo</button>'
     +'<button onclick="admConfirmRemoveTorneo('+ti+')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#ef4444;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">🗑 Elimina</button>'
     +'</div>'
+    +'<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg2);border-radius:6px;margin-bottom:10px;font-size:12px;font-weight:700;cursor:pointer">'
+    +'<input type="checkbox"'+(_torneoFeat(t.key,'sponsor')?' checked':'')+' onchange="admSetTorneoFeat(\''+t.key+'\',\'sponsor\',this.checked)" style="width:16px;height:16px;cursor:pointer">'
+    +'🤝 Sponsor abilitati<span style="font-weight:400;font-size:10px;color:var(--text3);margin-left:auto">mostra la sezione Sponsor in app e in admin</span></label>'
     +'<div style="margin-bottom:10px">'+leghe+'</div>'
     +'<div style="display:flex;gap:8px">'
     +'<input id="adm-new-lega-label-'+ti+'" type="text" placeholder="Nome lega (es. Francia)" style="flex:1;padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none">'
@@ -9538,6 +9568,7 @@ function enterLeague(tournament, leagueKey) {
     window._currentLeagueStaKey = 'adm_stadio_'+tournament+'_'+currentLeagueKey;
     window._currentTourneyKey = tournament;
     FANTASY_LOGOS = {};
+    _applyTorneoFeatures();
     showPage('lega');
     // Ricarica ADMIN_TORNEI da Firebase per aggiornare nomi leghe
     fbLoadKey('tornei', function(data) {
