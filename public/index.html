@@ -8056,9 +8056,8 @@ function admSaveEditUser(i) {
   u.attivo = document.getElementById('adm-eu-stato').value !== 'false';
   ADMIN_USERS[i] = u;
   // Salva su Firebase
-  fbSaveKey('users/' + u.username, JSON.stringify(u), function() {
-    fbSaveKey('users/list', JSON.stringify(ADMIN_USERS));
-  });
+  fbSaveKey('users/' + u.username, JSON.stringify(u));
+  admSaveUsers();
   document.getElementById('adm-edit-user-modal').style.display = 'none';
   admRenderUtenti();
   var msg = document.createElement('div');
