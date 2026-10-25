@@ -3673,6 +3673,11 @@ function slimGetCalendar() {
 }
 function slimGetStadio() {
   var lkCur = (typeof currentLeagueKey !== 'undefined' ? currentLeagueKey : 'it');
+  var _tk = window._currentTourneyKey;
+  if (_tk && _tk !== 'slim') {
+    var _fbSt = window.FB_STADIO && window.FB_STADIO[_tk+'_'+lkCur];
+    return _fbSt ? JSON.parse(JSON.stringify(_fbSt)) : {};
+  }
   window._currentLeagueStaKey = (lkCur === 'it') ? 'slim_stadio' : 'slim_stadio_' + lkCur;
   var key = window._currentLeagueStaKey;
   var raw = localStorage.getItem(key);
@@ -4946,6 +4951,17 @@ function loadDataFromFirebase() {
     if (typeof updateDashboardCounters === 'function') updateDashboardCounters();
   });
 
+  // Carica livelli stadio da data/stadio/{torneo}_{lega}
+  window.FB_STADIO = window.FB_STADIO || {};
+  fbLoadKey('stadio', function(val) {
+    if (!val || typeof val !== 'object') return;
+    Object.keys(val).forEach(function(k) {
+      var s = val[k];
+      if (typeof s === 'string') { try { s = JSON.parse(s); } catch(e) { s = null; } }
+      if (s && typeof s === 'object') window.FB_STADIO[k] = s;
+    });
+  });
+
   // Carica calendari da data/calendario/{torneo}_{lega}
   window.FB_CALENDARIO = window.FB_CALENDARIO || {};
   fbLoadKey('calendario', function(val) {
@@ -5441,6 +5457,9 @@ function admSaveStadioEl(el) {
   gsSaveKey('adm_stadio_saved_'+t+'_'+l, JSON.stringify(stadio));
   var appKey = (t==='tsm'&&l==='it') ? 'tsm_stadio_it' : (l==='it'?'slim_stadio':'slim_stadio_'+l);
   localStorage.setItem(appKey, JSON.stringify(stadio));
+  fbDB.ref('data/stadio/'+t+'_'+l).set(JSON.stringify(stadio));
+  window.FB_STADIO = window.FB_STADIO || {};
+  window.FB_STADIO[t+'_'+l] = JSON.parse(JSON.stringify(stadio));
   // Pulisci memoria temporanea
   delete window._admStadioTemp[cacheKey];
   var msg=document.createElement('div');
@@ -8627,6 +8646,7 @@ function admLoadCalBody() {
   el.innerHTML = h;
 }
 function admGetStadio(torneoKey, legaKey) {
+  if (window.FB_STADIO && window.FB_STADIO[torneoKey+'_'+legaKey]) return JSON.parse(JSON.stringify(window.FB_STADIO[torneoKey+'_'+legaKey]));
   // Legge prima il salvataggio Admin (dopo aver premuto Salva)
   // poi fallback sui dati iniziali embedded
   var adminSaved = localStorage.getItem('adm_stadio_saved_'+torneoKey+'_'+legaKey);
@@ -10229,6 +10249,11 @@ function slimGetCalendar() {
 }
 function slimGetStadio() {
   var lkCur = (typeof currentLeagueKey !== 'undefined' ? currentLeagueKey : 'it');
+  var _tk = window._currentTourneyKey;
+  if (_tk && _tk !== 'slim') {
+    var _fbSt = window.FB_STADIO && window.FB_STADIO[_tk+'_'+lkCur];
+    return _fbSt ? JSON.parse(JSON.stringify(_fbSt)) : {};
+  }
   window._currentLeagueStaKey = (lkCur === 'it') ? 'slim_stadio' : 'slim_stadio_' + lkCur;
   var key = window._currentLeagueStaKey;
   var raw = localStorage.getItem(key);
@@ -11508,6 +11533,9 @@ function admSaveStadioEl(el) {
   gsSaveKey('adm_stadio_saved_'+t+'_'+l, JSON.stringify(stadio));
   var appKey = (t==='tsm'&&l==='it') ? 'tsm_stadio_it' : (l==='it'?'slim_stadio':'slim_stadio_'+l);
   localStorage.setItem(appKey, JSON.stringify(stadio));
+  fbDB.ref('data/stadio/'+t+'_'+l).set(JSON.stringify(stadio));
+  window.FB_STADIO = window.FB_STADIO || {};
+  window.FB_STADIO[t+'_'+l] = JSON.parse(JSON.stringify(stadio));
   // Pulisci memoria temporanea
   delete window._admStadioTemp[cacheKey];
   var msg=document.createElement('div');
@@ -14190,6 +14218,7 @@ function admLoadCalBody() {
   el.innerHTML = h;
 }
 function admGetStadio(torneoKey, legaKey) {
+  if (window.FB_STADIO && window.FB_STADIO[torneoKey+'_'+legaKey]) return JSON.parse(JSON.stringify(window.FB_STADIO[torneoKey+'_'+legaKey]));
   // Legge prima il salvataggio Admin (dopo aver premuto Salva)
   // poi fallback sui dati iniziali embedded
   var adminSaved = localStorage.getItem('adm_stadio_saved_'+torneoKey+'_'+legaKey);
