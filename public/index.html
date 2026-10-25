@@ -4920,17 +4920,21 @@ function loadDataFromFirebase() {
   // Carica tornei da data/tornei
   loadTorneiFromFirebase();
 
-  // Carica squadre SLIM Italia da Firebase
-  fbLoadKey('tornei/slim/it/squadre', function(val) {
-    if (val && typeof val === 'object') {
-      try {
-        var teams = parseFirebaseArray(val);
-        if (teams && teams.length > 0) {
-          SLIM_TEAMS_IT = teams;
-          SLIM_TEAMS = teams;
-        }
-      } catch(e) { console.warn('Errore caricamento squadre SLIM:', e); }
-    }
+  // Carica squadre di ogni torneo/lega da data/tornei/{t}/{l}/squadre
+  window.FB_SQUADRE = window.FB_SQUADRE || {};
+  fbLoadKey('tornei', function(val) {
+    if (!val || typeof val !== 'object') return;
+    Object.keys(val).forEach(function(tk) {
+      var tdata = val[tk];
+      if (!tdata || typeof tdata !== 'object') return;
+      Object.keys(tdata).forEach(function(lk) {
+        var sq = tdata[lk] && tdata[lk].squadre;
+        if (typeof sq === 'string') { try { sq = JSON.parse(sq); } catch(e) { sq = null; } }
+        if (!sq || typeof sq !== 'object') return;
+        var names = Array.isArray(sq) ? sq.filter(Boolean) : Object.keys(sq);
+        if (names.length) window.FB_SQUADRE[tk + '_' + lk] = names.sort();
+      });
+    });
   });
 
   // Carica logo principale (fbLoadKey aggiunge 'data/' automaticamente)
@@ -8158,6 +8162,7 @@ function admLoadRoseSquadre() {
   document.getElementById('adm-rose-body').innerHTML='';
 }
 function admGetTeams(torneoKey, legaKey) {
+  if (window.FB_SQUADRE && window.FB_SQUADRE[torneoKey+'_'+legaKey]) return window.FB_SQUADRE[torneoKey+'_'+legaKey];
   if (torneoKey==='slim') {
     if (legaKey==='it') return (typeof SLIM_TEAMS_IT!=='undefined') ? SLIM_TEAMS_IT : Object.keys(TEAMS_ROSE||{}).sort();
     if (typeof ALL_LEAGUES_DATA!=='undefined' && ALL_LEAGUES_DATA[legaKey]) return Object.keys(ALL_LEAGUES_DATA[legaKey].teams||{}).sort();
@@ -13899,6 +13904,7 @@ function admCsConfirm() {
   setTimeout(admCsLoadSquadre,500);
 }
 function admGetTeams(torneoKey, legaKey) {
+  if (window.FB_SQUADRE && window.FB_SQUADRE[torneoKey+'_'+legaKey]) return window.FB_SQUADRE[torneoKey+'_'+legaKey];
   if (torneoKey==='slim') {
     if (legaKey==='it') return (typeof SLIM_TEAMS_IT!=='undefined') ? SLIM_TEAMS_IT : Object.keys(TEAMS_ROSE||{}).sort();
     if (typeof ALL_LEAGUES_DATA!=='undefined' && ALL_LEAGUES_DATA[legaKey]) return Object.keys(ALL_LEAGUES_DATA[legaKey].teams||{}).sort();
