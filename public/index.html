@@ -10167,14 +10167,13 @@ function calRenderGeneric(t, l, bodyId, nG, teams, callbackFn) {
   var el = document.getElementById(bodyId); if(!el) return;
   var viewKey = '_calView_'+t+'_'+l;
   var _togKey='_calToggle_'+t+'_'+l;var _tog=window[_togKey];window[_togKey]=false;
-  var view=_tog?(window[viewKey]||'calendario'):'calendario';
+  var view='calendario'; // lato utente solo RISULTATI (RENDIMENTO resta in admin)
   var cal = admGetCalendar(t, l);
   var schRaw = _calSchRaw(t,l);
   var schParsed = schRaw ? (function(){try{return JSON.parse(schRaw);}catch(e){return null;}})() : null;
   var sch = schParsed ? (schParsed.giornate || schParsed) : null;
   var _scoresRaw = _calScRaw(t,l);
   var _scores = _scoresRaw ? (function(){try{return JSON.parse(_scoresRaw);}catch(e){return null;}})() : null;
-  if (view==='calendario'&&!sch){var _hr=Object.keys(cal).some(function(g){return Object.values(cal[g]||{}).some(function(v){return v;});});if(_hr)view='rendimento';}
   var RC = {VC:'rgba(16,185,129,.15);color:#10b981',VF:'rgba(16,185,129,.1);color:#34d399',V:'rgba(110,231,183,.15);color:#6ee7b7',PC:'rgba(59,130,246,.12);color:#3b82f6',PF:'rgba(59,130,246,.08);color:#60a5fa',P:'rgba(147,197,253,.12);color:#93c5fd',SC:'rgba(239,68,68,.12);color:#ef4444',SF:'rgba(239,68,68,.08);color:#f87171',S:'rgba(252,165,165,.12);color:#fca5a5'};
   var _logos = {};
   if (typeof FANTASY_LOGOS !== 'undefined') Object.keys(FANTASY_LOGOS).forEach(function(k){_logos[k.toUpperCase()]=FANTASY_LOGOS[k];});
@@ -10183,7 +10182,7 @@ function calRenderGeneric(t, l, bodyId, nG, teams, callbackFn) {
     +'<button onclick="window[\''+viewKey+'\']=\'calendario\';window[\'_calToggle_'+t+'_'+l+'\']=true;'+(cb?cb+'()':'')+'" style="padding:5px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(view==='calendario'?'rgba(59,130,246,.5)':'var(--border)')+';background:'+(view==='calendario'?'rgba(59,130,246,.15)':'var(--bg2)')+';color:'+(view==='calendario'?'#3b82f6':'var(--text2)')+'">📅 RISULTATI</button>'
     +'<button onclick="window[\''+viewKey+'\']=\'rendimento\';window[\'_calToggle_'+t+'_'+l+'\']=true;'+(cb?cb+'()':'')+'" style="padding:5px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(view==='rendimento'?'rgba(16,185,129,.5)':'var(--border)')+';background:'+(view==='rendimento'?'rgba(16,185,129,.15)':'var(--bg2)')+';color:'+(view==='rendimento'?'#10b981':'var(--text2)')+'">📊 RENDIMENTO</button>'
     +'</div>';
-  var h = toggleHtml;
+  var h = '';
   if (view === 'calendario') {
     if (!sch) {
       h += '<div style="padding:30px;text-align:center;color:var(--text3);font-size:13px">📅 Calendario non ancora importato.<br><span style="font-size:11px">Importa il file xlsx dalla sezione Admin → Calendario.</span></div>';
