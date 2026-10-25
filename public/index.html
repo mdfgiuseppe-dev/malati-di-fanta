@@ -14678,6 +14678,19 @@ function admProcessGiornataXlsx(input){
       if(!matches.length&&ap.length>=2){
         for(var i=0;i<ap.length-1;i+=2){var a=ap[i],b=ap[i+1];if(a&&b)matches.push({team1:a.team,total1:a.total,team2:b.team,total2:b.total});}
       }
+      // Formato 2026: riga partita con casa in col A, risultato "N-N", trasferta subito dopo; "Totale" nelle righe sotto
+      if(!matches.length){
+        rows.forEach(function(row,ri){
+          var sc=null,ci=-1;
+          for(var c=1;c<row.length;c++){var v=(row[c]||'').toString().trim();if(/^\d+-\d+$/.test(v)){sc=v;ci=c;break;}}
+          if(!sc)return;
+          var t1=_findT((row[0]||'').toString().trim()),t2=_findT((row[ci+1]||'').toString().trim());
+          if(!t1||!t2)return;
+          var tot1=null,tot2=null;
+          for(var r=ri+1;r<Math.min(rows.length,ri+6);r++){var rr=rows[r];for(var c2=0;c2<rr.length;c2++){if(/^totale$/i.test((rr[c2]||'').toString().trim())){var tv=parseFloat(String(rr[c2+1]).replace(',','.'));if(!isNaN(tv)){if(c2<ci){if(tot1===null)tot1=tv;}else if(tot2===null)tot2=tv;}}}}
+          matches.push({team1:t1,total1:tot1||0,team2:t2,total2:tot2||0,scoreStr:sc});
+        });
+      }
       if(!matches.length){
         var dbg='Colonna A: '+aTeams.map(function(x){return x.name+'(totale:'+aTotals.filter(function(t){return t.ri>x.ri;}).slice(0,1).map(function(t){return t.val;}).join('')+')'}).join(', ')
           +'\nColonna K: '+kTeams.map(function(x){return x.name;}).join(', ');
