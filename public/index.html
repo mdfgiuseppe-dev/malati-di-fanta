@@ -3399,7 +3399,7 @@ function renderModulistica(torneoKey, containerId) {
     var inner = '<div style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:20px;cursor:pointer;transition:all .25s;display:flex;align-items:flex-start;gap:14px"'
       + ' onmouseover="this.style.borderColor=\''+hex+'\';this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 8px 30px rgba('+rgb+',.15)\'"'
       + ' onmouseout="this.style.borderColor=\'var(--border)\';this.style.transform=\'\';this.style.boxShadow=\'\'">'
-      + '<div style="width:44px;height:44px;border-radius:12px;background:rgba('+rgb+',.12);border:1px solid rgba('+rgb+',.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px">'+m.icona+'</div>'
+      + '<div style="width:44px;height:44px;border-radius:12px;background:rgba('+rgb+',.12);border:1px solid rgba('+rgb+',.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px">'+(m.icona||'📄')+'</div>'
       + '<div style="flex:1">'
       + '<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:4px">'+m.titolo+'</div>'
       + '<div style="font-size:11px;color:var(--text2);line-height:1.5">'+m.descrizione+'</div>'
@@ -9930,7 +9930,7 @@ function showSection(id,el){
   else if(id==='stadio')slimRenderStadio();
   else if(id==='multe')renderMulte();
   else if(id==='coppe'){initCoppaLogos();closeBracket();}
-  else if(id==='modulistica'){ renderModulistica('slim', 'slim-modulistica-body'); }
+  else if(id==='modulistica'){ renderModulistica(_modKey(window._currentTourneyKey||'slim', window.currentLeagueKey||'it'), 'slim-modulistica-body'); }
 }
 var currentTeam='SALERNITANA',currentFilter='ALL';
 function roleBadge(r){var roles=r.split(';').map(function(x){return x.trim();}).filter(function(x){return x;});return roles.map(function(x){var c=ROLE_COLORS[x]||['rgba(107,114,128,.15)','#6b7280'];return'<span style="display:inline-block;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;background:'+c[0]+';color:'+c[1]+';margin:1px">'+x+'</span>';}).join('');}
