@@ -1830,7 +1830,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     <div class="tbtn active" onclick="selectTeam(this,'Salernitana')"><img src="" style="width:26px;height:26px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'"><span>Salernitana</span></div><div class="tbtn " onclick="selectTeam(this,'Juventus')"><img src="" style="width:26px;height:26px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'"><span>Juventus</span></div><div class="tbtn " onclick="selectTeam(this,'Roma')"><img src="" style="width:26px;height:26px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'"><span>Roma</span></div><div class="tbtn " onclick="selectTeam(this,'Como')"><img src="" style="width:26px;height:26px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'"><span>Como</span></div><div class="tbtn " onclick="selectTeam(this,'Napoli')"><img src="" style="width:26px;height:26px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'"><span>Napoli</span></div><div class="tbtn " onclick="selectTeam(this,'Torino')"><img src="" style="width:26px;height:26px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'"><span>Torino</span></div><div class="tbtn " onclick="selectTeam(this,'Brescia')"><img src="" style="width:26px;height:26px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'"><span>Brescia</span></div><div class="tbtn " onclick="selectTeam(this,'Bari')"><img src="" style="width:26px;height:26px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'"><span>Bari</span></div><div class="tbtn " onclick="selectTeam(this,'Catanzaro')"><img src="" style="width:26px;height:26px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'"><span>Catanzaro</span></div><div class="tbtn " onclick="selectTeam(this,'Milan')"><img src="" style="width:26px;height:26px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'"><span>Milan</span></div>
     <div class="tbtn-inf">
       <div class="tbtn" onclick="selectTeam(this,'INFERMERIA')">
-        <span style="font-size:16px">🏥</span><span>Infermeria</span>
+        <span style="font-size:16px">🏥</span><span>INFERMERIA</span>
       </div>
     </div>
   </div>
@@ -4243,7 +4243,7 @@ function tsmUpdateHeader() {
   var lo=document.getElementById('tsm-th-logo');
   if (tsmCurrentTeam==='INFERMERIA') {
     if(lo) lo.style.display='none';
-    if(nm) nm.textContent='Infermeria';
+    if(nm) nm.textContent='INFERMERIA';
     if(cb) cb.style.display='none';
     if(st) st.innerHTML=''; return;
   }
@@ -4940,7 +4940,7 @@ function loadDataFromFirebase() {
         if (typeof sq === 'string') { try { sq = JSON.parse(sq); } catch(e) { sq = null; } }
         if (!sq || typeof sq !== 'object') return;
         var names = Array.isArray(sq) ? sq.filter(Boolean) : Object.keys(sq);
-        if (names.length) window.FB_SQUADRE[tk + '_' + lk] = names.sort();
+        if (names.length) window.FB_SQUADRE[tk + '_' + lk] = names.map(function(n){ return String(n).toUpperCase(); }).sort();
       });
     });
     if (typeof updateDashboardCounters === 'function') updateDashboardCounters();
@@ -6880,7 +6880,7 @@ function admScLoadSquadre() {
     sel.innerHTML = '<option value="">-- Seleziona --</option>';
     teams.forEach(function(sq) {
       var o = document.createElement('option');
-      o.value=sq; o.textContent=sq==='INFERMERIA'?'Infermeria':sq; o.style.color='#000';
+      o.value=sq; o.textContent=String(sq).toUpperCase(); o.style.color='#000';
       sel.appendChild(o);
     });
     document.getElementById('adm-sc-players'+side).innerHTML = '';
@@ -8184,7 +8184,7 @@ function admLoadRoseSquadre() {
   sel.innerHTML = '<option value="">-- Seleziona Squadra --</option>';
   var teams = admGetTeams(torneoKey, legaKey).slice().sort(function(a,b){return a.localeCompare(b);});
   teams.forEach(function(t){ var o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o); });
-  var oI=document.createElement('option');oI.value='INFERMERIA';oI.textContent='🏥 Infermeria';sel.appendChild(oI);
+  var oI=document.createElement('option');oI.value='INFERMERIA';oI.textContent='🏥 INFERMERIA';sel.appendChild(oI);
   document.getElementById('adm-rose-body').innerHTML='';
 }
 function admGetTeams(torneoKey, legaKey) {
@@ -8602,7 +8602,7 @@ function admLoadCalBody() {
   function headerRow() {
     return '<tr style="background:var(--bg2);font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3);position:sticky;top:0;z-index:2">'
       +'<th style="padding:7px 12px;text-align:left;min-width:70px">Giornata</th>'
-      + teams.map(function(t){ return '<th style="padding:7px 6px;min-width:80px;text-transform:none">'+t+'</th>'; }).join('')
+      + teams.map(function(t){ return '<th style="padding:7px 6px;min-width:80px">'+t+'</th>'; }).join('')
       +'<th style="padding:7px 6px;min-width:50px">Salva</th>'
       +'</tr>';
   }
@@ -9513,12 +9513,12 @@ function showSection(id,el){
 }
 var currentTeam='SALERNITANA',currentFilter='ALL';
 function roleBadge(r){var roles=r.split(';').map(function(x){return x.trim();}).filter(function(x){return x;});return roles.map(function(x){var c=ROLE_COLORS[x]||['rgba(107,114,128,.15)','#6b7280'];return'<span style="display:inline-block;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;background:'+c[0]+';color:'+c[1]+';margin:1px">'+x+'</span>';}).join('');}
-function buildTeamsGrid(){var g=document.getElementById('rose-teams-grid');if(!g)return;var list=Object.keys(TEAMS_ROSE).sort().concat(['INFERMERIA']);g.innerHTML=list.map(function(n){var a=n===currentTeam;var label=n==='INFERMERIA'?'Infermeria':n;return'<div class="tbtn'+(a?' active':'')+'" onclick="selectTeam(this,\''+n+'\')" style="padding:8px 4px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;font-weight:700">'+label+'</div>';}).join('');}
+function buildTeamsGrid(){var g=document.getElementById('rose-teams-grid');if(!g)return;var list=Object.keys(TEAMS_ROSE).sort().concat(['INFERMERIA']);g.innerHTML=list.map(function(n){var a=n===currentTeam;var label=n.toUpperCase();return'<div class="tbtn'+(a?' active':'')+'" onclick="selectTeam(this,\''+n+'\')" style="padding:8px 4px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;font-weight:700">'+label+'</div>';}).join('');}
 function selectTeam(el,name){currentTeam=name;currentFilter='ALL';buildTeamsGrid();updateHeader();buildFilters();renderTable();}
 function updateHeader(){
   if(currentTeam==='INFERMERIA'){
     var l=document.getElementById('th-logo');if(l)l.style.display='none';
-    var nm=document.getElementById('th-name');if(nm)nm.textContent='Infermeria';
+    var nm=document.getElementById('th-name');if(nm)nm.textContent='INFERMERIA';
     var c=document.getElementById('th-credits-box');if(c)c.style.display='none';
     var st=document.getElementById('th-stats');if(st)st.innerHTML='';
     return;
@@ -10799,7 +10799,7 @@ function tsmUpdateHeader() {
   var lo=document.getElementById('tsm-th-logo');
   if (tsmCurrentTeam==='INFERMERIA') {
     if(lo) lo.style.display='none';
-    if(nm) nm.textContent='Infermeria';
+    if(nm) nm.textContent='INFERMERIA';
     if(cb) cb.style.display='none';
     if(st) st.innerHTML=''; return;
   }
@@ -14165,7 +14165,7 @@ function admLoadCalBody() {
   function headerRow() {
     return '<tr style="background:var(--bg2);font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3);position:sticky;top:0;z-index:2">'
       +'<th style="padding:7px 12px;text-align:left;min-width:70px">Giornata</th>'
-      + teams.map(function(t){ return '<th style="padding:7px 6px;min-width:80px;text-transform:none">'+t+'</th>'; }).join('')
+      + teams.map(function(t){ return '<th style="padding:7px 6px;min-width:80px">'+t+'</th>'; }).join('')
       +'<th style="padding:7px 6px;min-width:50px">Salva</th>'
       +'</tr>';
   }
@@ -15225,12 +15225,12 @@ function showSection(id,el){
 }
 var currentTeam='SALERNITANA',currentFilter='ALL';
 function roleBadge(r){var roles=r.split(';').map(function(x){return x.trim();}).filter(function(x){return x;});return roles.map(function(x){var c=ROLE_COLORS[x]||['rgba(107,114,128,.15)','#6b7280'];return'<span style="display:inline-block;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;background:'+c[0]+';color:'+c[1]+';margin:1px">'+x+'</span>';}).join('');}
-function buildTeamsGrid(){var g=document.getElementById('rose-teams-grid');if(!g)return;var list=Object.keys(TEAMS_ROSE).sort().concat(['INFERMERIA']);g.innerHTML=list.map(function(n){var a=n===currentTeam;var label=n==='INFERMERIA'?'Infermeria':n;return'<div class="tbtn'+(a?' active':'')+'" onclick="selectTeam(this,\''+n+'\')" style="padding:8px 4px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;font-weight:700">'+label+'</div>';}).join('');}
+function buildTeamsGrid(){var g=document.getElementById('rose-teams-grid');if(!g)return;var list=Object.keys(TEAMS_ROSE).sort().concat(['INFERMERIA']);g.innerHTML=list.map(function(n){var a=n===currentTeam;var label=n.toUpperCase();return'<div class="tbtn'+(a?' active':'')+'" onclick="selectTeam(this,\''+n+'\')" style="padding:8px 4px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;font-weight:700">'+label+'</div>';}).join('');}
 function selectTeam(el,name){currentTeam=name;currentFilter='ALL';buildTeamsGrid();updateHeader();buildFilters();renderTable();}
 function updateHeader(){
   if(currentTeam==='INFERMERIA'){
     var l=document.getElementById('th-logo');if(l)l.style.display='none';
-    var nm=document.getElementById('th-name');if(nm)nm.textContent='Infermeria';
+    var nm=document.getElementById('th-name');if(nm)nm.textContent='INFERMERIA';
     var c=document.getElementById('th-credits-box');if(c)c.style.display='none';
     var st=document.getElementById('th-stats');if(st)st.innerHTML='';
     return;
