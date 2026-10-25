@@ -3161,38 +3161,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       </div>
       <div id="adm-cs-body"></div>
     </div>
-<!-- ===== IMMAGINI ===== -->
-    <div id="adm-s-immagini" class="adm-section" style="display:none">
-      <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px">Gestione <span style="color:#ef4444">Immagini</span></div>
-      <div style="font-size:11px;color:var(--text2);margin-bottom:20px">Carica loghi squadre, coppe e altri asset. Le immagini vengono salvate nel browser e usate dall'app al posto dei placeholder.</div>
-
-      <!-- Carica nuova immagine -->
-      <div class="card" style="padding:20px;margin-bottom:20px">
-        <div style="font-size:13px;font-weight:800;margin-bottom:14px">📤 Carica Nuova Immagine</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-bottom:10px">
-          <div>
-            <div style="font-size:9px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Chiave (identificativo)</div>
-            <input id="adm-img-key" type="text" placeholder="es. logo_juventus, coppa_champions" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;box-sizing:border-box">
-          </div>
-          <div>
-            <div style="font-size:9px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">File immagine</div>
-            <input id="adm-img-file" type="file" accept="image/*" style="width:100%;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none;box-sizing:border-box">
-          </div>
-          <button onclick="admUploadImmagine()" style="padding:8px 16px;background:#10b981;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap">Carica</button>
-        </div>
-        <div id="adm-img-preview" style="display:none;margin-top:10px;padding:10px;background:var(--bg2);border-radius:8px;display:flex;align-items:center;gap:12px">
-          <img id="adm-img-preview-img" style="width:60px;height:60px;object-fit:contain;border-radius:6px">
-          <div>
-            <div id="adm-img-preview-key" style="font-size:12px;font-weight:700"></div>
-            <div id="adm-img-preview-size" style="font-size:10px;color:var(--text2);margin-top:2px"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Lista immagini caricate -->
-      <div id="adm-immagini-list"></div>
-    </div>
-
     <!-- ===== IMPOSTAZIONI ===== -->
     <div id="adm-s-impostazioni" class="adm-section" style="display:none">
       <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px">⚙️ <span style="color:#ef4444">Impostazioni</span></div>
@@ -4023,19 +3991,6 @@ var ADMIN_USERS = [];
 
 
 // ═══════════════════════════════════════════════════════
-// ADMIN — Gestione Immagini
-// ═══════════════════════════════════════════════════════
-
-
-
-
-
-
-
-// Funzione globale per usare immagini custom nell'app
-
-
-// ═══════════════════════════════════════════════════════
 // ADMIN — Multe & Sanzioni
 // ═══════════════════════════════════════════════════════
 
@@ -4062,7 +4017,7 @@ function showAdminSection(id, el) {
   ['adm-rose-body','adm-cal-body','adm-sp-body','adm-stad-body',
    'adm-global-stadio-table-body','adm-sponsor-catalog-body',
    'adm-cop-editor-body','adm-cop-config-body','adm-stagioni-body',
-   'adm-immagini-list','adm-mul-body','adm-sc-playersA',
+   'adm-mul-body','adm-sc-playersA',
    'adm-sc-playersB','adm-sc-riepilogo','adm-cs-body',
    'adm-utenti-body','adm-tornei-body','adm-tornei-detail','adm-mod-body'].forEach(function(bid){
     var b = document.getElementById(bid); if(b) b.innerHTML='';
@@ -4119,7 +4074,6 @@ function showAdminSection(id, el) {
   if (id==='stadio') admInitSelettori('stad', true);
   if (id==='tablestadio') admRenderGlobalStadioTable();
   if (id==='stagioni') admRenderStagioni();
-  if (id==='immagini') admRenderImmagini();
   if (id==='coppe') admInitCoppeSection();
   if (id==='modulistica') admRenderModulistica(true);
   if (id==='multe') admInitSelettori('mul', true);
@@ -6713,124 +6667,6 @@ function admDeleteStagioneEl(el) {
   localStorage.setItem('storico_stagioni_'+torneoKey, JSON.stringify(storico));
   gsSaveKey('storico_stagioni_'+torneoKey, JSON.stringify(storico));
   admRenderStagioni();
-}
-
-
-// ═══════════════════════════════════════════════════════
-// ADMIN — Gestione Immagini
-// ═══════════════════════════════════════════════════════
-
-function admGetImmagini() {
-  var stored = localStorage.getItem('adm_immagini_index');
-  return stored ? JSON.parse(stored) : [];
-}
-
-function admSaveImmaginiIndex(list) {
-  localStorage.setItem('adm_immagini_index', JSON.stringify(list));
-}
-
-function admUploadImmagine() {
-  var keyEl = document.getElementById('adm-img-key');
-  var fileEl = document.getElementById('adm-img-file');
-  var key = keyEl.value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_');
-  if (!key) { alert('Inserisci una chiave identificativa'); return; }
-  if (!fileEl.files || !fileEl.files[0]) { alert('Seleziona un file immagine'); return; }
-
-  var file = fileEl.files[0];
-  var maxSize = 500 * 1024; // 500KB
-  if (file.size > maxSize) {
-    alert('Immagine troppo grande (max 500KB). Comprimi prima il file.');
-    return;
-  }
-
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var b64 = e.target.result; // data:image/...;base64,...
-    try {
-      localStorage.setItem('adm_img_'+key, b64);
-    } catch(err) {
-      alert('Spazio localStorage esaurito. Elimina alcune immagini prima di caricarne altre.');
-      return;
-    }
-
-    // Aggiorna indice
-    var list = admGetImmagini();
-    var existing = list.findIndex(function(i){return i.key===key;});
-    var entry = {key:key, name:file.name, size:Math.round(file.size/1024)+'KB', type:file.type, date:new Date().toLocaleDateString('it-IT')};
-    if (existing >= 0) list[existing] = entry;
-    else list.push(entry);
-    admSaveImmaginiIndex(list);
-
-    // Mostra anteprima
-    var prev = document.getElementById('adm-img-preview');
-    var prevImg = document.getElementById('adm-img-preview-img');
-    var prevKey = document.getElementById('adm-img-preview-key');
-    var prevSize = document.getElementById('adm-img-preview-size');
-    if (prev) { prev.style.display='flex'; prevImg.src=b64; prevKey.textContent='Chiave: adm_img_'+key; prevSize.textContent=entry.size+' · '+file.name; }
-
-    keyEl.value='';
-    fileEl.value='';
-    admRenderImmagini();
-    alert('✅ Immagine "'+key+'" caricata con successo!');
-  };
-  reader.readAsDataURL(file);
-}
-
-function admRenderImmagini() {
-  var el = document.getElementById('adm-immagini-list'); if(!el) return;
-  var list = admGetImmagini();
-  if (!list.length) {
-    el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text2);font-size:12px">Nessuna immagine caricata.</div>';
-    return;
-  }
-
-  var h = '<div class="card" style="padding:0;overflow:hidden">'
-    +'<div style="padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:10px;font-weight:800;text-transform:uppercase;color:var(--text3)">Immagini Caricate ('+list.length+')</div>'
-    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1px;background:var(--border)">';
-
-  list.forEach(function(img) {
-    var b64 = localStorage.getItem('adm_img_'+img.key) || '';
-    h += '<div style="background:var(--card);padding:12px;display:flex;flex-direction:column;align-items:center;gap:8px">'
-      +'<img src="'+b64+'" style="width:60px;height:60px;object-fit:contain;border-radius:6px;background:var(--bg2)">'
-      +'<div style="text-align:center">'
-      +'<div style="font-size:10px;font-weight:700;color:var(--text);word-break:break-all">'+img.key+'</div>'
-      +'<div style="font-size:9px;color:var(--text3);margin-top:2px">'+img.size+'</div>'
-      +'<div style="font-size:9px;color:var(--text3)">'+img.date+'</div>'
-      +'</div>'
-      +'<div style="display:flex;gap:6px">'
-      +'<button data-key="'+img.key+'" onclick="admCopyImgKeyEl(this)" style="padding:3px 8px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#3b82f6;border-radius:4px;font-size:9px;font-weight:700;cursor:pointer">Copia chiave</button>'
-      +'<button data-key="'+img.key+'" onclick="admDeleteImmagineEl(this)" style="padding:3px 8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#ef4444;border-radius:4px;font-size:9px;font-weight:700;cursor:pointer">Elimina</button>'
-      +'<button onclick="admEditTrofeoUrl(\'+ti+\')" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#3b82f6;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">🖼 Trofeo</button>'
-      +'</div>'
-      +'</div>';
-  });
-
-  h += '</div></div>';
-  el.innerHTML = h;
-}
-
-function admCopyImgKeyEl(el) { admCopyImgKey(el.dataset.key); }
-function admCopyImgKey(key) {
-  var fullKey = 'adm_img_'+key;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(fullKey).then(function(){
-      var msg=document.createElement('div');msg.textContent='✅ Chiave copiata: '+fullKey;msg.style.cssText='position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';document.body.appendChild(msg);setTimeout(function(){msg.remove();},2000);
-    });
-  }
-}
-
-function admDeleteImmagineEl(el) {
-  var key = el.dataset.key;
-  if (!confirm('Eliminare l\'immagine "'+key+'"?')) return;
-  localStorage.removeItem('adm_img_'+key);
-  var list = admGetImmagini().filter(function(i){return i.key!==key;});
-  admSaveImmaginiIndex(list);
-  admRenderImmagini();
-}
-
-// Funzione globale per usare immagini custom nell'app
-function getCustomImg(key) {
-  return localStorage.getItem('adm_img_'+key) || null;
 }
 
 
