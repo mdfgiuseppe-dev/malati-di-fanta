@@ -3689,6 +3689,25 @@ function admSetTorneoFeat(t, f, on) {
   _applyTorneoFeatures();
 }
 
+// Utenti: data/users/{username} = { cognome, nome, username, password, email, phone, lega, attivo }
+function _userKey(un) { return String(un || '').replace(/[.#$\[\]\/]/g, '_'); }
+function _userParts(u) {
+  if (u.cognome !== undefined) return { c: u.cognome || '', n: u.nome || '' };
+  var p = String(u.nome || '').split(' ');   // vecchio formato "Cognome Nome"
+  return { c: p[0] || '', n: p.slice(1).join(' ') };
+}
+function _userFull(u) { var p = _userParts(u); return (p.c + ' ' + p.n).trim(); }
+function _usersFromFb(val) {
+  if (!val || typeof val !== 'object') return [];
+  var out = [];
+  Object.keys(val).forEach(function(k) {
+    var v = val[k];
+    if (typeof v === 'string') { try { v = JSON.parse(v); } catch(e) { return; } }
+    if (v && !Array.isArray(v) && v.username) out.push(v);
+  });
+  return out;
+}
+
 // Carica dati critici da Firebase all'avvio
 function loadDataFromFirebase() {
   // Inizializza password admin al primo caricamento
@@ -3776,10 +3795,10 @@ function loadDataFromFirebase() {
   });
 
   // Carica utenti da Firebase
-  fbLoadKey('users/list', function(val) {
+  fbLoadKey('users', function(val) {
     if (val) {
       try {
-        var utenti = parseFirebaseArray(val);
+        var utenti = _usersFromFb(val);
         ADMIN_USERS.length = 0;
         utenti.forEach(function(u) { ADMIN_USERS.push(u); });
       } catch(e) { console.error('Error parsing users:', e); }
@@ -3814,12 +3833,12 @@ function loadDataFromFirebase() {
 
 // Login user (verifica su Firebase users)
 function fbLoginUser(username, password, callback) {
-  fbLoadKey('users/list', function(val) {
+  fbLoadKey('users', function(val) {
     if (!val) {
       callback(false, {error: 'Nessun utente trovato'});
       return;
     }
-    var users = parseFirebaseArray(val);
+    var users = _usersFromFb(val);
     if (!Array.isArray(users)) { users = []; }
 
     var matchedUser = null;
@@ -3835,7 +3854,7 @@ function fbLoginUser(username, password, callback) {
     } else if (matchedUser.attivo === false) {
       callback(false, {error: 'Utente disattivato'});
     } else {
-      callback(true, {username: matchedUser.username, nome: matchedUser.nome, lega: matchedUser.lega, role: 'user'});
+      callback(true, {username: matchedUser.username, nome: _userFull(matchedUser), lega: matchedUser.lega, role: 'user'});
     }
   });
 }
@@ -7418,8 +7437,10 @@ function admAggiornaDashboard() {
 // ADMIN — Utenti
 // ═══════════════════════════════════════════════════════
 function admSaveUsers() {
-  // Salva utenti su Firebase e ritorna Promise
-  return fbSaveKey('users/list', JSON.stringify(ADMIN_USERS));
+  // Salva ogni utente in data/users/{username} e ritorna Promise
+  var obj = {};
+  ADMIN_USERS.forEach(function(u) { obj[_userKey(u.username)] = u; });
+  return fbDB.ref('data/users').set(obj);
 }
 
 // Data in formato italiano gg/mm/aaaa (accetta gg/mm/aaaa, mm/gg/aaaa di Google Forms, ISO o testo data)
@@ -7548,13 +7569,13 @@ function admRenderUtenti() {
 
   // Ordina utenti per cognome, poi per nome
   var sortedUsers = ADMIN_USERS.slice().sort(function(a, b) {
-    var cognomeA = (a.nome || '').split(' ')[0].toLowerCase();
-    var cognomeB = (b.nome || '').split(' ')[0].toLowerCase();
+    var cognomeA = _userParts(a).c.toLowerCase();
+    var cognomeB = _userParts(b).c.toLowerCase();
     if (cognomeA !== cognomeB) {
       return cognomeA.localeCompare(cognomeB);
     }
-    var nomeA = (a.nome || '').split(' ').slice(1).join(' ').toLowerCase();
-    var nomeB = (b.nome || '').split(' ').slice(1).join(' ').toLowerCase();
+    var nomeA = _userParts(a).n.toLowerCase();
+    var nomeB = _userParts(b).n.toLowerCase();
     return nomeA.localeCompare(nomeB);
   });
 
@@ -7571,9 +7592,9 @@ function admRenderUtenti() {
     +'<th style="padding:8px 14px;text-align:center">Azioni</th>'
     +'</tr></thead><tbody>'
     + sortedUsers.map(function(u, i) {
-      var nomeParti = (u.nome || '').split(' ');
-      var cognome = nomeParti[0] || '';
-      var nome = nomeParti.slice(1).join(' ') || '';
+      var _up = _userParts(u);
+      var cognome = _up.c;
+      var nome = _up.n;
       var statoBtn = u.attivo!==false
         ? '<span style="background:rgba(16,185,129,.1);color:#10b981;font-size:9px;font-weight:800;padding:3px 10px;border-radius:20px;border:1px solid rgba(16,185,129,.2)">ATTIVO</span>'
         : '<span style="background:rgba(239,68,68,.1);color:#ef4444;font-size:9px;font-weight:800;padding:3px 10px;border-radius:20px;border:1px solid rgba(239,68,68,.2)">DISATTIVATO</span>';
@@ -7761,12 +7782,12 @@ function admAddUser() {
   if (!cognome || !nome || !username || !password) { alert('Compila tutti i campi obbligatori'); window._addingUser = false; return; }
 
   // Ricarica ADMIN_USERS da Firebase per verificare gli username attuali
-  fbLoadKey('users/list', function(usersFromFb) {
-    var fbUsers = parseFirebaseArray(usersFromFb) || [];
+  fbLoadKey('users', function(usersFromFb) {
+    var fbUsers = _usersFromFb(usersFromFb);
     if (!Array.isArray(fbUsers)) fbUsers = [];
     if (fbUsers.find(function(u){ return u.username===username; })) { alert('Username già esistente'); window._addingUser = false; return; }
 
-    var newUser = { nome:nomeCompleto, username:username, password:password, email:email, phone:phone, lega:lega, attivo:true };
+    var newUser = { cognome:cognome, nome:nome, username:username, password:password, email:email, phone:phone, lega:lega, attivo:true };
     ADMIN_USERS.push(newUser);
 
     // Aspetta che il salvataggio su Firebase sia completato
@@ -7867,9 +7888,9 @@ function admEditUser(i) {
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center';
     document.body.appendChild(modal);
   }
-  var nomeParti = (u.nome || '').split(' ');
-  var cognome = nomeParti[0] || '';
-  var nome = nomeParti.slice(1).join(' ') || '';
+  var _up = _userParts(u);
+  var cognome = _up.c;
+  var nome = _up.n;
   var statoOpts = '<option value="true"'+(u.attivo!==false ? ' selected' : '')+'>Attivo</option>'
     +'<option value="false"'+(u.attivo===false ? ' selected' : '')+'>Disattivato</option>';
 
@@ -7897,7 +7918,8 @@ function admSaveEditUser(i) {
   if (!u) return;
   var cognome = document.getElementById('adm-eu-cognome').value.trim() || '';
   var nome = document.getElementById('adm-eu-nome').value.trim() || '';
-  u.nome = (cognome + ' ' + nome).trim();
+  u.cognome = cognome;
+  u.nome = nome;
   u.username = document.getElementById('adm-eu-username').value.trim() || u.username;
   u.password = document.getElementById('adm-eu-password').value.trim() || u.password;
   u.email = document.getElementById('adm-eu-email').value.trim() || '';
@@ -7906,7 +7928,6 @@ function admSaveEditUser(i) {
   u.attivo = document.getElementById('adm-eu-stato').value !== 'false';
   ADMIN_USERS[i] = u;
   // Salva su Firebase
-  fbSaveKey('users/' + u.username, JSON.stringify(u));
   admSaveUsers();
   document.getElementById('adm-edit-user-modal').style.display = 'none';
   admRenderUtenti();
@@ -7923,7 +7944,7 @@ function admToggleUser(i) {
 }
 
 function admDeleteUser(i) {
-  if (!confirm('Eliminare l\'utente "'+ADMIN_USERS[i].nome+'"?')) return;
+  if (!confirm('Eliminare l\'utente "'+_userFull(ADMIN_USERS[i])+'"?')) return;
   ADMIN_USERS.splice(i, 1);
   admSaveUsers();
   admRenderUtenti();
