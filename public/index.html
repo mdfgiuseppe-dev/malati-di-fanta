@@ -4993,6 +4993,19 @@ function loadDataFromFirebase() {
     });
   });
 
+  // Carica calendario importato e punteggi (salvati come testo JSON)
+  [['calendario_schedule','FB_SCHEDULE'],['punteggi','FB_PUNTEGGI']].forEach(function(p) {
+    window[p[1]] = window[p[1]] || {};
+    fbLoadKey(p[0], function(val) {
+      if (!val || typeof val !== 'object') return;
+      Object.keys(val).forEach(function(k) {
+        var v = val[k];
+        if (typeof v === 'string') { try { v = JSON.parse(v); } catch(e) { v = null; } }
+        if (v && typeof v === 'object') window[p[1]][k] = v;
+      });
+    });
+  });
+
   // Carica calendari da data/calendario/{torneo}_{lega}
   window.FB_CALENDARIO = window.FB_CALENDARIO || {};
   fbLoadKey('calendario', function(val) {
@@ -8656,11 +8669,25 @@ function admLoadCalBody() {
   var torneoKey = document.getElementById('adm-cal-torneo').value;
   var legaKey = document.getElementById('adm-cal-lega').value;
   var el = document.getElementById('adm-cal-body'); if(!el||!legaKey) return;
+  var _schStored=_calSchRaw(torneoKey,legaKey);
+  var _schParsed=_schStored?(function(){try{return JSON.parse(_schStored);}catch(e){return null;}})():null;
+  var _schGiornate=_schParsed?(_schParsed.giornate||_schParsed):{};
+  var _schN=Object.keys(_schGiornate).length;
+  var _schAr=_schParsed?(_schParsed.andata_ritorno||0):0;
+  var _schNe=_schParsed?(_schParsed.neutre||0):0;
+  var giornate=_schN>0?_schN:(torneoKey==='tsm')?(typeof TSM_TOTAL_GIORNATE!=='undefined'?TSM_TOTAL_GIORNATE:36):(typeof SLIM_TOTAL_GIORNATE!=='undefined'?SLIM_TOTAL_GIORNATE:36);
   var cal = admGetCalendar(torneoKey, legaKey);
   var teams = admGetTeams(torneoKey, legaKey);
-  var giornate = (torneoKey==='tsm') ? (typeof TSM_TOTAL_GIORNATE!=='undefined'?TSM_TOTAL_GIORNATE:36) : (typeof SLIM_TOTAL_GIORNATE!=='undefined'?SLIM_TOTAL_GIORNATE:36);
-  var OPTS = ['','VC','VF','PC','PF','SC','SF'];
-  var RC = {VC:'#10b981',VF:'#34d399',PC:'#3b82f6',PF:'#60a5fa',SC:'#ef4444',SF:'#f87171'};
+  var viewKey='_admCalView_'+torneoKey+'_'+legaKey;
+  var _admTog=window['_admCalToggle_'+torneoKey+'_'+legaKey];window['_admCalToggle_'+torneoKey+'_'+legaKey]=false;
+  var view=_admTog?(window[viewKey]||'calendario'):'calendario';
+  if(view==='calendario'&&!_schN){var _har=Object.keys(cal).some(function(g){return Object.values(cal[g]||{}).some(function(v){return v;});});if(_har)view='risultati';}
+  var OPTS = ['','VC','VF','V','PC','PF','P','SC','SF','S'];
+  var RC = {VC:'#10b981',VF:'#34d399',V:'#6ee7b7',PC:'#3b82f6',PF:'#60a5fa',P:'#93c5fd',SC:'#ef4444',SF:'#f87171',S:'#fca5a5'};
+  var RC2 = {VC:'rgba(16,185,129,.15);color:#10b981',VF:'rgba(16,185,129,.1);color:#34d399',V:'rgba(110,231,183,.15);color:#6ee7b7',PC:'rgba(59,130,246,.12);color:#3b82f6',PF:'rgba(59,130,246,.08);color:#60a5fa',P:'rgba(147,197,253,.12);color:#93c5fd',SC:'rgba(239,68,68,.12);color:#ef4444',SF:'rgba(239,68,68,.08);color:#f87171',S:'rgba(252,165,165,.12);color:#fca5a5'};
+  var _admScRaw=_calScRaw(torneoKey,legaKey);
+  var _scores=_admScRaw?(function(){try{return JSON.parse(_admScRaw);}catch(e){return null;}})():null;
+  var _logos={};
   function headerRow() {
     return '<tr style="background:var(--bg2);font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3);position:sticky;top:0;z-index:2">'
       +'<th style="padding:7px 12px;text-align:left;min-width:70px">Giornata</th>'
@@ -8668,25 +8695,106 @@ function admLoadCalBody() {
       +'<th style="padding:7px 6px;min-width:50px">Salva</th>'
       +'</tr>';
   }
-  var h = '<div class="card" style="padding:0;overflow:hidden">'
-    +'<div style="overflow:auto;max-height:600px">'
-    +'<table style="width:100%;border-collapse:collapse">'
-    +'<thead>'+headerRow()+'</thead><tbody>';
-  for (var g=1;g<=giornate;g++) {
-    var gio = cal[String(g)]||{};
-    h += '<tr style="border-bottom:1px solid var(--border)">'
-      +'<td style="padding:6px 12px;font-family:Bebas Neue,sans-serif;font-size:15px;color:var(--text2)">G'+g+'</td>'
-      + teams.map(function(team){
-        var val = gio[team] || gio[team.toUpperCase()] || '';
-        var col = RC[val]||'var(--text3)';
-        var opts = OPTS.map(function(o){ return '<option value="'+o+'"'+(o===val?' selected':'')+'>'+( o||'—')+'</option>'; }).join('');
-        return '<td style="padding:4px 4px"><select data-t="'+torneoKey+'" data-l="'+legaKey+'" data-g="'+g+'" data-team="'+team+'" onchange="admUpdateCalEl(this)" style="width:100%;padding:4px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:'+col+';font-size:11px;font-weight:700;outline:none">'+opts+'</select></td>';
-      }).join('')
-      +'<td style="padding:4px 6px"><button data-t="'+torneoKey+'" data-l="'+legaKey+'" data-g="'+g+'" onclick="admSaveCalGiornataEl(this)" style="padding:4px 8px;background:#10b981;color:#fff;border:none;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer">Salva</button></td>'
-      +'</tr>';
+  var _lastG=1;for(var _fg=1;_fg<=giornate;_fg++){var _fgD=Object.values(cal[String(_fg)]||{}).some(function(v){return v;});if(_fgD){_lastG=Math.min(_fg+1,giornate);}else{break;}}
+  var _gOpts=Array.from({length:giornate},function(_,i){var v=i+1;return '<option value="'+v+'"'+(v===_lastG?' selected':'')+'>G'+v+'</option>';}).join('');
+  var _impH='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;padding:10px 14px;background:var(--bg2);border-radius:10px;border:1px solid var(--border)">'
+    +'<button onclick="window[\''+viewKey+'\']=\'calendario\';window[\'_admCalToggle_'+torneoKey+'_'+legaKey+'\']=true;admLoadCalBody();" style="padding:5px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(view==='calendario'?'rgba(59,130,246,.5)':'var(--border)')+';background:'+(view==='calendario'?'rgba(59,130,246,.15)':'var(--bg2)')+';color:'+(view==='calendario'?'#3b82f6':'var(--text2)')+'">📅 RISULTATI</button>'
+    +'<button onclick="window[\''+viewKey+'\']=\'risultati\';window[\'_admCalToggle_'+torneoKey+'_'+legaKey+'\']=true;admLoadCalBody();" style="padding:5px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(view==='risultati'?'rgba(16,185,129,.5)':'var(--border)')+';background:'+(view==='risultati'?'rgba(16,185,129,.15)':'var(--bg2)')+';color:'+(view==='risultati'?'#10b981':'var(--text2)')+'">📊 RENDIMENTO</button>'
+    +'<span style="color:var(--border);margin:0 2px">|</span>'
+    +'<button onclick="document.getElementById(\'adm-cal-sch-file\').click()" style="padding:5px 12px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:6px;color:#3b82f6;font-size:12px;font-weight:700;cursor:pointer">📥 Importa Cal.</button>'
+    +'<input type="file" id="adm-cal-sch-file" accept=".xlsx" style="display:none" onchange="admProcessCalScheduleXlsx(this)">'
+    +'<label style="font-size:11px;color:var(--text2)">A/R:<input id="adm-cal-ar" type="number" min="0" value="'+_schAr+'" onchange="admCalSaveArNe()" style="width:42px;margin-left:4px;padding:2px 4px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;outline:none"></label>'
+    +'<label style="font-size:11px;color:var(--text2)">N:<input id="adm-cal-ne" type="number" min="0" value="'+_schNe+'" onchange="admCalSaveArNe()" style="width:42px;margin-left:4px;padding:2px 4px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;outline:none"></label>'
+    +'<span style="font-size:11px;color:var(--text2)">'+(_schN?'✅ '+_schN+' gior.':'non importato')+'</span>'
+    +'<span style="color:var(--border);margin:0 6px">|</span>'
+    +'<select id="adm-cal-giornata-import" onchange="admCalAutoNeutral()" style="padding:5px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text);outline:none">'+_gOpts+'</select>'
+    +'<label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="adm-cal-neutral"> Neutrale</label>'
+    +'<button onclick="document.getElementById(\'adm-cal-res-file\').click()" style="padding:5px 12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);border-radius:6px;color:#10b981;font-size:12px;font-weight:700;cursor:pointer">⚽ Importa Giornata</button>'
+    +'<input type="file" id="adm-cal-res-file" accept=".xlsx" style="display:none" onchange="admProcessGiornataXlsx(this)">'
+    +'<button onclick="admAzzeraRisultatiCal()" style="padding:5px 12px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#ef4444;font-size:12px;font-weight:700;cursor:pointer">🗑 Azzera</button>'
+    +'</div>';
+  var h;
+  if (view === 'calendario') {
+    if (!_schN) {
+      h = '<div style="padding:30px;text-align:center;color:var(--text3);font-size:13px">📅 Calendario non ancora importato.<br><span style="font-size:11px">Premi "Importa Cal." per caricare il file xlsx.</span></div>';
+    } else {
+      var _editG=window['_admCalEditG_'+torneoKey+'_'+legaKey]||null;
+      h = '<div style="display:flex;flex-direction:column;gap:6px">';
+      for (var g=1; g<=giornate; g++) {
+        var matches=_schGiornate[String(g)]||[];
+        var gio=cal[String(g)]||{};
+        var hasD=Object.values(gio).some(function(v){return v;});
+        var _isEdit=(g===_editG);
+        h+='<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden">'
+          +'<div style="padding:5px 12px;background:var(--bg2);display:flex;justify-content:space-between;align-items:center">'
+          +'<span style="font-family:\'Bebas Neue\';font-size:14px;letter-spacing:1px;color:var(--text2)">Giornata '+g+'</span>'
+          +'<div style="display:flex;align-items:center;gap:6px">'
+          +(hasD?'<span style="font-size:9px;color:#10b981;font-weight:700">&#10003; COMPLETATA</span>':'<span style="font-size:9px;color:var(--text3)">da giocare</span>')
+          +'<button onclick="admCalToggleEdit('+g+',\''+torneoKey+'\',\''+legaKey+'\')" style="padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid '+(_isEdit?'rgba(239,68,68,.4)':'rgba(59,130,246,.4)')+';background:'+(_isEdit?'rgba(239,68,68,.12)':'rgba(59,130,246,.1)')+';color:'+(_isEdit?'#ef4444':'#3b82f6')+'">'+(_isEdit?'&#10005; Chiudi':'&#9998; Modifica')+'</button>'
+          +'</div>'
+          +'</div>';
+        if(!matches.length){h+='<div style="padding:5px 12px;font-size:11px;color:var(--text3)">Nessuna partita</div>';}
+        else{
+          h+='<div style="padding:5px 12px;display:flex;flex-direction:column;gap:2px">';
+          matches.forEach(function(m){
+            var _gk=function(obj,k){var v=obj[k];if(v!==undefined)return v;var u=(k||'').toUpperCase();var fk=Object.keys(obj).find(function(x){return x.toUpperCase()===u;});return fk?obj[fk]:'';};
+            var rH=_gk(gio,m.h),rA=_gk(gio,m.a);
+            var _symScore=(rH==='VC'||rH==='V')?'1-0':(rH==='PC'||rH==='P')?'1-1':(rH==='SC'||rH==='S')?'0-1':(rA==='VF'||rA==='V')?'0-1':(rA==='PF'||rA==='P')?'1-1':(rA==='SF'||rA==='S')?'1-0':null;
+            var _scG=typeof _scores!=='undefined'&&_scores&&_scores[String(g)];var _scK=_scG&&Object.keys(_scG).find(function(k){return k.toUpperCase()===(m.h||'').toUpperCase();});
+            var score=(_scK&&_scG[_scK])||_symScore;
+            var scoreC=_symScore?(_symScore==='1-0'?'#10b981':_symScore==='1-1'?'#3b82f6':'#ef4444'):'var(--text3)';
+            h+='<div style="display:grid;grid-template-columns:1fr 40px 1fr;align-items:center;gap:4px;padding:1px 0">'
+              +'<span style="display:flex;align-items:center;justify-content:flex-end;font-size:11px;font-weight:700">'+_teamCase(m.h||'')+'</span>'
+              +'<span style="text-align:center;font-family:\'Bebas Neue\';font-size:13px;color:'+scoreC+';letter-spacing:1px">'+(score||'&#8212;')+'</span>'
+              +'<span style="display:flex;align-items:center;font-size:11px;font-weight:700">'+_teamCase(m.a||'')+'</span>'
+              +'</div>';
+          });
+          h+='</div>';
+        }
+        if(_isEdit){
+          h+='<div style="border-top:1px solid var(--border);padding:8px 12px;background:rgba(59,130,246,.04)">'
+            +'<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px">';
+          matches.forEach(function(m){
+            var _scGE=_scores&&_scores[String(g)];
+            var _scKE=_scGE&&Object.keys(_scGE).find(function(k){return k.toUpperCase()===(m.h||'').toUpperCase();});
+            var scoreStrE=(_scKE&&_scGE[_scKE])||'';
+            var partsE=scoreStrE.split('-');
+            var shE=partsE.length>=2?partsE[0]:'';
+            var saE=partsE.length>=2?partsE[1]:'';
+            h+='<div style="display:grid;grid-template-columns:1fr 38px 12px 38px 1fr;align-items:center;gap:4px">'
+              +'<span style="text-align:right;font-size:11px;font-weight:700;color:var(--text)">'+_teamCase(m.h||'')+'</span>'
+              +'<input type="number" min="0" max="99" data-score-t="'+torneoKey+'" data-score-l="'+legaKey+'" data-score-g="'+g+'" data-score-h="'+(m.h||'').toUpperCase()+'" data-score-side="h" value="'+shE+'" style="width:38px;text-align:center;padding:3px 2px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-weight:700;outline:none">'
+              +'<span style="text-align:center;font-family:\'Bebas Neue\';font-size:14px;color:var(--text3)">-</span>'
+              +'<input type="number" min="0" max="99" data-score-t="'+torneoKey+'" data-score-l="'+legaKey+'" data-score-g="'+g+'" data-score-h="'+(m.h||'').toUpperCase()+'" data-score-side="a" value="'+saE+'" style="width:38px;text-align:center;padding:3px 2px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-weight:700;outline:none">'
+              +'<span style="text-align:left;font-size:11px;font-weight:700;color:var(--text)">'+_teamCase(m.a||'')+'</span>'
+              +'</div>';
+          });
+          h+='</div>'
+            +'<button onclick="admCalSaveScoreAndClose('+g+',\''+torneoKey+'\',\''+legaKey+'\')" style="padding:5px 14px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">&#128190; Salva G'+g+'</button>'
+            +'</div>';
+        }
+        h+='</div>';
+      }
+      h+='</div>';
+    }
+  } else {
+    h = '<div class="card" style="padding:0;overflow:hidden"><div style="overflow:auto;max-height:600px"><table style="width:100%;border-collapse:collapse"><thead>'+headerRow()+'</thead><tbody>';
+    for (var g=1;g<=giornate;g++) {
+      var gio = cal[String(g)]||{};
+      h += '<tr style="border-bottom:1px solid var(--border)">'
+        +'<td style="padding:6px 12px;font-family:Bebas Neue,sans-serif;font-size:15px;color:var(--text2)">G'+g+'</td>'
+        + teams.map(function(team){
+          var val = gio[team] || gio[team.toUpperCase()] || '';
+          var col = RC[val]||'var(--text3)';
+          var opts = OPTS.map(function(o){ return '<option value="'+o+'"'+(o===val?' selected':'')+'>'+( o||'—')+'</option>'; }).join('');
+          return '<td style="padding:4px 4px"><select data-t="'+torneoKey+'" data-l="'+legaKey+'" data-g="'+g+'" data-team="'+team+'" onchange="admUpdateCalEl(this)" style="width:100%;padding:4px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:'+col+';font-size:11px;font-weight:700;outline:none">'+opts+'</select></td>';
+        }).join('')
+        +'<td style="padding:4px 6px"><button data-t="'+torneoKey+'" data-l="'+legaKey+'" data-g="'+g+'" onclick="admSaveCalGiornataEl(this)" style="padding:4px 8px;background:#10b981;color:#fff;border:none;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer">Salva</button></td>'
+        +'</tr>';
+    }
+    h += '</tbody></table></div></div>';
   }
-  h += '</tbody></table></div></div>';
-  el.innerHTML = h;
+  el.innerHTML=_impH+h;
 }
 function admGetStadio(torneoKey, legaKey) {
   if (window.FB_STADIO && window.FB_STADIO[torneoKey+'_'+legaKey]) return JSON.parse(JSON.stringify(window.FB_STADIO[torneoKey+'_'+legaKey]));
@@ -14239,11 +14347,25 @@ function admLoadCalBody() {
   var torneoKey = document.getElementById('adm-cal-torneo').value;
   var legaKey = document.getElementById('adm-cal-lega').value;
   var el = document.getElementById('adm-cal-body'); if(!el||!legaKey) return;
+  var _schStored=_calSchRaw(torneoKey,legaKey);
+  var _schParsed=_schStored?(function(){try{return JSON.parse(_schStored);}catch(e){return null;}})():null;
+  var _schGiornate=_schParsed?(_schParsed.giornate||_schParsed):{};
+  var _schN=Object.keys(_schGiornate).length;
+  var _schAr=_schParsed?(_schParsed.andata_ritorno||0):0;
+  var _schNe=_schParsed?(_schParsed.neutre||0):0;
+  var giornate=_schN>0?_schN:(torneoKey==='tsm')?(typeof TSM_TOTAL_GIORNATE!=='undefined'?TSM_TOTAL_GIORNATE:36):(typeof SLIM_TOTAL_GIORNATE!=='undefined'?SLIM_TOTAL_GIORNATE:36);
   var cal = admGetCalendar(torneoKey, legaKey);
   var teams = admGetTeams(torneoKey, legaKey);
-  var giornate = (torneoKey==='tsm') ? (typeof TSM_TOTAL_GIORNATE!=='undefined'?TSM_TOTAL_GIORNATE:36) : (typeof SLIM_TOTAL_GIORNATE!=='undefined'?SLIM_TOTAL_GIORNATE:36);
-  var OPTS = ['','VC','VF','PC','PF','SC','SF'];
-  var RC = {VC:'#10b981',VF:'#34d399',PC:'#3b82f6',PF:'#60a5fa',SC:'#ef4444',SF:'#f87171'};
+  var viewKey='_admCalView_'+torneoKey+'_'+legaKey;
+  var _admTog=window['_admCalToggle_'+torneoKey+'_'+legaKey];window['_admCalToggle_'+torneoKey+'_'+legaKey]=false;
+  var view=_admTog?(window[viewKey]||'calendario'):'calendario';
+  if(view==='calendario'&&!_schN){var _har=Object.keys(cal).some(function(g){return Object.values(cal[g]||{}).some(function(v){return v;});});if(_har)view='risultati';}
+  var OPTS = ['','VC','VF','V','PC','PF','P','SC','SF','S'];
+  var RC = {VC:'#10b981',VF:'#34d399',V:'#6ee7b7',PC:'#3b82f6',PF:'#60a5fa',P:'#93c5fd',SC:'#ef4444',SF:'#f87171',S:'#fca5a5'};
+  var RC2 = {VC:'rgba(16,185,129,.15);color:#10b981',VF:'rgba(16,185,129,.1);color:#34d399',V:'rgba(110,231,183,.15);color:#6ee7b7',PC:'rgba(59,130,246,.12);color:#3b82f6',PF:'rgba(59,130,246,.08);color:#60a5fa',P:'rgba(147,197,253,.12);color:#93c5fd',SC:'rgba(239,68,68,.12);color:#ef4444',SF:'rgba(239,68,68,.08);color:#f87171',S:'rgba(252,165,165,.12);color:#fca5a5'};
+  var _admScRaw=_calScRaw(torneoKey,legaKey);
+  var _scores=_admScRaw?(function(){try{return JSON.parse(_admScRaw);}catch(e){return null;}})():null;
+  var _logos={};
   function headerRow() {
     return '<tr style="background:var(--bg2);font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3);position:sticky;top:0;z-index:2">'
       +'<th style="padding:7px 12px;text-align:left;min-width:70px">Giornata</th>'
@@ -14251,26 +14373,336 @@ function admLoadCalBody() {
       +'<th style="padding:7px 6px;min-width:50px">Salva</th>'
       +'</tr>';
   }
-  var h = '<div class="card" style="padding:0;overflow:hidden">'
-    +'<div style="overflow:auto;max-height:600px">'
-    +'<table style="width:100%;border-collapse:collapse">'
-    +'<thead>'+headerRow()+'</thead><tbody>';
-  for (var g=1;g<=giornate;g++) {
-    var gio = cal[String(g)]||{};
-    h += '<tr style="border-bottom:1px solid var(--border)">'
-      +'<td style="padding:6px 12px;font-family:Bebas Neue,sans-serif;font-size:15px;color:var(--text2)">G'+g+'</td>'
-      + teams.map(function(team){
-        var val = gio[team] || gio[team.toUpperCase()] || '';
-        var col = RC[val]||'var(--text3)';
-        var opts = OPTS.map(function(o){ return '<option value="'+o+'"'+(o===val?' selected':'')+'>'+( o||'—')+'</option>'; }).join('');
-        return '<td style="padding:4px 4px"><select data-t="'+torneoKey+'" data-l="'+legaKey+'" data-g="'+g+'" data-team="'+team+'" onchange="admUpdateCalEl(this)" style="width:100%;padding:4px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:'+col+';font-size:11px;font-weight:700;outline:none">'+opts+'</select></td>';
-      }).join('')
-      +'<td style="padding:4px 6px"><button data-t="'+torneoKey+'" data-l="'+legaKey+'" data-g="'+g+'" onclick="admSaveCalGiornataEl(this)" style="padding:4px 8px;background:#10b981;color:#fff;border:none;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer">Salva</button></td>'
-      +'</tr>';
+  var _lastG=1;for(var _fg=1;_fg<=giornate;_fg++){var _fgD=Object.values(cal[String(_fg)]||{}).some(function(v){return v;});if(_fgD){_lastG=Math.min(_fg+1,giornate);}else{break;}}
+  var _gOpts=Array.from({length:giornate},function(_,i){var v=i+1;return '<option value="'+v+'"'+(v===_lastG?' selected':'')+'>G'+v+'</option>';}).join('');
+  var _impH='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;padding:10px 14px;background:var(--bg2);border-radius:10px;border:1px solid var(--border)">'
+    +'<button onclick="window[\''+viewKey+'\']=\'calendario\';window[\'_admCalToggle_'+torneoKey+'_'+legaKey+'\']=true;admLoadCalBody();" style="padding:5px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(view==='calendario'?'rgba(59,130,246,.5)':'var(--border)')+';background:'+(view==='calendario'?'rgba(59,130,246,.15)':'var(--bg2)')+';color:'+(view==='calendario'?'#3b82f6':'var(--text2)')+'">📅 RISULTATI</button>'
+    +'<button onclick="window[\''+viewKey+'\']=\'risultati\';window[\'_admCalToggle_'+torneoKey+'_'+legaKey+'\']=true;admLoadCalBody();" style="padding:5px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(view==='risultati'?'rgba(16,185,129,.5)':'var(--border)')+';background:'+(view==='risultati'?'rgba(16,185,129,.15)':'var(--bg2)')+';color:'+(view==='risultati'?'#10b981':'var(--text2)')+'">📊 RENDIMENTO</button>'
+    +'<span style="color:var(--border);margin:0 2px">|</span>'
+    +'<button onclick="document.getElementById(\'adm-cal-sch-file\').click()" style="padding:5px 12px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:6px;color:#3b82f6;font-size:12px;font-weight:700;cursor:pointer">📥 Importa Cal.</button>'
+    +'<input type="file" id="adm-cal-sch-file" accept=".xlsx" style="display:none" onchange="admProcessCalScheduleXlsx(this)">'
+    +'<label style="font-size:11px;color:var(--text2)">A/R:<input id="adm-cal-ar" type="number" min="0" value="'+_schAr+'" onchange="admCalSaveArNe()" style="width:42px;margin-left:4px;padding:2px 4px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;outline:none"></label>'
+    +'<label style="font-size:11px;color:var(--text2)">N:<input id="adm-cal-ne" type="number" min="0" value="'+_schNe+'" onchange="admCalSaveArNe()" style="width:42px;margin-left:4px;padding:2px 4px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;outline:none"></label>'
+    +'<span style="font-size:11px;color:var(--text2)">'+(_schN?'✅ '+_schN+' gior.':'non importato')+'</span>'
+    +'<span style="color:var(--border);margin:0 6px">|</span>'
+    +'<select id="adm-cal-giornata-import" onchange="admCalAutoNeutral()" style="padding:5px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text);outline:none">'+_gOpts+'</select>'
+    +'<label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="adm-cal-neutral"> Neutrale</label>'
+    +'<button onclick="document.getElementById(\'adm-cal-res-file\').click()" style="padding:5px 12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);border-radius:6px;color:#10b981;font-size:12px;font-weight:700;cursor:pointer">⚽ Importa Giornata</button>'
+    +'<input type="file" id="adm-cal-res-file" accept=".xlsx" style="display:none" onchange="admProcessGiornataXlsx(this)">'
+    +'<button onclick="admAzzeraRisultatiCal()" style="padding:5px 12px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#ef4444;font-size:12px;font-weight:700;cursor:pointer">🗑 Azzera</button>'
+    +'</div>';
+  var h;
+  if (view === 'calendario') {
+    if (!_schN) {
+      h = '<div style="padding:30px;text-align:center;color:var(--text3);font-size:13px">📅 Calendario non ancora importato.<br><span style="font-size:11px">Premi "Importa Cal." per caricare il file xlsx.</span></div>';
+    } else {
+      var _editG=window['_admCalEditG_'+torneoKey+'_'+legaKey]||null;
+      h = '<div style="display:flex;flex-direction:column;gap:6px">';
+      for (var g=1; g<=giornate; g++) {
+        var matches=_schGiornate[String(g)]||[];
+        var gio=cal[String(g)]||{};
+        var hasD=Object.values(gio).some(function(v){return v;});
+        var _isEdit=(g===_editG);
+        h+='<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden">'
+          +'<div style="padding:5px 12px;background:var(--bg2);display:flex;justify-content:space-between;align-items:center">'
+          +'<span style="font-family:\'Bebas Neue\';font-size:14px;letter-spacing:1px;color:var(--text2)">Giornata '+g+'</span>'
+          +'<div style="display:flex;align-items:center;gap:6px">'
+          +(hasD?'<span style="font-size:9px;color:#10b981;font-weight:700">&#10003; COMPLETATA</span>':'<span style="font-size:9px;color:var(--text3)">da giocare</span>')
+          +'<button onclick="admCalToggleEdit('+g+',\''+torneoKey+'\',\''+legaKey+'\')" style="padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid '+(_isEdit?'rgba(239,68,68,.4)':'rgba(59,130,246,.4)')+';background:'+(_isEdit?'rgba(239,68,68,.12)':'rgba(59,130,246,.1)')+';color:'+(_isEdit?'#ef4444':'#3b82f6')+'">'+(_isEdit?'&#10005; Chiudi':'&#9998; Modifica')+'</button>'
+          +'</div>'
+          +'</div>';
+        if(!matches.length){h+='<div style="padding:5px 12px;font-size:11px;color:var(--text3)">Nessuna partita</div>';}
+        else{
+          h+='<div style="padding:5px 12px;display:flex;flex-direction:column;gap:2px">';
+          matches.forEach(function(m){
+            var _gk=function(obj,k){var v=obj[k];if(v!==undefined)return v;var u=(k||'').toUpperCase();var fk=Object.keys(obj).find(function(x){return x.toUpperCase()===u;});return fk?obj[fk]:'';};
+            var rH=_gk(gio,m.h),rA=_gk(gio,m.a);
+            var _symScore=(rH==='VC'||rH==='V')?'1-0':(rH==='PC'||rH==='P')?'1-1':(rH==='SC'||rH==='S')?'0-1':(rA==='VF'||rA==='V')?'0-1':(rA==='PF'||rA==='P')?'1-1':(rA==='SF'||rA==='S')?'1-0':null;
+            var _scG=typeof _scores!=='undefined'&&_scores&&_scores[String(g)];var _scK=_scG&&Object.keys(_scG).find(function(k){return k.toUpperCase()===(m.h||'').toUpperCase();});
+            var score=(_scK&&_scG[_scK])||_symScore;
+            var scoreC=_symScore?(_symScore==='1-0'?'#10b981':_symScore==='1-1'?'#3b82f6':'#ef4444'):'var(--text3)';
+            h+='<div style="display:grid;grid-template-columns:1fr 40px 1fr;align-items:center;gap:4px;padding:1px 0">'
+              +'<span style="display:flex;align-items:center;justify-content:flex-end;font-size:11px;font-weight:700">'+_teamCase(m.h||'')+'</span>'
+              +'<span style="text-align:center;font-family:\'Bebas Neue\';font-size:13px;color:'+scoreC+';letter-spacing:1px">'+(score||'&#8212;')+'</span>'
+              +'<span style="display:flex;align-items:center;font-size:11px;font-weight:700">'+_teamCase(m.a||'')+'</span>'
+              +'</div>';
+          });
+          h+='</div>';
+        }
+        if(_isEdit){
+          h+='<div style="border-top:1px solid var(--border);padding:8px 12px;background:rgba(59,130,246,.04)">'
+            +'<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px">';
+          matches.forEach(function(m){
+            var _scGE=_scores&&_scores[String(g)];
+            var _scKE=_scGE&&Object.keys(_scGE).find(function(k){return k.toUpperCase()===(m.h||'').toUpperCase();});
+            var scoreStrE=(_scKE&&_scGE[_scKE])||'';
+            var partsE=scoreStrE.split('-');
+            var shE=partsE.length>=2?partsE[0]:'';
+            var saE=partsE.length>=2?partsE[1]:'';
+            h+='<div style="display:grid;grid-template-columns:1fr 38px 12px 38px 1fr;align-items:center;gap:4px">'
+              +'<span style="text-align:right;font-size:11px;font-weight:700;color:var(--text)">'+_teamCase(m.h||'')+'</span>'
+              +'<input type="number" min="0" max="99" data-score-t="'+torneoKey+'" data-score-l="'+legaKey+'" data-score-g="'+g+'" data-score-h="'+(m.h||'').toUpperCase()+'" data-score-side="h" value="'+shE+'" style="width:38px;text-align:center;padding:3px 2px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-weight:700;outline:none">'
+              +'<span style="text-align:center;font-family:\'Bebas Neue\';font-size:14px;color:var(--text3)">-</span>'
+              +'<input type="number" min="0" max="99" data-score-t="'+torneoKey+'" data-score-l="'+legaKey+'" data-score-g="'+g+'" data-score-h="'+(m.h||'').toUpperCase()+'" data-score-side="a" value="'+saE+'" style="width:38px;text-align:center;padding:3px 2px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-weight:700;outline:none">'
+              +'<span style="text-align:left;font-size:11px;font-weight:700;color:var(--text)">'+_teamCase(m.a||'')+'</span>'
+              +'</div>';
+          });
+          h+='</div>'
+            +'<button onclick="admCalSaveScoreAndClose('+g+',\''+torneoKey+'\',\''+legaKey+'\')" style="padding:5px 14px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">&#128190; Salva G'+g+'</button>'
+            +'</div>';
+        }
+        h+='</div>';
+      }
+      h+='</div>';
+    }
+  } else {
+    h = '<div class="card" style="padding:0;overflow:hidden"><div style="overflow:auto;max-height:600px"><table style="width:100%;border-collapse:collapse"><thead>'+headerRow()+'</thead><tbody>';
+    for (var g=1;g<=giornate;g++) {
+      var gio = cal[String(g)]||{};
+      h += '<tr style="border-bottom:1px solid var(--border)">'
+        +'<td style="padding:6px 12px;font-family:Bebas Neue,sans-serif;font-size:15px;color:var(--text2)">G'+g+'</td>'
+        + teams.map(function(team){
+          var val = gio[team] || gio[team.toUpperCase()] || '';
+          var col = RC[val]||'var(--text3)';
+          var opts = OPTS.map(function(o){ return '<option value="'+o+'"'+(o===val?' selected':'')+'>'+( o||'—')+'</option>'; }).join('');
+          return '<td style="padding:4px 4px"><select data-t="'+torneoKey+'" data-l="'+legaKey+'" data-g="'+g+'" data-team="'+team+'" onchange="admUpdateCalEl(this)" style="width:100%;padding:4px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:'+col+';font-size:11px;font-weight:700;outline:none">'+opts+'</select></td>';
+        }).join('')
+        +'<td style="padding:4px 6px"><button data-t="'+torneoKey+'" data-l="'+legaKey+'" data-g="'+g+'" onclick="admSaveCalGiornataEl(this)" style="padding:4px 8px;background:#10b981;color:#fff;border:none;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer">Salva</button></td>'
+        +'</tr>';
+    }
+    h += '</tbody></table></div></div>';
   }
-  h += '</tbody></table></div></div>';
-  el.innerHTML = h;
+  el.innerHTML=_impH+h;
 }
+
+// ── Calendario: dati su Firebase (schedule, punteggi, esiti) ──
+function _teamCase(name) { return String(name || '').toUpperCase(); }
+function _calSchRaw(t,l){ var s=window.FB_SCHEDULE&&window.FB_SCHEDULE[t+'_'+l]; return s?JSON.stringify(s):null; }
+function _calSchSave(t,l,str){ window.FB_SCHEDULE=window.FB_SCHEDULE||{}; window.FB_SCHEDULE[t+'_'+l]=JSON.parse(str); fbDB.ref('data/calendario_schedule/'+t+'_'+l).set(str); }
+function _calScRaw(t,l){ var s=window.FB_PUNTEGGI&&window.FB_PUNTEGGI[t+'_'+l]; return s?JSON.stringify(s):null; }
+function _calScSave(t,l,str){ window.FB_PUNTEGGI=window.FB_PUNTEGGI||{}; window.FB_PUNTEGGI[t+'_'+l]=JSON.parse(str); fbDB.ref('data/punteggi/'+t+'_'+l).set(str); }
+function _calEsitiSave(t,l,cal){
+  localStorage.setItem('adm_cal_'+t+'_'+l, JSON.stringify(cal));
+  fbDB.ref('data/calendario/'+t+'_'+l).set(cal);
+  window.FB_CALENDARIO=window.FB_CALENDARIO||{};
+  window.FB_CALENDARIO[t+'_'+l]=JSON.parse(JSON.stringify(cal));
+}
+function admCalToggleEdit(g,t,l){
+  var key='_admCalEditG_'+t+'_'+l;
+  window[key]=(window[key]===g)?null:g;
+  window['_admCalToggle_'+t+'_'+l]=true;
+  admLoadCalBody();
+}
+function admCalSaveScoreAndClose(g,t,l){
+  var scRaw=_calScRaw(t,l);
+  var scores=scRaw?(function(){try{return JSON.parse(scRaw);}catch(e){return{};}}()):{};
+  if(!scores[String(g)])scores[String(g)]={};
+  var inputs=document.querySelectorAll('[data-score-g="'+g+'"][data-score-t="'+t+'"][data-score-l="'+l+'"]');
+  var matchMap={};
+  Array.prototype.forEach.call(inputs,function(inp){
+    var hKey=inp.getAttribute('data-score-h');
+    var side=inp.getAttribute('data-score-side');
+    if(!matchMap[hKey])matchMap[hKey]={h:'',a:''};
+    matchMap[hKey][side]=inp.value;
+  });
+  Object.keys(matchMap).forEach(function(hKey){
+    var sh=matchMap[hKey].h;var sa=matchMap[hKey].a;
+    if(sh!==''&&sa!=='')scores[String(g)][hKey]=sh+'-'+sa;
+  });
+  _calScSave(t,l,JSON.stringify(scores));
+  // Ricalcola gli esiti della giornata dal punteggio
+  var _schRaw=_calSchRaw(t,l);
+  var _schP=_schRaw?(function(){try{return JSON.parse(_schRaw);}catch(e){return null;}})():null;
+  var _schMatches=_schP?(_schP.giornate||_schP)[String(g)]||[]:[];
+  if(_schMatches.length){
+    var _uCal=admGetCalendar(t,l);
+    if(!_uCal[String(g)])_uCal[String(g)]={};
+    var _ar=_schP?(_schP.andata_ritorno||0):0,_ne=_schP?(_schP.neutre||0):0;
+    var _isNeutral=_ar>0&&g>_ar&&g<=(_ar+_ne);
+    var _fk=function(calG,name){var u=(name||'').toUpperCase();var k=Object.keys(calG).find(function(x){return x.toUpperCase()===u;});return k!==undefined?k:u;};
+    _schMatches.forEach(function(m){
+      var _hOrig=(m.h||'').toUpperCase();
+      var _scoreVal=(scores[String(g)]||{})[_hOrig];
+      if(!_scoreVal)return;
+      var _pts=_scoreVal.split('-');
+      if(_pts.length<2)return;
+      var _gh=parseInt(_pts[0])||0,_ga=parseInt(_pts[1])||0;
+      var _hR,_aR;
+      if(_gh>_ga){_hR=_isNeutral?'V':'VC';_aR=_isNeutral?'S':'SF';}
+      else if(_gh<_ga){_hR=_isNeutral?'S':'SC';_aR=_isNeutral?'V':'VF';}
+      else{_hR=_isNeutral?'P':'PC';_aR=_isNeutral?'P':'PF';}
+      _uCal[String(g)][_fk(_uCal[String(g)],m.h||_hOrig)]=_hR;
+      if(m.a)_uCal[String(g)][_fk(_uCal[String(g)],m.a)]=_aR;
+    });
+    _calEsitiSave(t,l,_uCal);
+  }
+  window['_admCalEditG_'+t+'_'+l]=null;
+  window['_admCalToggle_'+t+'_'+l]=true;
+  admLoadCalBody();
+  var msg=document.createElement('div');msg.textContent='✓ Risultati G'+g+' salvati';msg.style.cssText='position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';document.body.appendChild(msg);setTimeout(function(){msg.remove();},2000);
+}
+function admCalSaveArNe(){
+  var t=document.getElementById('adm-cal-torneo').value;
+  var l=document.getElementById('adm-cal-lega').value;
+  if(!t||!l)return;
+  var raw=_calSchRaw(t,l);
+  var sch=raw?(function(){try{return JSON.parse(raw);}catch(e){return null;}})():null;
+  if(!sch)sch={giornate:{},andata_ritorno:0,neutre:0};
+  sch.andata_ritorno=parseInt((document.getElementById('adm-cal-ar')||{}).value)||0;
+  sch.neutre=parseInt((document.getElementById('adm-cal-ne')||{}).value)||0;
+  _calSchSave(t,l,JSON.stringify(sch));
+  admCalAutoNeutral();
+}
+function admCalAutoNeutral(){
+  var t=document.getElementById('adm-cal-torneo').value;
+  var l=document.getElementById('adm-cal-lega').value;
+  var g=parseInt((document.getElementById('adm-cal-giornata-import')||{}).value)||0;
+  var chk=document.getElementById('adm-cal-neutral');
+  if(!chk||!g)return;
+  var ar=parseInt((document.getElementById('adm-cal-ar')||{}).value)||0;
+  var ne=parseInt((document.getElementById('adm-cal-ne')||{}).value)||0;
+  var sch=_calSchRaw(t,l);
+  if(sch){try{var meta=JSON.parse(sch);ar=meta.andata_ritorno||ar;ne=meta.neutre||ne;}catch(e){}}
+  if(ar>0)chk.checked=g>ar&&g<=(ar+ne);
+}
+function admAzzeraRisultatiCal(){
+  var t=document.getElementById('adm-cal-torneo').value;
+  var l=document.getElementById('adm-cal-lega').value;
+  if(!t||!l){alert('Seleziona torneo e lega prima');return;}
+  if(!confirm('Cancellare TUTTI i risultati del calendario per questa lega?\nL\'operazione non può essere annullata.'))return;
+  var teams=admGetTeams(t,l);
+  var _schRaw=_calSchRaw(t,l);
+  var _schP=_schRaw?(function(){try{return JSON.parse(_schRaw);}catch(e){return null;}})():null;
+  var _schN=_schP?Object.keys(_schP.giornate||_schP).length:0;
+  var giornate=_schN>0?_schN:(t==='tsm')?(typeof TSM_TOTAL_GIORNATE!=='undefined'?TSM_TOTAL_GIORNATE:36):(typeof SLIM_TOTAL_GIORNATE!=='undefined'?SLIM_TOTAL_GIORNATE:36);
+  var cal={};
+  for(var g=1;g<=giornate;g++){cal[String(g)]={};teams.forEach(function(tm){cal[String(g)][tm.toUpperCase()]='';});}
+  _calEsitiSave(t,l,cal);
+  _calScSave(t,l,'{}');
+  var msg=document.createElement('div');msg.textContent='🗑 Risultati azzerati';msg.style.cssText='position:fixed;top:70px;right:20px;background:#ef4444;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';document.body.appendChild(msg);setTimeout(function(){msg.remove();},2500);
+  admLoadCalBody();
+}
+function admProcessCalScheduleXlsx(input){
+  var t=document.getElementById('adm-cal-torneo').value;
+  var l=document.getElementById('adm-cal-lega').value;
+  if(!t||!l){alert('Seleziona torneo e lega prima');input.value='';return;}
+  var file=input.files[0];if(!file)return;
+  function _doProc(){
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:'array'});
+      var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+      var schedule={},leftG=null,rightG=null;
+      rows.forEach(function(row){
+        var c0=(row[0]||'').toString().trim(),c6=(row[6]||'').toString().trim();
+        var mL=c0.match(/(\d+)/),mR=c6.match(/(\d+)/);
+        if(/giornata/i.test(c0)&&mL){leftG=parseInt(mL[1]);if(!schedule[leftG])schedule[leftG]=[];}
+        if(/giornata/i.test(c6)&&mR){rightG=parseInt(mR[1]);if(!schedule[rightG])schedule[rightG]=[];}
+        if(!/giornata/i.test(c0)){var hl=c0,al=(row[3]||'').toString().trim();if(hl&&al&&leftG)schedule[leftG].push({h:hl.toUpperCase(),a:al.toUpperCase()});}
+        if(!/giornata/i.test(c6)){var hr=c6,ar=(row[9]||'').toString().trim();if(hr&&ar&&rightG)schedule[rightG].push({h:hr.toUpperCase(),a:ar.toUpperCase()});}
+      });
+      var nG=Object.keys(schedule).length;
+      if(!nG){alert('Nessuna giornata trovata. Verifica il formato file (atteso: "Nª Giornata" in col A o G).');input.value='';return;}
+      var existing=_calSchRaw(t,l);
+      if(existing){var exP=JSON.parse(existing);var exN=Object.keys(exP.giornate||exP).length;if(!confirm('Schedule già presente ('+exN+' giornate). Sovrascrivere?')){input.value='';return;}}
+      var ar=parseInt((document.getElementById('adm-cal-ar')||{}).value)||0;
+      var ne=parseInt((document.getElementById('adm-cal-ne')||{}).value)||0;
+      var toStore={giornate:schedule,andata_ritorno:ar,neutre:ne};
+      _calSchSave(t,l,JSON.stringify(toStore));
+      var msg=document.createElement('div');msg.textContent='✅ Calendario importato: '+nG+' giornate';msg.style.cssText='position:fixed;top:70px;right:20px;background:#3b82f6;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';document.body.appendChild(msg);setTimeout(function(){msg.remove();},3000);
+      admLoadCalBody();
+    }catch(ex){alert('Errore parsing xlsx: '+ex.message);}
+    input.value='';
+  };
+  reader.readAsArrayBuffer(file);
+  }
+  if(typeof XLSX!=='undefined'){_doProc();return;}
+  var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload=_doProc;s.onerror=function(){alert('Errore caricamento libreria xlsx.');};document.head.appendChild(s);
+}
+function admProcessGiornataXlsx(input){
+  var t=document.getElementById('adm-cal-torneo').value;
+  var l=document.getElementById('adm-cal-lega').value;
+  var selG=document.getElementById('adm-cal-giornata-import');
+  var g=selG?parseInt(selG.value):0;
+  var neutral=document.getElementById('adm-cal-neutral')?document.getElementById('adm-cal-neutral').checked:false;
+  if(!t||!l||!g){alert('Seleziona torneo, lega e numero giornata prima');input.value='';return;}
+  var file=input.files[0];if(!file)return;
+  var teams=admGetTeams(t,l);
+  function _doProc(){
+  function _findT(name){var u=(name||'').toUpperCase();return teams.find(function(x){return x.toUpperCase()===u;});}
+  function _isAllCaps(s){return s.length>1&&s===s.toUpperCase()&&/[A-Z]/.test(s);}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:'array'});
+      var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+      var aTeams=[],aTotals=[],kTeams=[],kTotals=[];
+      function _parseTot(s){var m=s.match(/(\d+[,.]\d+|\d+)/);return m?parseFloat(m[1].replace(',','.')):null;}
+      rows.forEach(function(row,ri){
+        var cA=(row[0]||'').toString().trim();
+        // Lato sinistro: colonna A
+        if(/TOTALE/i.test(cA)){var vA=_parseTot(cA);if(vA===null&&row.length>1){vA=_parseTot((row[1]||'').toString().trim());}if(vA!==null)aTotals.push({ri:ri,val:vA});}
+        else if(_isAllCaps(cA)&&_findT(cA))aTeams.push({ri:ri,name:_findT(cA)});
+        // Lato destro: scansiona colonne 1-15 per primo nome squadra e primo TOTALE
+        var rTeam=null,rTot=null;
+        for(var ci=1;ci<row.length&&ci<=15;ci++){
+          var c=(row[ci]||'').toString().trim();if(!c)continue;
+          if(rTot===null&&/TOTALE/i.test(c)){var vK=_parseTot(c);if(vK===null&&ci+1<row.length)vK=_parseTot((row[ci+1]||'').toString().trim());if(vK!==null)rTot=vK;}
+          if(rTeam===null&&_isAllCaps(c)&&_findT(c))rTeam=_findT(c);
+        }
+        if(rTeam!==null&&!kTeams.some(function(t){return t.ri===ri;}))kTeams.push({ri:ri,name:rTeam});
+        if(rTot!==null&&!kTotals.some(function(t){return t.ri===ri;}))kTotals.push({ri:ri,val:rTot});
+      });
+      var rowScoreMap={};rows.forEach(function(row,ri){for(var ci=0;ci<row.length&&ci<=20;ci++){var c=(row[ci]||'').toString().trim();if(/^\d+-\d+$/.test(c)){rowScoreMap[ri]=c;break;}}});
+      function pairTP(ts,tots){return ts.map(function(tm,ti){var nRi=(ts[ti+1]||{}).ri||Infinity;var tot=tots.find(function(x){return x.ri>tm.ri&&x.ri<nRi;});return{team:tm.name,total:tot?tot.val:null,ri:tm.ri,nRi:nRi};}).filter(function(x){return x.total!==null;});}
+      function findScore(s,e){for(var _r=s;_r<e;_r++){if(rowScoreMap[_r])return rowScoreMap[_r];}return null;}
+      var ap=pairTP(aTeams,aTotals),kp=pairTP(kTeams,kTotals);
+      var matches=[];
+      if(ap.length>0&&kp.length>0){
+        ap.forEach(function(a,i){var k=kp[i];if(k)matches.push({team1:a.team,total1:a.total,team2:k.team,total2:k.total,scoreStr:findScore(a.ri,a.nRi)||findScore(k.ri,k.nRi)});});
+      }
+      if(!matches.length&&ap.length>=2){
+        for(var i=0;i<ap.length-1;i+=2){var a=ap[i],b=ap[i+1];if(a&&b)matches.push({team1:a.team,total1:a.total,team2:b.team,total2:b.total});}
+      }
+      if(!matches.length){
+        var dbg='Colonna A: '+aTeams.map(function(x){return x.name+'(totale:'+aTotals.filter(function(t){return t.ri>x.ri;}).slice(0,1).map(function(t){return t.val;}).join('')+')'}).join(', ')
+          +'\nColonna K: '+kTeams.map(function(x){return x.name;}).join(', ');
+        alert('Nessuna partita trovata.\nVerifica che i nomi squadra nel file corrispondano (case-insensitive) ai nomi in calendario.\n\n'+dbg);
+        input.value='';return;
+      }
+      var _schRawI=_calSchRaw(t,l);
+      var _schPI=_schRawI?(function(){try{return JSON.parse(_schRawI);}catch(e){return null;}})():null;
+      var _schMI=_schPI?(_schPI.giornate||_schPI)[String(g)]||[]:[];
+      function _getHA(m){var u1=(m.team1||'').toUpperCase(),u2=(m.team2||'').toUpperCase();for(var _i=0;_i<_schMI.length;_i++){var _sm=_schMI[_i];var _sh=(_sm.h||'').toUpperCase(),_sa=(_sm.a||'').toUpperCase();if((_sh===u1&&_sa===u2)||(_sh===u2&&_sa===u1))return{team1IsHome:_sh===u1};}return{team1IsHome:true};}
+      // Usa punteggio reale (scoreStr) per W/D/L; fallback a totali fantacalcio
+      function _wd(m){if(m.scoreStr){var _sp=m.scoreStr.split('-');var _gh=parseInt(_sp[0])||0,_ga=parseInt(_sp[1])||0;return{w1:_gh>_ga,d:_gh===_ga};}return{w1:m.total1>m.total2,d:m.total1===m.total2};}
+      var preview=matches.map(function(m){var _r=_wd(m),w1=_r.w1,d=_r.d;if(neutral)return m.team1+' '+m.total1.toFixed(2)+' - '+m.total2.toFixed(2)+' '+m.team2+' ('+(w1?'V/S':d?'P/P':'S/V')+')';var _h=_getHA(m);return m.team1+' '+m.total1.toFixed(2)+' - '+m.total2.toFixed(2)+' '+m.team2+' '+(_h.team1IsHome?(w1?'(VC/SF)':d?'(PC/PF)':'(SC/VF)'):(w1?'(VF/SC)':d?'(PF/PC)':'(SF/VC)'));}).join('\n');
+      if(!confirm('Importare '+matches.length+' partite per G'+g+(neutral?' [NEUTRALE]':'')+'?\n\n'+preview)){input.value='';return;}
+      var cal=admGetCalendar(t,l);
+      if(!cal[String(g)])cal[String(g)]={};
+      var _ck=function(calG,name){var u=(name||'').toUpperCase();var k=Object.keys(calG).find(function(x){return x.toUpperCase()===u;});return k!==undefined?k:name;};
+      matches.forEach(function(m){
+        var _r=_wd(m),w1=_r.w1,d=_r.d;
+        var k1=_ck(cal[String(g)],m.team1),k2=_ck(cal[String(g)],m.team2);
+        if(neutral){cal[String(g)][k1]=w1?'V':(d?'P':'S');cal[String(g)][k2]=w1?'S':(d?'P':'V');}
+        else{var _h=_getHA(m);var _hk=_h.team1IsHome?k1:k2,_ak=_h.team1IsHome?k2:k1,_hW=_h.team1IsHome?w1:!w1;if(_hW){cal[String(g)][_hk]='VC';cal[String(g)][_ak]='SF';}else if(d){cal[String(g)][_hk]='PC';cal[String(g)][_ak]='PF';}else{cal[String(g)][_hk]='SC';cal[String(g)][_ak]='VF';}}
+      });
+      _calEsitiSave(t,l,cal);
+      var scores=(function(){var r=_calScRaw(t,l);try{return r?JSON.parse(r):{};}catch(e){return{};}})(); if(!scores[String(g)])scores[String(g)]={};matches.forEach(function(m){if(!m.scoreStr)return;var _hm=_getHA(m);var _p=m.scoreStr.split('-');var hk=(_hm.team1IsHome?m.team1:m.team2).toUpperCase();scores[String(g)][hk]=_hm.team1IsHome?m.scoreStr:(_p[1]+'-'+_p[0]);});_calScSave(t,l,JSON.stringify(scores));
+      var msg=document.createElement('div');msg.textContent='✅ G'+g+': '+matches.length+' partite importate'+(neutral?' [neutrale]':'');msg.style.cssText='position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';document.body.appendChild(msg);setTimeout(function(){msg.remove();},3000);
+      admLoadCalBody();
+    }catch(ex){alert('Errore parsing xlsx: '+ex.message);}
+    input.value='';
+  };
+  reader.readAsArrayBuffer(file);
+  }
+  if(typeof XLSX!=='undefined'){_doProc();return;}
+  var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload=_doProc;s.onerror=function(){alert('Errore caricamento libreria xlsx.');};document.head.appendChild(s);
+}
+
 function admGetStadio(torneoKey, legaKey) {
   if (window.FB_STADIO && window.FB_STADIO[torneoKey+'_'+legaKey]) return JSON.parse(JSON.stringify(window.FB_STADIO[torneoKey+'_'+legaKey]));
   // Legge prima il salvataggio Admin (dopo aver premuto Salva)
