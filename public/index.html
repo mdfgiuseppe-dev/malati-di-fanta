@@ -3745,7 +3745,8 @@ function loadDataFromFirebase() {
         var sq = tdata[lk] && tdata[lk].squadre;
         if (typeof sq === 'string') { try { sq = JSON.parse(sq); } catch(e) { sq = null; } }
         if (!sq || typeof sq !== 'object') return;
-        var names = Array.isArray(sq) ? sq.filter(Boolean) : Object.keys(sq);
+        // Formato: { CHIAVE_SICURA: "NOME" }; accetta anche i vecchi { "Nome": true } ed elenco di nomi
+        var names = Array.isArray(sq) ? sq.filter(Boolean) : Object.keys(sq).map(function(k){ return typeof sq[k] === 'string' ? sq[k] : k; });
         if (names.length) window.FB_SQUADRE[tk + '_' + lk] = names.map(function(n){ return String(n).toUpperCase(); }).sort();
       });
     });
@@ -7471,7 +7472,9 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
   fbDB.ref('data/crediti/'+torneo.key+'_'+legaKey).set(cr);
   fbDB.ref('data/calendario/'+torneo.key+'_'+legaKey).set(cal);
   // Salva squadre su Firebase (percorso strutturato per tornei)
-  fbDB.ref('data/tornei/'+torneo.key+'/'+legaKey+'/squadre').set(squadre);
+  var _sqObj = {};
+  squadre.forEach(function(n){ _sqObj[_fbSafeKey(n)] = String(n).toUpperCase(); });
+  fbDB.ref('data/tornei/'+torneo.key+'/'+legaKey+'/squadre').set(_sqObj);
   fbDB.ref('data/tornei/'+torneo.key+'/'+legaKey+'/label').set(legaLabel);
   window.FB_SQUADRE = window.FB_SQUADRE || {};
   window.FB_SQUADRE[torneo.key+'_'+legaKey] = squadre.map(function(n){ return String(n).toUpperCase(); }).sort();
