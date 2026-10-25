@@ -7587,7 +7587,7 @@ function admRenderUtenti() {
     +'<th style="padding:8px 14px;text-align:left">Password</th>'
     +'<th style="padding:8px 14px;text-align:left">Email</th>'
     +'<th style="padding:8px 14px;text-align:left">Telefono</th>'
-    +'<th style="padding:8px 14px;text-align:left">Lega</th>'
+    +'<th style="padding:8px 14px;text-align:left">Squadre</th>'
     +'<th style="padding:8px 14px;text-align:center">Stato</th>'
     +'<th style="padding:8px 14px;text-align:center">Azioni</th>'
     +'</tr></thead><tbody>'
@@ -7607,7 +7607,7 @@ function admRenderUtenti() {
         +'<td style="padding:9px 14px;font-size:12px;color:var(--text2);font-family:monospace">'+u.password+'</td>'
         +'<td style="padding:9px 14px;font-size:12px;color:var(--text2)">'+(u.email||'—')+'</td>'
         +'<td style="padding:9px 14px;font-size:12px;color:var(--text2)">'+(u.phone||'—')+'</td>'
-        +'<td style="padding:9px 14px;font-size:11px;color:var(--text2)">'+(u.lega||'—')+'</td>'
+        +'<td style="padding:9px 14px;font-size:11px;color:var(--text2)">'+(_userSquadreLabel(u)||'—')+'</td>'
         +'<td style="padding:9px 14px;text-align:center">'+statoBtn+'</td>'
         +'<td style="padding:9px 14px;text-align:center;display:flex;gap:6px;justify-content:center">'
         +'<button onclick="admEditUser('+ri+')" style="padding:4px 10px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#3b82f6;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">✏️ Modifica</button>'
@@ -7905,6 +7905,7 @@ function admEditUser(i) {
     +'<input id="adm-eu-phone" type="text" value="'+(u.phone||'')+'" placeholder="Telefono" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
     +'<select id="adm-eu-lega" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'+legheOpts+'</select>'
     +'<select id="adm-eu-stato" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'+statoOpts+'</select>'
+    +_admEuSquadreHtml(u)
     +'</div>'
     +'<div style="display:flex;gap:8px;margin-top:16px">'
     +'<button onclick="admSaveEditUser('+i+')" style="flex:1;padding:8px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">💾 Salva</button>'
@@ -7912,6 +7913,37 @@ function admEditUser(i) {
     +'</div>'
     +'</div>';
   modal.style.display = 'flex';
+}
+// Blocco "Squadre" della modale utente: un select per ogni lega di ogni torneo
+function _admEuSquadreHtml(u) {
+  var mine = u.squadre || {};
+  var rows = '';
+  ADMIN_TORNEI.forEach(function(t) {
+    t.leghe.slice().sort(function(a,b){return a.label.localeCompare(b.label);}).forEach(function(l) {
+      var k = t.key+'_'+l.key;
+      var teams = (window.FB_SQUADRE && window.FB_SQUADRE[k]) || [];
+      var opts = '<option value="">— Nessuna —</option>' + teams.map(function(n) {
+        var other = ADMIN_USERS.find(function(x){ return x !== u && x.squadre && x.squadre[k] === n; });
+        return '<option value="'+n+'"'+(mine[k]===n?' selected':'')+'>'+n+(other?' (già di '+_userFull(other)+')':'')+'</option>';
+      }).join('');
+      rows += '<div style="display:flex;align-items:center;gap:8px">'
+        +'<span style="flex:1;font-size:11px;font-weight:700;color:var(--text2)">'+t.label+' – '+l.label+'</span>'
+        +'<select data-sqk="'+k+'" style="flex:1;padding:6px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none">'+opts+'</select>'
+        +'</div>';
+    });
+  });
+  if (!rows) return '';
+  return '<div style="margin-top:6px;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--text3)">Squadre</div>'
+    +'<div style="display:flex;flex-direction:column;gap:6px">'+rows+'</div>';
+}
+// Elenco squadre dell'utente per la tabella (es. "ITALIA: BARI")
+function _userSquadreLabel(u) {
+  var sq = u.squadre || {};
+  var parts = [];
+  ADMIN_TORNEI.forEach(function(t) {
+    t.leghe.forEach(function(l) { var n = sq[t.key+'_'+l.key]; if (n) parts.push(l.label+': '+n); });
+  });
+  return parts.join('<br>');
 }
 function admSaveEditUser(i) {
   var u = ADMIN_USERS[i];
@@ -7925,6 +7957,10 @@ function admSaveEditUser(i) {
   u.email = document.getElementById('adm-eu-email').value.trim() || '';
   u.phone = document.getElementById('adm-eu-phone').value.trim() || '';
   u.lega = document.getElementById('adm-eu-lega').value;
+  // Squadre dell'utente per lega: { "slm_it": "BARI", ... }
+  var _sq = {};
+  document.querySelectorAll('#adm-edit-user-modal select[data-sqk]').forEach(function(s) { if (s.value) _sq[s.getAttribute('data-sqk')] = s.value; });
+  if (Object.keys(_sq).length) u.squadre = _sq; else delete u.squadre;
   u.attivo = document.getElementById('adm-eu-stato').value !== 'false';
   ADMIN_USERS[i] = u;
   // Salva su Firebase
