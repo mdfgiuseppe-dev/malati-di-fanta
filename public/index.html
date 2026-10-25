@@ -1039,8 +1039,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 </style>
 </head>
 <body>
-<img id="tsm-coppa-src" src="" style="display:none;width:0;height:0" alt="">
-<img id="tsm-it-logo" src="" style="display:none;width:0;height:0" alt="">
 <div id="page-splash" class="page"><style>#page-splash{background:var(--bg);}.sp-glow{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 40%,rgba(59,130,246,.12),transparent 70%);pointer-events:none;}[data-theme=dark] .sp-glow{background:radial-gradient(ellipse 60% 50% at 50% 40%,rgba(30,58,138,.25),transparent 70%);}.sp-wrap{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px 20px;text-align:center;}.sp-logo{width:260px;max-width:80vw;filter:drop-shadow(0 8px 40px rgba(59,130,246,.3));cursor:pointer;transition:transform .3s;}[data-theme=dark] .sp-logo{filter:drop-shadow(0 8px 40px rgba(30,58,138,.6));}.sp-logo:hover{transform:scale(1.04);}.sp-btn{display:inline-flex;align-items:center;gap:10px;padding:13px 36px;border:1.5px solid rgba(59,130,246,.5);border-radius:50px;background:transparent;color:rgba(0,0,0,.55);font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .25s;}[data-theme=dark] .sp-btn{color:rgba(255,255,255,.65);border-color:rgba(59,130,246,.45);}.sp-btn:hover{border-color:#3b82f6;color:#1e40af;transform:translateY(-2px);}[data-theme=dark] .sp-btn:hover{color:#fff;}.sp-sub{font-size:10px;font-weight:700;letter-spacing:3px;color:rgba(0,0,0,.25);text-transform:uppercase;}[data-theme=dark] .sp-sub{color:rgba(255,255,255,.18);}.sp-theme{position:fixed;top:20px;right:20px;width:36px;height:36px;border-radius:10px;background:rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:20;transition:all .2s;}[data-theme=dark] .sp-theme{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);}.sp-theme:hover{transform:scale(1.1);}</style><div class="sp-glow"></div><div class="sp-theme" onclick="toggleTheme()" id="sp-theme-btn" title="Cambia tema"></div><script>document.getElementById("sp-theme-btn").textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";</script><div class="sp-wrap"><img class="sp-logo" src="" alt="Malati di Fanta" onclick="showPage('dashboard')"><button class="sp-btn" onclick="showPage('dashboard')">Entra nella piattaforma <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button><div class="sp-sub">Fantacalcio Manageriale Continuativo · Since 2019</div></div></div>
 <div id="page-lega" class="page">
 
@@ -1455,368 +1453,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 
 </div>
-<div id="page-tsm-lega" class="page">
-<!-- TOPBAR -->
-<div class="topbar">
-  <img class="topbar-logo" src="" alt="MdF" onclick="showPage('dashboard')">
-  <div class="breadcrumb">
-    <span style="cursor:pointer;color:var(--green)" onclick="showPage('dashboard')">TSM</span>
-    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-    <img id="tsm-breadcrumb-logo" src="" style="height:16px;width:auto;object-fit:contain;">
-    <b id="tsm-breadcrumb-league">Italia</b>
-  </div>
-  <div class="topbar-right">
-    <div id="tsm-pg-theme-btn" onclick="toggleTheme()" title="Cambia tema" style="width:34px;height:34px;border-radius:9px;background:var(--card2,rgba(255,255,255,.08));border:1px solid var(--border,rgba(255,255,255,.1));display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;transition:all .2s">☀️</div>
-    <div class="user-chip" id="tsm-user-chip" onclick="openLogoutModal()" style="cursor:pointer">
-      <div class="user-av" id="tsm-user-av">?</div>
-      <div style="font-size:12px;font-weight:600" id="tsm-user-name">Utente</div>
-    </div>
-  </div>
-</div>
-<!-- MOBILE NAV -->
-<div class="mobile-nav" id="tsm-mobile-nav">
-  <div class="mnav-btn active" onclick="showTSMSection('dashboard',this)">🏠 Dashboard</div>
-  <div class="mnav-btn" onclick="showTSMSection('rose',this)">👥 Rose</div>
-  <div class="mnav-btn" onclick="showTSMSection('calendario',this)">📅 Calendario</div>
-  <div class="mnav-btn" onclick="showTSMSection('classifica',this)">🏆 Classifica</div>
-  <div class="mnav-btn" onclick="showTSMSection('stadio',this)">🏟️ Stadio</div>
-  <div class="mnav-btn" onclick="showTSMSection('sponsor',this)">🤝 Sponsor</div>
-  <div class="mnav-btn" onclick="showTSMSection('multe',this)">⚠️ Multe</div>
-  <div class="mnav-btn" onclick="showTSMSection('modulistica',this)">📑 Moduli</div>
-</div>
-<div class="layout">
-<nav class="sidenav">
-  <div class="sidenav-header">
-    <div class="league-logo-row">
-      <img id="tsm-league-logo" class="league-logo" src="" alt="TSM Italia">
-      <div>
-        <div class="league-info-name" id="tsm-sidebar-name">TSM Italia</div>
-        <div class="league-info-sub" id="tsm-sidebar-sub">10 squadre · Classic</div>
-      </div>
-    </div>
-    <div class="league-season">⚽ Stagione 2026/27</div>
-  </div>
-  <div class="nav-section">Menu</div>
-  <div class="nav-item active" onclick="showTSMSection('dashboard',this)">
-    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-    Dashboard
-  </div>
-  <div class="nav-item" onclick="showTSMSection('rose',this)">
-    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-    Rose Squadre
-  </div>
-  <div class="nav-item" onclick="showTSMSection('calendario',this)">
-    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-    Calendario
-  </div>
-  <div class="nav-item" onclick="showTSMSection('classifica',this)">
-    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg>
-    Classifica
-  </div>
-  <div class="nav-section">Gestione</div>
-  <div class="nav-item" onclick="showTSMSection('stadio',this)">
-    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11"/></svg>
-    Stadio
-  </div>
-  <div class="nav-item" onclick="showTSMSection('sponsor',this)">
-    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-    Sponsor
-  </div>
-  <div class="nav-item" onclick="showTSMSection('multe',this)">
-    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-    Multe e Sanzioni
-  </div>
-  <div class="nav-item" onclick="showTSMSection('modulistica',this)">
-    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-    Modulistica
-  </div>
-</nav>
-<div class="main tsm-main">
-<!-- ===== DASHBOARD ===== -->
-  <div id="tsm-s-dashboard" class="section">
-    <!-- HERO LEGA -->
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;width:100%;padding:clamp(32px,8vw,64px) 20px clamp(28px,6vw,48px);position:relative;overflow:hidden;min-height:clamp(280px,70vw,420px)">
-
-      <!-- Glow radiale animato -->
-      <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden">
-        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);width:clamp(240px,70vw,360px);height:clamp(240px,70vw,360px);background:radial-gradient(ellipse,rgba(16,185,129,.15),transparent 65%);animation:dash-pulse 4s ease-in-out infinite"></div>
-        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);width:clamp(150px,45vw,220px);height:clamp(150px,45vw,220px);background:radial-gradient(ellipse,rgba(16,185,129,.08),transparent 60%);animation:dash-pulse 4s ease-in-out infinite .5s"></div>
-      </div>
-
-      <!-- Cerchi decorativi -->
-      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:clamp(200px,60vw,300px);height:clamp(200px,60vw,300px);border:1px solid rgba(16,185,129,.08);border-radius:50%;animation:dash-spin 20s linear infinite;pointer-events:none"></div>
-      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:clamp(260px,75vw,370px);height:clamp(260px,75vw,370px);border:1px dashed rgba(16,185,129,.05);border-radius:50%;animation:dash-spin 30s linear infinite reverse;pointer-events:none"></div>
-
-      <!-- Trofeo -->
-      <div style="position:relative;z-index:2;margin-bottom:clamp(20px,5vw,32px)">
-        <img id="tsm-lega-dash-trophy" src="" style="width:clamp(160px,48vw,240px);height:clamp(160px,48vw,240px);object-fit:contain;filter:drop-shadow(0 12px 40px rgba(16,185,129,.55));animation:dash-float 3.5s ease-in-out infinite">
-      </div>
-
-      <!-- Titolo -->
-      <div id="lega-dash-title" style="position:relative;z-index:2;font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,10vw,56px);letter-spacing:clamp(3px,1.5vw,6px);color:var(--text);line-height:1;margin-bottom:10px;text-shadow:0 2px 20px rgba(16,185,129,.15)">TSM ITALIA</div>
-
-      <!-- Sottotitolo -->
-      <div style="position:relative;z-index:2;font-size:clamp(9px,2.5vw,11px);font-weight:800;letter-spacing:clamp(2px,1vw,4px);text-transform:uppercase;color:#10b981">Fantacalcio Manageriale · Modalità Classic</div>
-
-    </div>
-
-
-
-  </div><!-- /s-dashboard -->
-
-
-
-  <div id="s-rose" class="section">
-    <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:14px">Rose <span style="color:var(--green)">Squadre</span></div>
-    <div id="rose-teams-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px"></div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;align-items:center" id="filters-row"></div>
-    <div class="card" style="padding:0;overflow:hidden">
-      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)">
-        <img id="th-logo" style="width:36px;height:36px;object-fit:contain;display:none">
-        <div style="flex:1">
-          <div style="font-weight:800;font-size:14px" id="th-name">—</div>
-          <div style="display:flex;gap:10px;margin-top:4px" id="th-stats"></div>
-        </div>
-        <div id="th-credits-box" style="text-align:right;display:none">
-          <div style="font-size:9px;color:var(--text2);font-weight:700">CREDITI ROSA</div>
-          <div style="font-family:'Bebas Neue';font-size:22px;color:#10b981" id="th-credits-v">—</div>
-        </div>
-      </div>
-      <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
-        <input id="search" type="text" placeholder="Cerca giocatore o club reale..." oninput="renderTable()" style="width:100%;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Barlow',sans-serif;font-size:13px;outline:none">
-      </div>
-      <table style="width:100%;min-width:320px;border-collapse:collapse;table-layout:auto">
-        <thead><tr style="background:var(--bg2);font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--text3)">
-          <th style="padding:7px 10px;text-align:left;width:13%">Ruolo</th>
-          <th style="padding:7px 8px;text-align:left;width:35%">Giocatore</th>
-          <th style="padding:7px 8px;text-align:left;width:25%">Club Reale</th>
-          <th style="padding:7px 10px;text-align:right;width:13%">Costo</th>
-          <th style="padding:7px 8px;text-align:center;width:14%">Scadenza</th>
-        </tr></thead>
-        <tbody id="tbody"></tbody>
-      </table>
-      <div id="empty" style="display:none;padding:30px;text-align:center;color:var(--text2)">🔍 Nessun giocatore trovato</div>
-    </div>
-  </div>
-
-  
-  <div id="tsm-s-rose" class="section" style="width:100%">
-    <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:14px">Rose <span style="color:var(--green)">Squadre</span></div>
-    <div id="tsm-rose-teams-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px"></div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;align-items:center" id="tsm-filters-row"></div>
-    <div class="card" style="padding:0;overflow:hidden">
-      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)">
-        <img id="tsm-th-logo" style="width:36px;height:36px;object-fit:contain;display:none">
-        <div style="flex:1">
-          <div style="font-weight:800;font-size:18px" id="tsm-th-name">—</div>
-          <div style="display:flex;gap:10px;margin-top:4px" id="tsm-th-stats"></div>
-        </div>
-        <div id="tsm-th-credits-box" style="text-align:right;display:none">
-          <div style="font-size:9px;color:var(--text2);font-weight:700">CREDITI ROSA</div>
-          <div style="font-family:'Bebas Neue';font-size:22px;color:#10b981" id="tsm-th-credits-v">—</div>
-        </div>
-      </div>
-
-      <table style="width:100%;border-collapse:collapse">
-        <thead><tr style="background:var(--bg2);font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--text3)">
-          <th style="padding:7px 10px;text-align:left">Ruolo</th>
-          <th style="padding:7px 8px;text-align:left">Giocatore</th>
-          <th style="padding:7px 8px;text-align:left">Club Reale</th>
-          <th style="padding:7px 10px;text-align:right">Costo</th>
-          <th style="padding:7px 8px;text-align:center">Scadenza</th>
-        </tr></thead>
-        <tbody id="tsm-tbody"></tbody>
-      </table>
-      <div id="tsm-empty" style="display:none;padding:30px;text-align:center;color:var(--text2)">🔍 Nessun giocatore trovato</div>
-    </div>
-  </div>
-<!-- ===== CALENDARIO ===== -->
-  <div id="tsm-s-calendario" class="section">
-    <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:14px">Calendario <span style="color:var(--green)">& Risultati</span></div>
-    <div id="tsm-calendario-body"></div>
-  </div>
-<!-- ===== CLASSIFICA ===== -->
-  <div id="tsm-s-classifica" class="section">
-    <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:4px">Classifica <span style="color:var(--green)">Campionato</span></div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:14px" id="tsm-giornata-label">—</div>
-    <div class="card" style="padding:0;overflow:hidden">
-      <table style="width:100%;border-collapse:collapse">
-        <thead>
-          <tr style="background:var(--bg2);font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--text3)">
-            <th style="padding:7px 10px;width:26px">#</th>
-            <th style="width:10px"></th>
-            <th style="padding:7px 8px;text-align:left">Squadra</th>
-            <th style="padding:7px 8px;width:26px">G</th>
-            <th style="padding:7px 8px;width:26px">V</th>
-            <th style="padding:7px 8px;width:26px">P</th>
-            <th style="padding:7px 8px;width:26px">S</th>
-            <th style="padding:7px 8px;width:36px;color:var(--green)">Pt</th>
-          </tr>
-        </thead>
-        <tbody id="tsm-classifica-body"></tbody>
-      </table>
-      <div id="tsm-classifica-note"></div>
-    </div>
-  </div>
-<!-- ===== STADIO ===== -->
-  <div id="tsm-s-stadio" class="section">
-    <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:14px">🏟️ <span style="color:var(--green)">Stadio</span></div>
-    <div id="tsm-stadio-body"></div>
-  </div>
-<!-- ===== SPONSOR ===== -->
-<div id="tsm-s-multe" class="section">
-    <!-- TITOLO -->
-    <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px">⚠️ <span style="color:#ef4444">Multe e Sanzioni</span></div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:20px">Situazione disciplinare aggiornata in tempo reale</div>
-
-    <!-- TABELLA SQUADRE -->
-    <div class="card" style="padding:0;overflow:hidden;margin-bottom:24px">
-      <div style="padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
-        <svg width="16" height="16" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text2)">Situazione Disciplinare Squadre</span>
-        
-      </div>
-      <div style="overflow-x:auto">
-        <table style="width:100%;min-width:320px;border-collapse:collapse;table-layout:auto">
-          <colgroup><col style="width:32%"><col style="width:17%"><col style="width:17%"><col style="width:17%"><col style="width:17%"></colgroup><thead>
-            <tr style="background:var(--bg2);font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--text3)">
-              <th style="padding:5px 8px;text-align:left">Squadra</th>
-              <th style="padding:5px 4px;text-align:center">Richiami</th>
-              <th style="padding:5px 4px;text-align:center">Punti di Penalità</th>
-              <th style="padding:5px 4px;text-align:center">Crediti di Multa</th>
-              <th style="padding:5px 4px;text-align:center">Stato</th>
-            </tr>
-          </thead>
-          <tbody id="tsm-multe-body"></tbody>
-        </table>
-      </div>
-      <div style="padding:10px 14px;border-top:1px solid var(--border);font-size:10px;color:var(--text3);display:flex;align-items:center;gap:6px">
-        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-        Con 5 richiami totali lo staff si riunirà per valutare l&#39;esonero del manager
-      </div>
-    </div>
-
-    <!-- SPECCHIETTO REGOLE -->
-    <div style="font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;color:var(--text);margin-bottom:14px">📋 Regolamento Disciplinare</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:16px">
-
-      <div class="card" style="padding:0;overflow:hidden">
-        <div style="padding:10px 14px;background:rgba(239,68,68,.08);border-bottom:1px solid rgba(239,68,68,.15);display:flex;align-items:center;gap:8px">
-          <span style="font-size:16px">📝</span>
-          <span style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#ef4444">Formazione Non Inserita</span>
-        </div>
-        <table style="width:100%;border-collapse:collapse">
-          <thead><tr style="background:var(--bg2);font-size:9px;font-weight:800;color:var(--text3);text-transform:uppercase">
-            <th style="padding:6px 12px;text-align:center">N°</th><th style="padding:6px 12px;text-align:left">Sanzione</th>
-          </tr></thead>
-          <tbody>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:var(--text2)">1</td><td style="padding:7px 12px;font-size:11px">Richiamo</td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#f59e0b">2</td><td style="padding:7px 12px;font-size:11px">Richiamo + <span style="color:#ef4444;font-weight:700">−5 cr</span></td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#f97316">3</td><td style="padding:7px 12px;font-size:11px"><span style="color:#ef4444;font-weight:700">−1 pt</span> + <span style="color:#ef4444;font-weight:700">−10 cr</span></td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#ef4444">4</td><td style="padding:7px 12px;font-size:11px"><span style="color:#ef4444;font-weight:700">−2 pt</span> + <span style="color:#ef4444;font-weight:700">−15 cr</span></td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#ef4444">5</td><td style="padding:7px 12px;font-size:11px"><span style="color:#ef4444;font-weight:700">−3 pt</span> + <span style="color:#ef4444;font-weight:700">−20 cr</span></td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#ef4444">6</td><td style="padding:7px 12px;font-size:11px"><span style="color:#ef4444;font-weight:700">−4 pt</span> + <span style="color:#ef4444;font-weight:700">−25 cr</span></td></tr>
-            <tr><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#7f1d1d">7</td><td style="padding:7px 12px;font-size:11px;font-weight:800;color:#ef4444">ESONERO</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="card" style="padding:0;overflow:hidden">
-        <div style="padding:10px 14px;background:rgba(245,158,11,.08);border-bottom:1px solid rgba(245,158,11,.15);display:flex;align-items:center;gap:8px">
-          <span style="font-size:16px">💬</span>
-          <span style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#f59e0b">Spam in Chat</span>
-        </div>
-        <table style="width:100%;border-collapse:collapse">
-          <thead><tr style="background:var(--bg2);font-size:9px;font-weight:800;color:var(--text3);text-transform:uppercase">
-            <th style="padding:6px 12px;text-align:center">N°</th><th style="padding:6px 12px;text-align:left">Sanzione</th>
-          </tr></thead>
-          <tbody>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:var(--text2)">1</td><td style="padding:7px 12px;font-size:11px">Richiamo</td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:var(--text2)">2</td><td style="padding:7px 12px;font-size:11px">Richiamo</td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:var(--text2)">3</td><td style="padding:7px 12px;font-size:11px">Richiamo</td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#f59e0b">4</td><td style="padding:7px 12px;font-size:11px"><span style="color:#ef4444;font-weight:700">−1 pt</span></td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#f97316">5</td><td style="padding:7px 12px;font-size:11px"><span style="color:#ef4444;font-weight:700">−2 pt</span></td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#ef4444">6</td><td style="padding:7px 12px;font-size:11px"><span style="color:#ef4444;font-weight:700">−3 pt</span></td></tr>
-            <tr><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#7f1d1d">7</td><td style="padding:7px 12px;font-size:11px;font-weight:800;color:#ef4444">ESONERO</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="card" style="padding:0;overflow:hidden">
-        <div style="padding:10px 14px;background:rgba(139,92,246,.08);border-bottom:1px solid rgba(139,92,246,.15);display:flex;align-items:center;gap:8px">
-          <span style="font-size:16px">🚫</span>
-          <span style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8b5cf6">Offese / Comportamenti</span>
-        </div>
-        <table style="width:100%;border-collapse:collapse">
-          <thead><tr style="background:var(--bg2);font-size:9px;font-weight:800;color:var(--text3);text-transform:uppercase">
-            <th style="padding:6px 12px;text-align:center">N°</th><th style="padding:6px 12px;text-align:left">Sanzione</th>
-          </tr></thead>
-          <tbody>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:var(--text2)">1</td><td style="padding:7px 12px;font-size:11px">Richiamo</td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:var(--text2)">2</td><td style="padding:7px 12px;font-size:11px">Richiamo</td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#8b5cf6">3</td><td style="padding:7px 12px;font-size:11px"><span style="color:#ef4444;font-weight:700">−1 pt</span></td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#f97316">4</td><td style="padding:7px 12px;font-size:11px"><span style="color:#ef4444;font-weight:700">−2 pt</span></td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#ef4444">5</td><td style="padding:7px 12px;font-size:11px"><span style="color:#ef4444;font-weight:700">−4 pt</span></td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#ef4444">6</td><td style="padding:7px 12px;font-size:11px"><span style="color:#ef4444;font-weight:700">−6 pt</span></td></tr>
-            <tr><td style="padding:7px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#7f1d1d">7</td><td style="padding:7px 12px;font-size:11px;font-weight:800;color:#ef4444">ESONERO</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-    </div>
-
-    <!-- NOTE -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px">
-      <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:12px 14px">
-        <div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#ef4444;margin-bottom:8px">⚠️ Regola 5 Richiami</div>
-        <div style="font-size:11px;color:var(--text2);line-height:1.6">Con <strong style="color:var(--text)">5 richiami totali</strong>, indipendentemente dal tipo, lo staff si riunirà per valutare l&#39;esonero del manager.</div>
-      </div>
-      <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:12px 14px">
-        <div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#f59e0b;margin-bottom:8px">💸 Insolvenza Crediti</div>
-        <div style="font-size:11px;color:var(--text2);line-height:1.6">Se la squadra non ha crediti per pagare le multe: <strong style="color:var(--text)">−1 pt ogni 10 cr</strong> di multa non pagata.</div>
-      </div>
-      <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:12px 14px">
-        <div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#10b981;margin-bottom:8px">📌 Episodi Punibili</div>
-        <div style="font-size:11px;color:var(--text2);line-height:1.6">Insulti · Commenti razzisti · Spam non autorizzato · Bestemmie · Formazione non inserita · Formazione palesemente perdente · Scambio a favore di altro manager</div>
-      </div>
-    </div>
-  </div><!-- /s-multe -->
-  <div id="tsm-s-sponsor" class="section">
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px;padding:40px 20px;text-align:center;width:100%">
-      <div style="position:relative;margin-bottom:36px">
-        <div style="position:absolute;inset:-40px;background:radial-gradient(ellipse at center,rgba(16,185,129,.15),transparent 70%);border-radius:50%;pointer-events:none"></div>
-        <img src="" id="sponsor-tsm-logo" style="width:160px;height:160px;object-fit:contain;filter:drop-shadow(0 8px 40px rgba(16,185,129,.4));position:relative;z-index:1">
-      </div>
-      <div style="display:inline-flex;align-items:center;gap:10px;padding:10px 24px;background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.25);border-radius:50px;margin-bottom:24px">
-        <svg width="16" height="16" fill="none" stroke="#ef4444" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>
-        <span style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#ef4444">Non disponibile</span>
-      </div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(22px,5vw,38px);letter-spacing:3px;color:var(--text);line-height:1.1;margin-bottom:12px">
-        SPONSOR NON PREVISTI<br><span style="color:#10b981">PER QUESTO FORMAT</span>
-      </div>
-      <div style="font-size:13px;color:var(--text2);max-width:380px;line-height:1.6;margin-bottom:32px">
-        Il format <strong style="color:var(--text)">TSM</strong> non prevede accordi commerciali con sponsor.<br>
-        Questa sezione è disponibile negli altri tornei della piattaforma.
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;width:100%;max-width:300px;margin-bottom:28px">
-        <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))"></div>
-        <div style="font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text3)">TSM</div>
-        <div style="flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)"></div>
-      </div>
-      
-    </div>
-  </div><!-- /s-sponsor -->
-<!-- ===== MODULISTICA ===== -->
-  <div id="tsm-s-modulistica" class="section">
-    <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px">📋 <span style="color:#10b981">Modulistica</span></div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:24px" id="tsm-mod-subtitle">Moduli ufficiali — clicca per compilare</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px" id="tsm-modulistica-body"></div>
-  </div>
-
-</div><!-- /main -->
-</div><!-- /layout -->
-</div>
-
 <div id="page-rose" class="page">
 
 
@@ -3675,8 +3311,6 @@ var SLIM_TEAMS = [];
 
 
 
-var tsmCurrentTeam = '';
-var tsmCurrentFilter = 'ALL';
 
 
 
@@ -5187,7 +4821,6 @@ var _adminClickTimer = null;
 window.addEventListener('storage', function(e) {
   if (e.key && e.key.startsWith('user_crediti_')) {
     if (typeof updateHeader === 'function') updateHeader();
-    if (typeof tsmUpdateHeader === 'function') tsmUpdateHeader();
   }
 });
 
@@ -5197,7 +4830,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
   // Sincronizza adm_crediti_base → user_crediti al caricamento (per tutti i tornei)
   (function(){
-    var tornei = ['slim_it','slim_en','slim_de','slim_es','slim_fr','slim_pt','slim_nl','slim_tr','tsm_it'];
+    var tornei = ['slim_it','slim_en','slim_de','slim_es','slim_fr','slim_pt','slim_nl','slim_tr'];
     tornei.forEach(function(tk_lk) {
       var raw = localStorage.getItem('adm_crediti_base_'+tk_lk);
       if (!raw) return;
@@ -5479,9 +5112,6 @@ function updateLogosTornei() {
     var _slLogo = localStorage.getItem('adm_logo_torneo_slim');
     var _slEl = document.getElementById('sponsor-slim-logo');
     if (_slEl) _slEl.src = _slLogo || '';
-    var _tsmLogo = localStorage.getItem('adm_logo_torneo_tsm');
-    var _tsmEl = document.getElementById('sponsor-tsm-logo');
-    if (_tsmEl) _tsmEl.src = _tsmLogo || '';
   } catch(e) {}
 }
 function updateDashboardCounters() {
@@ -5825,389 +5455,23 @@ function _updateLegaDashboard(leagueKey) {
 
 
 
-function enterTSM() {
-  var loggedUser = localStorage.getItem('current_user');
-  if (!loggedUser) { openLoginModal(); return; }
-  // Aggiorna chip utente
-  try {
-    var u = JSON.parse(loggedUser);
-    var av = document.getElementById('tsm-user-av');
-    var nm = document.getElementById('tsm-user-name');
-    if (av) av.textContent = u.ruolo==='admin' ? 'AD' : (u.nome||'?').split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'??';
-    if (nm) nm.textContent = u.ruolo==='admin' ? 'Admin' : (u.nome||'');
-  } catch(e) {}
-  TEAMS_ROSE = TSM_ROSE_IT || {};
-  INFERMERIA = TSM_INFERMERIA_IT || [];
-  CREDITS = TSM_CREDITS_IT || {};
-  SLIM_TEAMS = TSM_TEAMS_IT || [];
-  FANTASY_LOGOS = TSM_FANTASY_LOGOS || {};
-  window._currentLeagueCalKey = 'tsm_calendar_it';
-  window._currentLeagueStaKey = 'tsm_stadio_it';
-  window.currentLeagueKey = 'tsm_it';
-  // Carica rose e infermeria aggiornate (sovrascrive hardcoded)
-  var _tsmRoseLS = localStorage.getItem('adm_rose_tsm_it');
-  if (_tsmRoseLS) { try { var _tr=JSON.parse(_tsmRoseLS); TEAMS_ROSE=_tr; if(typeof TSM_ROSE_IT!=='undefined') Object.keys(_tr).forEach(function(k){TSM_ROSE_IT[k]=_tr[k];}); } catch(e){} }
-  var _tsmInfLS = localStorage.getItem('adm_infermeria_tsm_it');
-  if (_tsmInfLS) { try { INFERMERIA=JSON.parse(_tsmInfLS); } catch(e){} }
-  // GSheets disabled: use Firebase only
-  if (false && GS_ONLINE && typeof gsLoadKey === 'function') {
-    gsLoadKey('adm_rose_tsm_it', function(val) {
-      if (val===null) return;
-      try { var parsed=typeof val==='string'?JSON.parse(val):val; localStorage.setItem('adm_rose_tsm_it',JSON.stringify(parsed)); TEAMS_ROSE=parsed; if(typeof TSM_ROSE_IT!=='undefined') Object.keys(parsed).forEach(function(k){TSM_ROSE_IT[k]=parsed[k];}); if(typeof tsmUpdateView==='function') tsmUpdateView(); else if(typeof showTeam==='function'&&tsmCurrentTeam) showTeam(tsmCurrentTeam); } catch(e){}
-    });
-    gsLoadKey('adm_infermeria_tsm_it', function(val) {
-      if (val===null) return;
-      try { var arr=typeof val==='string'?JSON.parse(val):val; INFERMERIA=arr; localStorage.setItem('adm_infermeria_tsm_it',JSON.stringify(arr)); } catch(e){}
-    });
-  }
-  // Forza sempre aggiornamento se i dati sono cambiati (versioning)
-  var _tsmVer = '2';
-  if (localStorage.getItem('tsm_ver') !== _tsmVer) {
-    localStorage.setItem('tsm_calendar_it', JSON.stringify(TSM_INITIAL_CALENDAR_IT));
-    gsSaveKey('tsm_calendar_it', localStorage.getItem('tsm_calendar_it'));
-    localStorage.setItem('tsm_stadio_it', JSON.stringify(TSM_INITIAL_STADIO_IT));
-    gsSaveKey('tsm_stadio_it', localStorage.getItem('tsm_stadio_it'));
-    localStorage.setItem('tsm_ver', _tsmVer);
-  } else {
-    if (!localStorage.getItem('tsm_calendar_it'))
-      localStorage.setItem('tsm_calendar_it', JSON.stringify(TSM_INITIAL_CALENDAR_IT));
-      gsSaveKey('tsm_calendar_it', localStorage.getItem('tsm_calendar_it'));
-    if (!localStorage.getItem('tsm_stadio_it'))
-      localStorage.setItem('tsm_stadio_it', JSON.stringify(TSM_INITIAL_STADIO_IT));
-      gsSaveKey('tsm_stadio_it', localStorage.getItem('tsm_stadio_it'));
-  }
-  showPage('tsm-lega');
-  setTimeout(function(){
-    // Logo TSM Italia
-    var _tsmLogo = localStorage.getItem('adm_logo_lega_tsm_it');
-    if (_tsmLogo) {
-      _tsmLogo = _normalizeImgUrl(_tsmLogo);
-      ['tsm-breadcrumb-logo','tsm-league-logo'].forEach(function(id){ var el=document.getElementById(id); if(el) el.src=_tsmLogo; });
-    }
-    // Trofeo TSM Italia
-    var _tsmTrofeo = localStorage.getItem('adm_trofeo_lega_tsm_it');
-    if (_tsmTrofeo) {
-      var _tEl = document.getElementById('tsm-lega-dash-trophy');
-      if (_tEl) _tEl.src = _normalizeImgUrl(_tsmTrofeo);
-    } else if (typeof GS_ONLINE !== 'undefined' && GS_ONLINE && typeof gsLoadKey === 'function') {
-      (function(){ var _t=document.getElementById('tsm-lega-dash-trophy');
-        gsLoadKey('adm_trofeo_lega_tsm_it', function(val){ if(val){ localStorage.setItem('adm_trofeo_lega_tsm_it',val); if(_t) _t.src=_normalizeImgUrl(val); } });
-      })();
-    }
-    showTSMSection('dashboard', null);
-  }, 50);
-}
-
-
-var tsmCurrentTeam = '';
-var tsmCurrentFilter = 'ALL';
-
-function tsmBuildTeamsGrid() {
-  var g = document.getElementById('tsm-rose-teams-grid');
-  if (!g) return;
-  var list = Object.keys(TEAMS_ROSE).sort().concat(['INFERMERIA']);
-  if (!tsmCurrentTeam || list.indexOf(tsmCurrentTeam) < 0) tsmCurrentTeam = list[0];
-  g.innerHTML = list.map(function(n) {
-    var a = n === tsmCurrentTeam;
-    return '<div onclick="tsmSelectTeam(this,\'' + n + '\')" style="padding:8px 4px;background:' + (a?'rgba(16,185,129,.12)':'var(--card)') + ';border:1px solid ' + (a?'rgba(16,185,129,.4)':'var(--border)') + ';border-radius:8px;text-align:center;cursor:pointer;font-size:11px;font-weight:700;color:' + (a?'#10b981':'var(--text2)') + ';transition:all .2s">' + n.toUpperCase() + '</div>';
-  }).join('');
-}
-
-function tsmSelectTeam(el, name) {
-  var g = document.getElementById('tsm-rose-teams-grid');
-  if (g) g.querySelectorAll('div').forEach(function(b){ b.style.background='var(--card)';b.style.borderColor='var(--border)';b.style.color='var(--text2)'; });
-  if (el){ el.style.background='rgba(16,185,129,.12)';el.style.borderColor='rgba(16,185,129,.4)';el.style.color='#10b981'; }
-  tsmCurrentTeam = name; tsmCurrentFilter = 'ALL';
-  var s = document.getElementById('tsm-search'); if(s) s.value='';
-  tsmUpdateHeader(); tsmBuildFilters(); tsmRenderTable();
-}
-
-function tsmUpdateHeader() {
-  var nm=document.getElementById('tsm-th-name');
-  var cb=document.getElementById('tsm-th-credits-box');
-  var cv=document.getElementById('tsm-th-credits-v');
-  var st=document.getElementById('tsm-th-stats');
-  var lo=document.getElementById('tsm-th-logo');
-  if (tsmCurrentTeam==='INFERMERIA') {
-    if(lo) lo.style.display='none';
-    if(nm) nm.textContent='INFERMERIA';
-    if(cb) cb.style.display='none';
-    if(st) st.innerHTML=''; return;
-  }
-  if(lo){var fl=FANTASY_LOGOS[tsmCurrentTeam];if(fl){lo.src=fl;lo.style.display='block';}else{lo.style.display='none';}}
-  if(nm) nm.textContent=tsmCurrentTeam;
-  if(cb) cb.style.display='block';
-  if(cv){
-    var _admCrTSM = JSON.parse(localStorage.getItem('adm_crediti_base_tsm_it')||'{}');
-    var _userCredTSM = JSON.parse(localStorage.getItem('user_crediti_tsm_it')||'{}');
-    var _baseTSM = (_admCrTSM[tsmCurrentTeam]!==undefined) ? _admCrTSM[tsmCurrentTeam]
-      : (_admCrTSM[tsmCurrentTeam.toUpperCase()]!==undefined) ? _admCrTSM[tsmCurrentTeam.toUpperCase()]
-      : (_userCredTSM[tsmCurrentTeam]!==undefined) ? _userCredTSM[tsmCurrentTeam]
-      : (_userCredTSM[tsmCurrentTeam.toUpperCase()]!==undefined) ? _userCredTSM[tsmCurrentTeam.toUpperCase()]
-      : (CREDITS&&CREDITS[tsmCurrentTeam]!==undefined?CREDITS[tsmCurrentTeam]:null);
-    // Movimenti rose: costiOrig - costiAttuali
-    var _rosaOrigTSM = (typeof TSM_ROSE_IT!=='undefined' && TSM_ROSE_IT[tsmCurrentTeam]) ? TSM_ROSE_IT[tsmCurrentTeam] : null;
-    var _roseStoredTSM = localStorage.getItem('adm_rose_tsm_it');
-    if (_roseStoredTSM) { try { var _rs=JSON.parse(_roseStoredTSM); if(_rs[tsmCurrentTeam]) _rosaOrigTSM=_rs[tsmCurrentTeam]; } catch(e){} }
-    var _costiOrigTSM = _rosaOrigTSM ? _rosaOrigTSM.reduce(function(s,p){return s+(parseFloat(p.costo)||0);},0) : 0;
-    var _rosaAttuTSM = (typeof TEAMS_ROSE!=='undefined' && TEAMS_ROSE[tsmCurrentTeam]) ? TEAMS_ROSE[tsmCurrentTeam] : [];
-    var _costiAttuTSM = _rosaAttuTSM.reduce(function(s,p){return s+(parseFloat(p.costo)||0);},0);
-    var _movTSM = _costiOrigTSM - _costiAttuTSM;
-    // Multe
-    var _multeRawTSM = localStorage.getItem('tsm_multe_it');
-    var _crMulTSM = 0;
-    if (_multeRawTSM) { try { var _mdTSM=JSON.parse(_multeRawTSM); var _mqTSM=_mdTSM[tsmCurrentTeam]||_mdTSM[tsmCurrentTeam.toUpperCase()]||{}; _crMulTSM=parseFloat(_mqTSM.multe)||0; } catch(e){} }
-    var _credValTSM = _baseTSM !== null ? Math.round((_baseTSM + _movTSM - _crMulTSM)*10)/10 : '—';
-    cv.textContent = _credValTSM;
-  }
-  var pl=TEAMS_ROSE[tsmCurrentTeam]||[];
-  var por=0,dif=0,cen=0,att=0;
-  pl.forEach(function(p){
-    var r=(p.ruolo||'').split(';')[0].trim();
-    if(r==='P')por++;
-    else if(r==='D')dif++;
-    else if(r==='A')att++;
-    else cen++;
-  });
-  if(st) st.innerHTML='<div class="th-stat"><span class="th-stat-v" style="color:#f59e0b">'+por+'</span> Por</div><div class="th-stat"><span class="th-stat-v" style="color:#10b981">'+dif+'</span> Dif</div><div class="th-stat"><span class="th-stat-v" style="color:#3b82f6">'+cen+'</span> Cen</div><div class="th-stat"><span class="th-stat-v" style="color:#ef4444">'+att+'</span> Att</div><div class="th-stat"><span class="th-stat-v">'+pl.length+'</span> Tot</div>';
-}
-
-function tsmBuildFilters() {
-  var fr=document.getElementById('tsm-filters-row'); if(!fr) return;
-  var players=tsmCurrentTeam==='INFERMERIA'?INFERMERIA:(TEAMS_ROSE[tsmCurrentTeam]||[]);
-  var GROUPS=[
-    {label:'TUTTI',roles:null},
-    {label:'PORTIERE',roles:['P']},
-    {label:'DIFESA',roles:['D']},
-    {label:'CENTROCAMPO',roles:['C']},
-    {label:'ATTACCO',roles:['A']}
-  ];
-  fr.innerHTML='<span style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-right:4px">FILTRA:</span>'+
-  GROUPS.map(function(f){
-    var key=f.roles?f.roles.join(','):'ALL';
-    var a=tsmCurrentFilter===key;
-    return '<div class="fbtn'+(a?' active':'')+' " onclick="tsmSetFilter(\'' + key + '\',this)" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">'+f.label+'</div>';
-  }).join('');
-}
-
-function tsmSetFilter(key, el) {
-  tsmCurrentFilter=key;
-  var fr=document.getElementById('tsm-filters-row');
-  if(fr) fr.querySelectorAll('div').forEach(function(b){b.style.background='transparent';b.style.borderColor='var(--border)';b.style.color='var(--text2)';});
-  if(el){el.style.background='rgba(16,185,129,.1)';el.style.borderColor='#10b981';el.style.color='#10b981';}
-  tsmRenderTable();
-}
-
-function tsmRenderTable() {
-  var tbody=document.getElementById('tsm-tbody');
-  var empty=document.getElementById('tsm-empty');
-  var se=document.getElementById('tsm-search');
-  if(!tbody) return;
-  var q=se?se.value.toLowerCase():'';
-  var players=tsmCurrentTeam==='INFERMERIA'?INFERMERIA:(TEAMS_ROSE[tsmCurrentTeam]||[]);
-  var _tsmRo=['P','D','C','A'];
-  players=players.slice().sort(function(a,b){var ia=_tsmRo.indexOf(a.ruolo.split(';')[0].trim()),ib=_tsmRo.indexOf(b.ruolo.split(';')[0].trim());if(ia!==ib)return(ia>=0?ia:99)-(ib>=0?ib:99);return a.nome.localeCompare(b.nome);});
-  var RC={'P':['rgba(245,158,11,.15)','#f59e0b'],'Dc':['rgba(16,185,129,.15)','#10b981'],'B':['rgba(16,185,129,.15)','#10b981'],'Dd':['rgba(16,185,129,.15)','#10b981'],'Ds':['rgba(16,185,129,.15)','#10b981'],'D':['rgba(16,185,129,.15)','#10b981'],'C':['rgba(59,130,246,.15)','#3b82f6'],'M':['rgba(59,130,246,.15)','#3b82f6'],'E':['rgba(59,130,246,.15)','#3b82f6'],'T':['rgba(59,130,246,.15)','#3b82f6'],'W':['rgba(59,130,246,.15)','#3b82f6'],'A':['rgba(239,68,68,.15)','#ef4444'],'Pc':['rgba(239,68,68,.15)','#ef4444'],'At':['rgba(239,68,68,.15)','#ef4444']};
-  var filterRoles = tsmCurrentFilter==='ALL' ? null : tsmCurrentFilter.split(',');
-  var filtered=players.filter(function(p){
-    var r=(p.ruolo||'').split(';')[0].trim();
-    return (!filterRoles||filterRoles.indexOf(r)>-1)&&(!q||(p.nome||'').toLowerCase().indexOf(q)>-1||(p.squadra||'').toLowerCase().indexOf(q)>-1);
-  });
-  if(empty) empty.style.display=filtered.length===0?'block':'none';
-  tbody.innerHTML=filtered.map(function(p){
-    var r=(p.ruolo||'').split(';')[0].trim();
-    var c=RC[r]||['rgba(107,114,128,.15)','#6b7280'];
-    var colCosto=p.costo>=50?'#ef4444':p.costo>=20?'#f59e0b':'var(--text2)';
-    return '<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 10px;width:13%"><span style="font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;background:'+c[0]+';color:'+c[1]+'">'+r+'</span></td><td style="padding:8px 8px;font-weight:700;font-size:13px;width:35%">'+(p.nome||'')+'</td><td style="padding:8px 8px;font-size:12px;color:var(--text2);width:25%">'+((typeof REAL_NAMES!=='undefined'&&REAL_NAMES[p.squadra])||p.squadra||'')+'</td><td style="padding:8px 10px;text-align:right;font-family:\'Bebas Neue\';font-size:17px;color:'+colCosto+';width:13%">'+(p.costo||0)+'<span style="font-size:10px;font-weight:700;color:var(--text3);margin-left:1px">cr</span></td><td style="padding:8px 8px;font-size:11px;width:14%;text-align:center">'+(p.scadenza?(function(){var _sc=scadenzaColor(p.scadenza)||{bg:'rgba(239,68,68,.15)',color:'#ef4444'};return '<span style="background:'+_sc.bg+';color:'+_sc.color+';border-radius:4px;padding:2px 5px;font-weight:700;font-size:10px">⏳ '+p.scadenza+'</span>';})():'')+'</td></tr>';
-  }).join('');
-}
-
-function tsmGetCalendar() {
-  var raw = localStorage.getItem('tsm_calendar_it');
-  if (raw) return JSON.parse(raw);
-  return TSM_INITIAL_CALENDAR_IT || {};
-}
-
-function tsmGetStadio() {
-  var raw = localStorage.getItem('tsm_stadio_it');
-  if (raw) return JSON.parse(raw);
-  return TSM_INITIAL_STADIO_IT || {};
-}
-
-function tsmCalcStandings() {
-  var cal = tsmGetCalendar();
-  var stadio = tsmGetStadio();
-  var ST = TSM_STADIO_TABLE_IT || {};
-  var s = {};
-  // Usa TSM_TEAMS_IT se disponibile, altronde SLIM_TEAMS
-  var tsmTeams = (typeof TSM_TEAMS_IT !== 'undefined' && TSM_TEAMS_IT.length) ? TSM_TEAMS_IT : SLIM_TEAMS;
-  // Mappa lookup case-insensitive
-  var teamKeyMap = {};
-  tsmTeams.forEach(function(t) {
-    s[t] = {v:0,p:0,s:0,pt:0,cr:0};
-    teamKeyMap[t.toUpperCase()] = t;
-  });
-  var giocate = 0;
-  for (var g in cal) {
-    var hasData = Object.values(cal[g]).some(function(v){return v;});
-    if (!hasData) continue;
-    giocate++;
-    for (var teamRaw in cal[g]) {
-      var team = teamKeyMap[teamRaw.toUpperCase()] || teamRaw;
-      var res = cal[g][teamRaw];
-      if (!res || !s[team]) continue;
-      var lv = stadio[team] || 1;
-      var st = ST[String(lv)] || {};
-      if (res==='VC'||res==='VF') {
-        s[team].v++; s[team].pt+=3;
-        if (res==='VC') s[team].cr += (st.cr_vittoria||0);
-      } else if (res==='PC'||res==='PF') {
-        s[team].p++; s[team].pt+=1;
-        if (res==='PC') s[team].cr += (st.cr_pareggio||0);
-      } else if (res==='SC'||res==='SF') {
-        s[team].s++;
-        if (res==='SC') s[team].cr += (st.cr_sconfitta||0);
-      }
-    }
-  }
-  // Penalità TSM
-  var _tsmMulRaw2 = localStorage.getItem('tsm_multe_it');
-  var _tsmMulData2 = _tsmMulRaw2 ? JSON.parse(_tsmMulRaw2) : {};
-  tsmTeams.forEach(function(t) {
-    var md = _tsmMulData2[t] || _tsmMulData2[t.toUpperCase()] || {};
-    var pen = parseInt(md.penalita) || 0;
-    if (pen > 0) { s[t].pt -= pen; s[t].penalita = pen; }
-  });
-  var sorted = tsmTeams.slice().sort(function(a,b){
-    if (s[b].pt !== s[a].pt) return s[b].pt - s[a].pt;
-    return s[b].v - s[a].v;
-  });
-  return {standings: s, sorted: sorted, giocate: giocate};
-}
-
-function tsmRenderCalendario() {
-  var el = document.getElementById('tsm-calendario-body'); if(!el) return;
-  var cal = tsmGetCalendar();
-  var RC = {VC:'rgba(16,185,129,.15);color:#10b981',VF:'rgba(16,185,129,.1);color:#34d399',PC:'rgba(59,130,246,.12);color:#3b82f6',PF:'rgba(59,130,246,.08);color:#60a5fa',SC:'rgba(239,68,68,.12);color:#ef4444',SF:'rgba(239,68,68,.08);color:#f87171'};
-  var h = '';
-  for (var g=1; g<=TSM_TOTAL_GIORNATE; g++) {
-    var gio = cal[String(g)] || {};
-    var hasData = Object.values(gio).some(function(v){return v;});
-    h += '<div style="margin-bottom:10px"><div style="font-family:\'Bebas Neue\';font-size:13px;letter-spacing:1px;color:var(--text2);padding:6px 10px;background:var(--bg2);border-radius:8px 8px 0 0;border:1px solid var(--border);border-bottom:none;display:flex;justify-content:space-between"><span>Giornata '+g+'</span>'+(hasData?'<span style="color:var(--green);font-size:10px">Completata</span>':'<span style="color:var(--text3);font-size:10px">Da giocare</span>')+'</div><div style="background:var(--card);border:1px solid var(--border);border-radius:0 0 8px 8px;padding:8px 10px;display:grid;grid-template-columns:repeat(2,1fr);gap:4px">';
-    var _tsmTeams2 = (typeof TSM_TEAMS_IT !== 'undefined' && TSM_TEAMS_IT.length) ? TSM_TEAMS_IT : SLIM_TEAMS;
-    _tsmTeams2.forEach(function(team){
-      var res = gio[team] || gio[team.toUpperCase()] || '';
-      var st = RC[res] ? 'background:'+RC[res] : 'background:var(--bg2);color:var(--text3)';
-      h += '<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 6px;border-radius:4px"><span style="font-size:11px;font-weight:700;display:flex;align-items:center">'+_uLogo(team,16)+team+'</span><span style="font-size:10px;font-weight:800;padding:1px 6px;border-radius:3px;'+st+'">'+(res||'--')+'</span></div>';
-    });
-    h += '</div></div>';
-  }
-  el.innerHTML = h;
-}
-
-function tsmRenderClassifica() {
-  var el = document.getElementById('tsm-classifica-body'); if(!el) return;
-  var res = tsmCalcStandings();
-  var s = res.standings; var sorted = res.sorted; var giocate = res.giocate;
-  var logos = {};
-  if (typeof FANTASY_LOGOS !== 'undefined') Object.keys(FANTASY_LOGOS).forEach(function(k){ logos[k.toUpperCase()]=FANTASY_LOGOS[k]; });
-  el.innerHTML = sorted.map(function(team, i) {
-    var pos = i+1; var t = s[team]; var g = t.v+t.p+t.s;
-    var logo = logos[team.toUpperCase()] || '';
-    var logoHtml = logo
-      ? '<img src="'+logo+'" style="width:22px;height:22px;object-fit:contain;border-radius:3px;margin-right:7px;flex-shrink:0">'
-      : '<div style="width:22px;height:22px;margin-right:7px;flex-shrink:0"></div>';
-    var dot = pos===1?'#f59e0b':pos===2?'#9ca3af':pos===3?'#cd7c3a':'var(--border2)';
-    return '<tr style="border-bottom:1px solid var(--border)">'
-      +'<td style="padding:7px 10px;font-family:\'Bebas Neue\';font-size:16px;color:var(--text);width:26px;text-align:center">'+pos+'</td>'
-      +'<td style="width:10px"><div style="width:7px;height:7px;border-radius:50%;background:'+dot+'"></div></td>'
-      +'<td style="padding:5px 8px"><div style="display:flex;align-items:center">'+logoHtml+'<span style="font-weight:700;font-size:12px">'+team.toUpperCase()+'</span></div></td>'
-      +'<td style="text-align:center;font-size:11px;color:var(--text2);width:26px">'+g+'</td>'
-      +'<td style="text-align:center;font-size:11px;color:#10b981;width:26px">'+t.v+'</td>'
-      +'<td style="text-align:center;font-size:11px;color:var(--text2);width:26px">'+t.p+'</td>'
-      +'<td style="text-align:center;font-size:11px;color:#ef4444;width:26px">'+t.s+'</td>'
-      +'<td style="text-align:center;font-family:\'Bebas Neue\';font-size:17px;color:var(--green);width:36px">'+t.pt+'</td>'
-      +'</tr>';
-  }).join('');
-  var gEl = document.getElementById('tsm-giornata-label');
-  if (gEl) gEl.textContent = 'Giornata '+giocate+' / '+TSM_TOTAL_GIORNATE;
-  // Note penalità
-  var penNote = sorted.filter(function(t){return s[t].penalita>0;});
-  var noteEl = document.getElementById('tsm-classifica-note');
-  if (noteEl) {
-    noteEl.innerHTML = penNote.length
-      ? '<div style="padding:8px 10px;font-size:10px;color:#ef4444">'+penNote.map(function(t){return '* '+t.toUpperCase()+': -'+s[t].penalita+' pt di penalità';}).join('<br>')+'</div>'
-      : '';
-  }
-  if (penNote.length && el) {
-    penNote.forEach(function(t) {
-      el.querySelectorAll('tr').forEach(function(row) {
-        var nc = row.querySelector('td:nth-child(3) span');
-        if (nc && nc.textContent === t.toUpperCase()) { nc.textContent = t.toUpperCase()+' *'; nc.style.color='#ef4444'; }
-      });
-    });
-  }
-}
-
-function tsmRenderStadio() {
-  var el = document.getElementById('tsm-stadio-body'); if(!el) return;
-  var stadio = tsmGetStadio();
-  // Usa tabella globale aggiornata se disponibile
-  var _stGlobal = localStorage.getItem('adm_stadio_table_global');
-  var ST = (_stGlobal ? JSON.parse(_stGlobal) : null) || TSM_STADIO_TABLE_IT || {};
-  var res = tsmCalcStandings();
-  var tsmTeams3 = (typeof TSM_TEAMS_IT!=='undefined' && TSM_TEAMS_IT.length) ? TSM_TEAMS_IT : SLIM_TEAMS;
-  el.innerHTML = tsmTeams3.slice().sort(function(a,b){
-    return (stadio[b]||stadio[b.toUpperCase()]||1)-(stadio[a]||stadio[a.toUpperCase()]||1);
-  }).map(function(team){
-    var lv = stadio[team] || stadio[team.toUpperCase()] || 1;
-    var st = ST[String(lv)] || {};
-    var cr = (res.standings[team]||{}).cr || 0;
-    var pct = Math.round(lv/8*100);
-    return '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px">'
-      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
-      +'<div style="font-weight:700;font-size:13px;flex:1;display:flex;align-items:center">'+_uLogo(team,22)+team.toUpperCase()+'</div>'
-      +'<div style="font-family:\'Bebas Neue\';font-size:20px;color:#f59e0b">Lv '+lv+(st.nome?' — '+st.nome:'')+'</div>'
-      +'<div style="font-family:\'Bebas Neue\';font-size:18px;color:#10b981">'+cr.toFixed(1)+' cr</div>'
-      +'</div>'
-      +'<div style="height:4px;background:var(--bg2);border-radius:2px;margin-bottom:8px">'
-      +'<div style="height:4px;background:linear-gradient(90deg,#10b981,#f59e0b);border-radius:2px;width:'+pct+'%"></div>'
-      +'</div>'
-      +'<div style="display:flex;gap:12px;font-size:10px;color:var(--text2)">'
-      +'<span>Posti: <b style="color:var(--text)">'+(st.posti||'--')+'</b></span>'
-      +'<span>V: <b style="color:#10b981">+'+(st.cr_vittoria||0)+' cr</b></span>'
-      +'<span>P: <b style="color:#3b82f6">+'+(st.cr_pareggio||0)+' cr</b></span>'
-      +'<span>S: <b style="color:#ef4444">'+(st.cr_sconfitta||0)+' cr</b></span>'
-      +'</div></div>';
-  }).join('');
-}
 
 
 
-function tsmRenderMulte(){
-  var el=document.getElementById('tsm-multe-body');
-  if(!el)return;
-  var teams=(typeof SLIM_TEAMS!=='undefined')?SLIM_TEAMS:[];
-  var multeKey='tsm_multe_it';
-  var stored=localStorage.getItem(multeKey);
-  var data=stored?JSON.parse(stored):{};
-  var h='';
-  teams.forEach(function(team){
-    var d=data[team]||{richiami:0,penalita:0,multe:0,ultima:'—'};
-    var hasIssue=d.richiami>0||d.penalita>0||d.multe>0;
-    var cR=d.richiami>0?'#f59e0b':'var(--text2)';
-    var cP=d.penalita>0?'#ef4444':'var(--text2)';
-    var cM=d.multe>0?'#ef4444':'var(--text2)';
-    h+='<tr style="border-bottom:1px solid var(--border)">';
-    h+='<td style="padding:4px 6px;font-weight:700;font-size:10px;word-break:break-word;white-space:normal;max-width:90px">'+_uLogo(team,16)+team+'</td>';
-    h+='<td style="padding:4px 4px;text-align:center"><span style="font-size:12px;color:'+cR+'">'+d.richiami+'</span></td>';
-    h+='<td style="padding:4px 4px;text-align:center"><span style="font-size:12px;color:'+cP+'">'+d.penalita+'</span></td>';
-    h+='<td style="padding:4px 4px;text-align:center"><span style="font-size:12px;color:'+cM+'">'+d.multe+'</span></td>';
 
-    h+='<td style="padding:9px 10px;text-align:center">'+(hasIssue?'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 5px;border-radius:20px;font-size:8px;font-weight:800;background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)">⚠️</span>':'<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 5px;border-radius:20px;font-size:8px;font-weight:800;background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.2)">✅</span>')+'</td></tr>';
-  });
-  el.innerHTML=h;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ═══════════════════════════════════════════════════════
 // GOOGLE SHEETS — Layer di sincronizzazione
@@ -10123,21 +9387,6 @@ function admImportExcel(type) {
   alert('Funzione importazione Excel — disponibile nella prossima versione');
 }
 
-function showTSMSection(id, el) {
-  var pg = document.getElementById('page-tsm-lega');
-  if (!pg) return;
-  pg.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
-  var sec = document.getElementById('tsm-s-' + id);
-  if (sec) sec.classList.add('active');
-  pg.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
-  if (el) el.classList.add('active');
-  if (id === 'rose') { tsmBuildTeamsGrid(); tsmUpdateHeader(); tsmBuildFilters(); tsmRenderTable(); }
-  else if (id === 'calendario') tsmRenderCalendario();
-  else if (id === 'classifica') tsmRenderClassifica();
-  else if (id === 'stadio') tsmRenderStadio();
-  else if (id === 'multe') tsmRenderMulte();
-  else if (id === 'modulistica') renderModulistica('tsm_it', 'tsm-modulistica-body');
-}
 
 
 // ═══════════════════════════════════════════════════════
@@ -10406,7 +9655,6 @@ function enterLeague(tournament, leagueKey) {
       }
     }, 500);
   } catch(e) {}
-  if (leagueKey === 'tsm_it') { enterTSM(); return; }
   // ILM e ILC non ancora disponibili lato utente
   if (tournament === 'ilm' || tournament === 'ilc') return;
   // Tornei non-slim/non-tsm (es. TDM): usano page-lega con chiavi proprie
@@ -11040,7 +10288,6 @@ function _applyLogoMain(url) {
 window.addEventListener('storage', function(e) {
   if (e.key && e.key.startsWith('user_crediti_')) {
     if (typeof updateHeader === 'function') updateHeader();
-    if (typeof tsmUpdateHeader === 'function') tsmUpdateHeader();
   }
 });
 
@@ -11050,7 +10297,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
   // Sincronizza adm_crediti_base → user_crediti al caricamento (per tutti i tornei)
   (function(){
-    var tornei = ['slim_it','slim_en','slim_de','slim_es','slim_fr','slim_pt','slim_nl','slim_tr','tsm_it'];
+    var tornei = ['slim_it','slim_en','slim_de','slim_es','slim_fr','slim_pt','slim_nl','slim_tr'];
     tornei.forEach(function(tk_lk) {
       var raw = localStorage.getItem('adm_crediti_base_'+tk_lk);
       if (!raw) return;
