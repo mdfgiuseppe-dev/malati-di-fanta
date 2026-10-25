@@ -1213,7 +1213,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <div id="s-classifica" class="section">
     <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:4px">Classifica <span style="color:var(--green)">Campionato</span></div>
     <div style="font-size:11px;color:var(--text2);margin-bottom:14px" id="slim-giornata-label">—</div>
-    <div class="card" style="padding:0;overflow:hidden">
+    <div class="card" style="padding:0;overflow-x:auto">
       <table style="width:100%;border-collapse:collapse">
         <thead><tr style="background:var(--bg2);font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--text3)">
           <th style="padding:8px 10px;text-align:center">#</th><th></th>
@@ -1222,7 +1222,11 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
           <th style="padding:8px 6px;text-align:center;color:#10b981">V</th>
           <th style="padding:8px 6px;text-align:center">P</th>
           <th style="padding:8px 6px;text-align:center;color:#ef4444">S</th>
+          <th style="padding:8px 6px;text-align:center">GF</th>
+          <th style="padding:8px 6px;text-align:center">GS</th>
+          <th style="padding:8px 6px;text-align:center">DR</th>
           <th style="padding:8px 6px;text-align:center">Pt</th>
+          <th style="padding:8px 6px;text-align:center;padding-right:8px">TOT</th>
         </tr></thead>
         <tbody id="slim-classifica-body"></tbody>
       </table>
@@ -3698,7 +3702,7 @@ function slimCalcStandings() {
   var s = {};
   var teamKeyMap = {};
   SLIM_TEAMS.forEach(function(t) {
-    s[t]={v:0,vf:0,p:0,s:0,pt:0,cr:0,gf:0,gs:0,penalita:0};
+    s[t]={v:0,vf:0,p:0,s:0,pt:0,cr:0,gf:0,gs:0,tot:0,penalita:0};
     teamKeyMap[t.toUpperCase()] = t;
   });
   var giocate = 0;
@@ -3714,18 +3718,41 @@ function slimCalcStandings() {
       var team = tk;
       var lv = stadio[team] || stadio[team.toUpperCase()] || 1;
       var st = SLIM_STADIO_TABLE[lv] || {};
-      if (res==='VC'||res==='VF') {
+      if (res==='VC'||res==='VF'||res==='V') {
         s[team].v++; s[team].pt+=3;
         if (res==='VC') { s[team].cr += (st.cr_vittoria||0); }
-      } else if (res==='PC'||res==='PF') {
+      } else if (res==='PC'||res==='PF'||res==='P') {
         s[team].p++; s[team].pt+=1;
         if (res==='PC') { s[team].cr += (st.cr_pareggio||0); }
-      } else if (res==='SC'||res==='SF') {
+      } else if (res==='SC'||res==='SF'||res==='S') {
         s[team].s++;
         if (res==='SC') { s[team].cr += (st.cr_sconfitta||0); }
       }
     }
   }
+  // Gol fatti/subiti dai punteggi (chiave = squadra di casa) e totali fantacalcio
+  var _tkC = window._currentTourneyKey || 'slim';
+  var _lkC = (typeof currentLeagueKey !== 'undefined' && currentLeagueKey) ? currentLeagueKey : 'it';
+  var _scC = (window.FB_PUNTEGGI || {})[_tkC+'_'+_lkC] || {};
+  var _schC = ((window.FB_SCHEDULE || {})[_tkC+'_'+_lkC] || {}).giornate || {};
+  Object.keys(_scC).forEach(function(gk) {
+    (_schC[gk] || []).forEach(function(m) {
+      var sv = (_scC[gk] || {})[(m.h || '').toUpperCase()];
+      if (!sv) return;
+      var sp = String(sv).split('-');
+      var gh = parseInt(sp[0]) || 0, ga = parseInt(sp[1]) || 0;
+      var th = teamKeyMap[(m.h || '').toUpperCase()], ta = teamKeyMap[(m.a || '').toUpperCase()];
+      if (th) { s[th].gf += gh; s[th].gs += ga; }
+      if (ta) { s[ta].gf += ga; s[ta].gs += gh; }
+    });
+  });
+  var _totC = (window.FB_TOTALI || {})[_tkC+'_'+_lkC] || {};
+  Object.keys(_totC).forEach(function(gk) {
+    Object.keys(_totC[gk] || {}).forEach(function(k) {
+      var tt = teamKeyMap[k.toUpperCase()];
+      if (tt) s[tt].tot += parseFloat(_totC[gk][k]) || 0;
+    });
+  });
   SLIM_TEAMS.forEach(function(t) {
     var md = multeData[t] || multeData[t.toUpperCase()] || {};
     var pen = parseInt(md.penalita) || 0;
@@ -4994,7 +5021,7 @@ function loadDataFromFirebase() {
   });
 
   // Carica calendario importato e punteggi (salvati come testo JSON)
-  [['calendario_schedule','FB_SCHEDULE'],['punteggi','FB_PUNTEGGI']].forEach(function(p) {
+  [['calendario_schedule','FB_SCHEDULE'],['punteggi','FB_PUNTEGGI'],['totali','FB_TOTALI']].forEach(function(p) {
     window[p[1]] = window[p[1]] || {};
     fbLoadKey(p[0], function(val) {
       if (!val || typeof val !== 'object') return;
@@ -9850,7 +9877,11 @@ function slimRenderClassifica(){
       +'<td style="text-align:center;font-size:11px;color:#10b981;width:26px">'+t.v+'</td>'
       +'<td style="text-align:center;font-size:11px;color:var(--text2);width:26px">'+t.p+'</td>'
       +'<td style="text-align:center;font-size:11px;color:#ef4444;width:26px">'+t.s+'</td>'
+      +'<td style="text-align:center;font-size:11px;color:var(--text2);width:26px">'+t.gf+'</td>'
+      +'<td style="text-align:center;font-size:11px;color:var(--text2);width:26px">'+t.gs+'</td>'
+      +'<td style="text-align:center;font-size:11px;font-weight:700;color:'+((t.gf-t.gs)>0?'#10b981':(t.gf-t.gs)<0?'#ef4444':'var(--text2)')+';width:30px">'+((t.gf-t.gs)>0?'+':'')+(t.gf-t.gs)+'</td>'
       +'<td style="text-align:center;font-family:\'Bebas Neue\';font-size:17px;color:var(--green);width:36px">'+t.pt+'</td>'
+      +'<td style="text-align:center;font-size:11px;color:var(--text2);width:44px;padding-right:8px">'+(Math.round(t.tot*10)/10)+'</td>'
       +'</tr>';
   }).join('');
   var gEl=document.getElementById('slim-giornata-label');
@@ -10436,7 +10467,7 @@ function slimCalcStandings() {
   var s = {};
   var teamKeyMap = {};
   SLIM_TEAMS.forEach(function(t) {
-    s[t]={v:0,vf:0,p:0,s:0,pt:0,cr:0,gf:0,gs:0,penalita:0};
+    s[t]={v:0,vf:0,p:0,s:0,pt:0,cr:0,gf:0,gs:0,tot:0,penalita:0};
     teamKeyMap[t.toUpperCase()] = t;
   });
   var giocate = 0;
@@ -10452,18 +10483,41 @@ function slimCalcStandings() {
       var team = tk;
       var lv = stadio[team] || stadio[team.toUpperCase()] || 1;
       var st = SLIM_STADIO_TABLE[lv] || {};
-      if (res==='VC'||res==='VF') {
+      if (res==='VC'||res==='VF'||res==='V') {
         s[team].v++; s[team].pt+=3;
         if (res==='VC') { s[team].cr += (st.cr_vittoria||0); }
-      } else if (res==='PC'||res==='PF') {
+      } else if (res==='PC'||res==='PF'||res==='P') {
         s[team].p++; s[team].pt+=1;
         if (res==='PC') { s[team].cr += (st.cr_pareggio||0); }
-      } else if (res==='SC'||res==='SF') {
+      } else if (res==='SC'||res==='SF'||res==='S') {
         s[team].s++;
         if (res==='SC') { s[team].cr += (st.cr_sconfitta||0); }
       }
     }
   }
+  // Gol fatti/subiti dai punteggi (chiave = squadra di casa) e totali fantacalcio
+  var _tkC = window._currentTourneyKey || 'slim';
+  var _lkC = (typeof currentLeagueKey !== 'undefined' && currentLeagueKey) ? currentLeagueKey : 'it';
+  var _scC = (window.FB_PUNTEGGI || {})[_tkC+'_'+_lkC] || {};
+  var _schC = ((window.FB_SCHEDULE || {})[_tkC+'_'+_lkC] || {}).giornate || {};
+  Object.keys(_scC).forEach(function(gk) {
+    (_schC[gk] || []).forEach(function(m) {
+      var sv = (_scC[gk] || {})[(m.h || '').toUpperCase()];
+      if (!sv) return;
+      var sp = String(sv).split('-');
+      var gh = parseInt(sp[0]) || 0, ga = parseInt(sp[1]) || 0;
+      var th = teamKeyMap[(m.h || '').toUpperCase()], ta = teamKeyMap[(m.a || '').toUpperCase()];
+      if (th) { s[th].gf += gh; s[th].gs += ga; }
+      if (ta) { s[ta].gf += ga; s[ta].gs += gh; }
+    });
+  });
+  var _totC = (window.FB_TOTALI || {})[_tkC+'_'+_lkC] || {};
+  Object.keys(_totC).forEach(function(gk) {
+    Object.keys(_totC[gk] || {}).forEach(function(k) {
+      var tt = teamKeyMap[k.toUpperCase()];
+      if (tt) s[tt].tot += parseFloat(_totC[gk][k]) || 0;
+    });
+  });
   SLIM_TEAMS.forEach(function(t) {
     var md = multeData[t] || multeData[t.toUpperCase()] || {};
     var pen = parseInt(md.penalita) || 0;
@@ -14493,6 +14547,7 @@ function _calSchRaw(t,l){ var s=window.FB_SCHEDULE&&window.FB_SCHEDULE[t+'_'+l];
 function _calSchSave(t,l,str){ window.FB_SCHEDULE=window.FB_SCHEDULE||{}; window.FB_SCHEDULE[t+'_'+l]=JSON.parse(str); fbDB.ref('data/calendario_schedule/'+t+'_'+l).set(str); }
 function _calScRaw(t,l){ var s=window.FB_PUNTEGGI&&window.FB_PUNTEGGI[t+'_'+l]; return s?JSON.stringify(s):null; }
 function _calScSave(t,l,str){ window.FB_PUNTEGGI=window.FB_PUNTEGGI||{}; window.FB_PUNTEGGI[t+'_'+l]=JSON.parse(str); fbDB.ref('data/punteggi/'+t+'_'+l).set(str); }
+function _calTotSave(t,l,str){ window.FB_TOTALI=window.FB_TOTALI||{}; window.FB_TOTALI[t+'_'+l]=JSON.parse(str); fbDB.ref('data/totali/'+t+'_'+l).set(str); }
 function _calEsitiSave(t,l,cal){
   localStorage.setItem('adm_cal_'+t+'_'+l, JSON.stringify(cal));
   fbDB.ref('data/calendario/'+t+'_'+l).set(cal);
@@ -14591,6 +14646,7 @@ function admAzzeraRisultatiCal(){
   for(var g=1;g<=giornate;g++){cal[String(g)]={};teams.forEach(function(tm){cal[String(g)][tm.toUpperCase()]='';});}
   _calEsitiSave(t,l,cal);
   _calScSave(t,l,'{}');
+  _calTotSave(t,l,'{}');
   var msg=document.createElement('div');msg.textContent='🗑 Risultati azzerati';msg.style.cssText='position:fixed;top:70px;right:20px;background:#ef4444;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';document.body.appendChild(msg);setTimeout(function(){msg.remove();},2500);
   admLoadCalBody();
 }
@@ -14716,6 +14772,7 @@ function admProcessGiornataXlsx(input){
       });
       _calEsitiSave(t,l,cal);
       var scores=(function(){var r=_calScRaw(t,l);try{return r?JSON.parse(r):{};}catch(e){return{};}})(); if(!scores[String(g)])scores[String(g)]={};matches.forEach(function(m){if(!m.scoreStr)return;var _hm=_getHA(m);var _p=m.scoreStr.split('-');var hk=(_hm.team1IsHome?m.team1:m.team2).toUpperCase();scores[String(g)][hk]=_hm.team1IsHome?m.scoreStr:(_p[1]+'-'+_p[0]);});_calScSave(t,l,JSON.stringify(scores));
+      var tots=JSON.parse(JSON.stringify((window.FB_TOTALI||{})[t+'_'+l]||{}));tots[String(g)]={};matches.forEach(function(m){tots[String(g)][(m.team1||'').toUpperCase()]=m.total1;tots[String(g)][(m.team2||'').toUpperCase()]=m.total2;});_calTotSave(t,l,JSON.stringify(tots));
       var msg=document.createElement('div');msg.textContent='✅ G'+g+': '+matches.length+' partite importate'+(neutral?' [neutrale]':'');msg.style.cssText='position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';document.body.appendChild(msg);setTimeout(function(){msg.remove();},3000);
       admLoadCalBody();
     }catch(ex){alert('Errore parsing xlsx: '+ex.message);}
@@ -15931,7 +15988,11 @@ function slimRenderClassifica(){
       +'<td style="text-align:center;font-size:11px;color:#10b981;width:26px">'+t.v+'</td>'
       +'<td style="text-align:center;font-size:11px;color:var(--text2);width:26px">'+t.p+'</td>'
       +'<td style="text-align:center;font-size:11px;color:#ef4444;width:26px">'+t.s+'</td>'
+      +'<td style="text-align:center;font-size:11px;color:var(--text2);width:26px">'+t.gf+'</td>'
+      +'<td style="text-align:center;font-size:11px;color:var(--text2);width:26px">'+t.gs+'</td>'
+      +'<td style="text-align:center;font-size:11px;font-weight:700;color:'+((t.gf-t.gs)>0?'#10b981':(t.gf-t.gs)<0?'#ef4444':'var(--text2)')+';width:30px">'+((t.gf-t.gs)>0?'+':'')+(t.gf-t.gs)+'</td>'
       +'<td style="text-align:center;font-family:\'Bebas Neue\';font-size:17px;color:var(--green);width:36px">'+t.pt+'</td>'
+      +'<td style="text-align:center;font-size:11px;color:var(--text2);width:44px;padding-right:8px">'+(Math.round(t.tot*10)/10)+'</td>'
       +'</tr>';
   }).join('');
   var gEl=document.getElementById('slim-giornata-label');
