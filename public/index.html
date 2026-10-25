@@ -583,7 +583,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   .t-stat{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;
     border-bottom:1px solid var(--border);}
   .t-stat:last-child{border-bottom:none;}
-  .t-stat-l{color:var(--text2);}
+  .t-stat-l{color:var(--text2);text-transform:uppercase;}
   .t-stat-v{font-weight:700;}
   .t-cta{padding:7px 10px;border-radius:8px;font-size:10px;font-weight:800;letter-spacing:.8px;
     text-transform:uppercase;text-align:center;
@@ -3931,7 +3931,7 @@ function selectTournament(key, el) {
           + 'onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--card)\'">'
           + '<img src="'+logo+'" data-flag="'+lega.flag+'" data-lega-key="'+lega.key+'" onerror="this.style.display=\'none\'; if(!this.nextElementSibling) { var d=document.createElement(\'div\'); d.style.cssText=\'font-size:28px\'; d.textContent=this.dataset.flag; this.parentNode.insertBefore(d, this.nextSibling); }" style="width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));">'
           + '<div style="display:none;font-size:28px">'+lega.flag+'</div>'
-          + '<div style="font-size:12px;font-weight:700;color:var(--text)">'+lega.label+'</div>'
+          + '<div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase">'+lega.label+'</div>'
           + (_nClub ? '<div style="font-size:10px;color:var(--text2)">'+_nClub+' club</div>' : '')
           + '</div>';
   });
@@ -10487,7 +10487,7 @@ function selectTournament(key, el) {
           + 'onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--card)\'">'
           + '<img src="'+logo+'" data-flag="'+lega.flag+'" data-lega-key="'+lega.key+'" onerror="this.style.display=\'none\'; if(!this.nextElementSibling) { var d=document.createElement(\'div\'); d.style.cssText=\'font-size:28px\'; d.textContent=this.dataset.flag; this.parentNode.insertBefore(d, this.nextSibling); }" style="width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));">'
           + '<div style="display:none;font-size:28px">'+lega.flag+'</div>'
-          + '<div style="font-size:12px;font-weight:700;color:var(--text)">'+lega.label+'</div>'
+          + '<div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase">'+lega.label+'</div>'
           + (_nClub ? '<div style="font-size:10px;color:var(--text2)">'+_nClub+' club</div>' : '')
           + '</div>';
   });
