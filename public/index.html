@@ -3594,7 +3594,7 @@ function loadTorneiFromFirebase() {
         Object.keys(tdata).forEach(function(lkey) {
           leghe.push({
             key: lkey,
-            label: LEGHE_LABELS[lkey] || lkey.toUpperCase()
+            label: (tdata[lkey] && tdata[lkey].label) || LEGHE_LABELS[lkey] || lkey.toUpperCase()
           });
         });
       }
@@ -6964,11 +6964,9 @@ function admSaveMulteEl(el) {
 // ADMIN — Tornei & Leghe
 // ═══════════════════════════════════════════════════════
 function admSaveTornei() {
-  fbSaveKey('tornei', JSON.stringify(ADMIN_TORNEI));
+  // NON riscrivere data/tornei: lì stanno le squadre di ogni lega e la struttura torneo/lega.
+  // Le leghe si scrivono/cancellano nodo per nodo (admAddLegaConfirm / admRemoveLega).
   localStorage.setItem('admin_tornei', JSON.stringify(ADMIN_TORNEI));
-  if (typeof gsPost === 'function' && GS_ONLINE) {
-    gsPost({action:'saveTornei', data: ADMIN_TORNEI}, null);
-  }
 }
 
 function admRenderTornei() {
@@ -7473,6 +7471,9 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
   fbDB.ref('data/calendario/'+torneo.key+'_'+legaKey).set(cal);
   // Salva squadre su Firebase (percorso strutturato per tornei)
   fbDB.ref('data/tornei/'+torneo.key+'/'+legaKey+'/squadre').set(squadre);
+  fbDB.ref('data/tornei/'+torneo.key+'/'+legaKey+'/label').set(legaLabel);
+  window.FB_SQUADRE = window.FB_SQUADRE || {};
+  window.FB_SQUADRE[torneo.key+'_'+legaKey] = squadre.map(function(n){ return String(n).toUpperCase(); }).sort();
 
   localStorage.setItem('adm_rose_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
   localStorage.setItem('adm_rose_import_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
@@ -7519,6 +7520,15 @@ function admRemoveLega(ti, li) {
   var l = t && t.leghe[li];
   if (!l) return;
   var tk = t.key, lk = l.key;
+  if (!confirm('Eliminare la lega "'+l.label+'" e TUTTI i suoi dati su Firebase?\n(squadre, calendario, risultati, totali, stadio, loghi)\n\nL\'operazione non può essere annullata.')) return;
+  // Rimuovi i dati della lega da Firebase
+  var _fk = tk+'_'+lk;
+  fbDB.ref('data/tornei/'+tk+'/'+lk).remove();
+  ['calendario','calendario_schedule','punteggi','totali','stadio','rose','crediti'].forEach(function(n){ fbDB.ref('data/'+n+'/'+_fk).remove(); });
+  fbDB.ref('data/images/loghi/squadre/'+tk+'/'+lk).remove();
+  fbDB.ref('data/images/loghi/leghe/'+_fk).remove();
+  ['FB_SQUADRE','FB_CALENDARIO','FB_SCHEDULE','FB_PUNTEGGI','FB_TOTALI','FB_STADIO'].forEach(function(v){ if (window[v]) delete window[v][_fk]; });
+  if (window.FB_LOGHI_SQUADRE && window.FB_LOGHI_SQUADRE[tk]) delete window.FB_LOGHI_SQUADRE[tk][lk];
   // Rimuovi dati dal localStorage
   ['adm_rose_','adm_rose_import_','adm_crediti_base_','adm_cal_','adm_stadio_',
    'adm_sponsor_','slim_calendar_','slim_stadio_'].forEach(function(prefix) {
