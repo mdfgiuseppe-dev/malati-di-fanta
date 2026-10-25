@@ -3594,7 +3594,7 @@ function loadTorneiFromFirebase() {
         Object.keys(tdata).forEach(function(lkey) {
           leghe.push({
             key: lkey,
-            label: (tdata[lkey] && tdata[lkey].label) || LEGHE_LABELS[lkey] || lkey.toUpperCase()
+            label: String((tdata[lkey] && tdata[lkey].label) || LEGHE_LABELS[lkey] || lkey).toUpperCase()
           });
         });
       }
@@ -7445,6 +7445,7 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
   var squadre = [];
   inputs.forEach(function(inp){ if(inp.value.trim()) squadre.push(inp.value.trim()); });
   if (!squadre.length) { alert('Inserisci almeno una squadra'); return; }
+  legaLabel = String(legaLabel || legaKey).toUpperCase();
 
   // Aggiungi lega al torneo
   torneo.leghe.push({key: legaKey, label: legaLabel});
