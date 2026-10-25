@@ -6933,6 +6933,12 @@ function admRenderTornei() {
   sel.selectedIndex = 0;
 }
 
+// Riapre il dettaglio del torneo dopo un salvataggio (resta sulla stessa pagina)
+function admReopenTorneo(ti) {
+  var sel = document.getElementById('adm-tornei-select');
+  if (sel) sel.value = String(ti);
+  admSelectTorneoDetail(String(ti));
+}
 function admUpdateTorneoColor(ti, color) {
   var t = ADMIN_TORNEI[ti];
   if (!t) return;
@@ -7454,6 +7460,7 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
   document.getElementById('adm-new-lega-label-'+ti).value = '';
   document.getElementById('adm-new-lega-key-'+ti).value = '';
   admRenderTornei();
+  admReopenTorneo(ti);
   admAggiornaDashboard();
 
   var msg = document.createElement('div');
@@ -7495,6 +7502,7 @@ function admRemoveLega(ti, li) {
   ADMIN_TORNEI[ti].leghe.splice(li, 1);
   admSaveTornei();
   admRenderTornei();
+  admReopenTorneo(ti);
   admAggiornaDashboard();
   var msg = document.createElement('div');
   msg.textContent = '✅ Lega "'+l.label+'" eliminata';
