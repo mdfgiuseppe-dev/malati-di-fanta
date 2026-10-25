@@ -2708,6 +2708,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
       Stagioni
     </div>
+    <div class="nav-item" id="adm-nav-societa" onclick="showAdminSection('societa',this)" ontouchend="event.preventDefault();showAdminSection('societa',this)">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+      Gestione Società
+    </div>
     <div class="nav-item" id="adm-nav-cambio-squadre" onclick="showAdminSection('cambio-squadre',this)" ontouchend="event.preventDefault();showAdminSection('cambio-squadre',this)">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
       Cambio Squadre
@@ -2741,6 +2745,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
         <option value="multe">⚠️ Multe &amp; Sanzioni</option>
         <option value="modulistica">📄 Modulistica</option>
         <option value="stagioni">🔄 Stagioni</option>
+        <option value="societa">🏢 Gestione Società</option>
         <option value="cambio-squadre">👕 Cambio Squadre</option>
         <option value="tablestadio">📊 Tabella Stadio</option>
         <option value="impostazioni">⚙️ Impostazioni</option>
@@ -3127,6 +3132,18 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px">Gestione <span style="color:#ef4444">Stagioni</span></div>
       <div style="font-size:11px;color:var(--text2);margin-bottom:20px">Archivia la stagione corrente e avvia quella nuova. Le rose e lo stadio vengono mantenuti, sponsor e risultati vengono azzerati.</div>
       <div id="adm-stagioni-body"></div>
+    </div>
+
+    <!-- ===== GESTIONE SOCIETÀ ===== -->
+    <div id="adm-s-societa" class="adm-section" style="display:none">
+      <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px">Gestione <span style="color:#10b981">Società</span></div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:20px">Per ogni squadra della lega: allenatori e, in futuro, gettoni e quote.</div>
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <select id="adm-soc-torneo" onchange="admSocLoadLeghe()" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"><option value="">-- Seleziona Torneo --</option></select>
+        <select id="adm-soc-lega" onchange="admSocRender()" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"><option value="">-- Seleziona Lega --</option></select>
+      </div>
+      <div id="adm-soc-tabs" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap"></div>
+      <div id="adm-soc-body"></div>
     </div>
 
     <!-- ===== CAMBIO SQUADRE ===== -->
@@ -3718,6 +3735,7 @@ function loadDataFromFirebase() {
 
   // Carica squadre di ogni torneo/lega da data/tornei/{t}/{l}/squadre
   window.FB_SQUADRE = window.FB_SQUADRE || {};
+  window.FB_ALLENATORI = window.FB_ALLENATORI || {};
   fbLoadKey('tornei', function(val) {
     if (!val || typeof val !== 'object') return;
     Object.keys(val).forEach(function(tk) {
@@ -3730,6 +3748,11 @@ function loadDataFromFirebase() {
         // Formato: { CHIAVE_SICURA: "NOME" }; accetta anche i vecchi { "Nome": true } ed elenco di nomi
         var names = Array.isArray(sq) ? sq.filter(Boolean) : Object.keys(sq).map(function(k){ return typeof sq[k] === 'string' ? sq[k] : k; });
         if (names.length) window.FB_SQUADRE[tk + '_' + lk] = names.map(function(n){ return String(n).toUpperCase(); }).sort();
+      });
+      // Allenatori: data/tornei/{t}/{l}/allenatori/{CHIAVE_SQUADRA} = { allenatore, vice } (username)
+      Object.keys(tdata).forEach(function(lk) {
+        var al = tdata[lk] && tdata[lk].allenatori;
+        if (al && typeof al === 'object') window.FB_ALLENATORI[tk + '_' + lk] = al;
       });
     });
     if (typeof updateDashboardCounters === 'function') updateDashboardCounters();
@@ -4039,7 +4062,7 @@ function showAdminSection(id, el) {
    'adm-global-stadio-table-body','adm-sponsor-catalog-body',
    'adm-cop-editor-body','adm-cop-config-body','adm-stagioni-body',
    'adm-mul-body','adm-sc-playersA',
-   'adm-sc-playersB','adm-sc-riepilogo','adm-cs-body',
+   'adm-sc-playersB','adm-sc-riepilogo','adm-cs-body','adm-soc-body','adm-soc-tabs',
    'adm-utenti-body','adm-tornei-body','adm-tornei-detail','adm-mod-body'].forEach(function(bid){
     var b = document.getElementById(bid); if(b) b.innerHTML='';
   });
@@ -4080,6 +4103,7 @@ function showAdminSection(id, el) {
   }
   if (id==='rose') { admInitSelettori('rose', true); admInitImportSelectors(); }
   if (id==='cambio-squadre') admCsInit();
+  if (id==='societa') admSocInit();
   if (id==='calendario') admInitSelettori('cal', true);
   if (id==='sponsor') {
     admInitSelettori('sp');
@@ -7905,7 +7929,6 @@ function admEditUser(i) {
     +'<input id="adm-eu-phone" type="text" value="'+(u.phone||'')+'" placeholder="Telefono" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'
     +'<select id="adm-eu-lega" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'+legheOpts+'</select>'
     +'<select id="adm-eu-stato" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'+statoOpts+'</select>'
-    +_admEuSquadreHtml(u)
     +'</div>'
     +'<div style="display:flex;gap:8px;margin-top:16px">'
     +'<button onclick="admSaveEditUser('+i+')" style="flex:1;padding:8px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">💾 Salva</button>'
@@ -7914,34 +7937,18 @@ function admEditUser(i) {
     +'</div>';
   modal.style.display = 'flex';
 }
-// Blocco "Squadre" della modale utente: un select per ogni lega di ogni torneo
-function _admEuSquadreHtml(u) {
-  var mine = u.squadre || {};
-  var rows = '';
-  ADMIN_TORNEI.forEach(function(t) {
-    t.leghe.slice().sort(function(a,b){return a.label.localeCompare(b.label);}).forEach(function(l) {
-      var k = t.key+'_'+l.key;
-      var teams = (window.FB_SQUADRE && window.FB_SQUADRE[k]) || [];
-      var opts = '<option value="">— Nessuna —</option>' + teams.map(function(n) {
-        var other = ADMIN_USERS.find(function(x){ return x !== u && x.squadre && x.squadre[k] === n; });
-        return '<option value="'+n+'"'+(mine[k]===n?' selected':'')+'>'+n+(other?' (già di '+_userFull(other)+')':'')+'</option>';
-      }).join('');
-      rows += '<div style="display:flex;align-items:center;gap:8px">'
-        +'<span style="flex:1;font-size:11px;font-weight:700;color:var(--text2)">'+t.label+' – '+l.label+'</span>'
-        +'<select data-sqk="'+k+'" style="flex:1;padding:6px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none">'+opts+'</select>'
-        +'</div>';
-    });
-  });
-  if (!rows) return '';
-  return '<div style="margin-top:6px;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--text3)">Squadre</div>'
-    +'<div style="display:flex;flex-direction:column;gap:6px">'+rows+'</div>';
-}
-// Elenco squadre dell'utente per la tabella (es. "ITALIA: BARI")
+// Squadre allenate dall'utente (da data/tornei/{t}/{l}/allenatori), per la tabella utenti
 function _userSquadreLabel(u) {
-  var sq = u.squadre || {};
   var parts = [];
   ADMIN_TORNEI.forEach(function(t) {
-    t.leghe.forEach(function(l) { var n = sq[t.key+'_'+l.key]; if (n) parts.push(l.label+': '+n); });
+    t.leghe.forEach(function(l) {
+      var al = (window.FB_ALLENATORI || {})[t.key+'_'+l.key] || {};
+      Object.keys(al).forEach(function(k) {
+        var a = al[k] || {}, sq = (FB_SQUADRE[t.key+'_'+l.key] || []).find(function(n){ return _fbSafeKey(n) === k; }) || k;
+        if (a.allenatore === u.username) parts.push(l.label+': '+sq+' (all.)');
+        if (a.vice === u.username) parts.push(l.label+': '+sq+' (vice)');
+      });
+    });
   });
   return parts.join('<br>');
 }
@@ -7957,10 +7964,6 @@ function admSaveEditUser(i) {
   u.email = document.getElementById('adm-eu-email').value.trim() || '';
   u.phone = document.getElementById('adm-eu-phone').value.trim() || '';
   u.lega = document.getElementById('adm-eu-lega').value;
-  // Squadre dell'utente per lega: { "slm_it": "BARI", ... }
-  var _sq = {};
-  document.querySelectorAll('#adm-edit-user-modal select[data-sqk]').forEach(function(s) { if (s.value) _sq[s.getAttribute('data-sqk')] = s.value; });
-  if (Object.keys(_sq).length) u.squadre = _sq; else delete u.squadre;
   u.attivo = document.getElementById('adm-eu-stato').value !== 'false';
   ADMIN_USERS[i] = u;
   // Salva su Firebase
@@ -8091,6 +8094,81 @@ function admConfirmImport(){
   var cT=document.getElementById('adm-rose-torneo'),cL=document.getElementById('adm-rose-lega');
   if(cT&&cT.value===tk&&cL&&cL.value===lk) admLoadRoseSquadre();
 }
+// ADMIN — Gestione Società (schede per squadra: Allenatori; in futuro Gettoni, Quote)
+var ADM_SOC_TABS = [{ key: 'allenatori', label: '👔 Allenatori' }];
+window._admSocTab = 'allenatori';
+function admSocInit() {
+  var sel = document.getElementById('adm-soc-torneo'); if (!sel) return;
+  sel.innerHTML = '<option value="">-- Seleziona Torneo --</option>';
+  ADMIN_TORNEI.forEach(function(t){ var o = document.createElement('option'); o.value = t.key; o.textContent = t.label; sel.appendChild(o); });
+  sel.onchange = admSocLoadLeghe;
+  var lg = document.getElementById('adm-soc-lega'); if (lg) { lg.innerHTML = '<option value="">-- Seleziona Lega --</option>'; lg.onchange = admSocRender; }
+}
+function admSocLoadLeghe() {
+  var tk = document.getElementById('adm-soc-torneo').value;
+  var sel = document.getElementById('adm-soc-lega');
+  sel.innerHTML = '<option value="">-- Seleziona Lega --</option>';
+  document.getElementById('adm-soc-body').innerHTML = '';
+  document.getElementById('adm-soc-tabs').innerHTML = '';
+  var t = ADMIN_TORNEI.find(function(x){ return x.key === tk; }); if (!t) return;
+  t.leghe.slice().sort(function(a,b){ return a.label.localeCompare(b.label); }).forEach(function(l){ var o = document.createElement('option'); o.value = l.key; o.textContent = l.label; sel.appendChild(o); });
+}
+function admSocSetTab(k) { window._admSocTab = k; admSocRender(); }
+function admSocRender() {
+  var tk = document.getElementById('adm-soc-torneo').value, lk = document.getElementById('adm-soc-lega').value;
+  var tabs = document.getElementById('adm-soc-tabs'), body = document.getElementById('adm-soc-body');
+  if (!tk || !lk) { tabs.innerHTML = ''; body.innerHTML = ''; return; }
+  tabs.innerHTML = ADM_SOC_TABS.map(function(tb) {
+    var on = window._admSocTab === tb.key;
+    return '<button onclick="admSocSetTab(\''+tb.key+'\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(on?'rgba(16,185,129,.5)':'var(--border)')+';background:'+(on?'rgba(16,185,129,.15)':'var(--bg2)')+';color:'+(on?'#10b981':'var(--text2)')+'">'+tb.label+'</button>';
+  }).join('');
+  if (window._admSocTab === 'allenatori') admSocRenderAllenatori(tk, lk, body);
+}
+function admSocRenderAllenatori(tk, lk, body) {
+  var teams = admGetTeams(tk, lk);
+  if (!teams.length) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nessuna squadra in questa lega.</div>'; return; }
+  var al = (window.FB_ALLENATORI || {})[tk+'_'+lk] || {};
+  var users = ADMIN_USERS.filter(function(u){ return u.attivo !== false; }).sort(function(a,b){ return _userFull(a).localeCompare(_userFull(b)); });
+  function sel(role, team, cur) {
+    return '<select data-soc-role="'+role+'" data-soc-team="'+team+'" style="width:100%;padding:6px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none">'
+      +'<option value="">— Nessuno —</option>'
+      + users.map(function(u){ return '<option value="'+u.username+'"'+(cur===u.username?' selected':'')+'>'+_userFull(u)+'</option>'; }).join('')
+      +'</select>';
+  }
+  body.innerHTML = '<div class="card" style="padding:0;overflow:hidden">'
+    + teams.map(function(n) {
+      var a = al[_fbSafeKey(n)] || {};
+      var lg = getTeamLogo(tk, lk, n);
+      return '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)">'
+        +'<div style="flex:1 1 140px;display:flex;align-items:center;font-weight:700;font-size:13px">'+(lg?'<img src="'+lg+'" onerror="this.style.display=\'none\'" style="width:24px;height:24px;object-fit:contain;margin-right:8px">':'')+n+'</div>'
+        +'<div style="flex:1 1 140px"><div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:3px">Allenatore</div>'+sel('allenatore', n, a.allenatore)+'</div>'
+        +'<div style="flex:1 1 140px"><div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:3px">Allenatore in seconda</div>'+sel('vice', n, a.vice)+'</div>'
+        +'</div>';
+    }).join('')
+    +'</div>'
+    +'<button onclick="admSocSaveAllenatori()" style="margin-top:14px;padding:8px 20px;background:#10b981;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">💾 Salva</button>';
+}
+function admSocSaveAllenatori() {
+  var tk = document.getElementById('adm-soc-torneo').value, lk = document.getElementById('adm-soc-lega').value;
+  if (!tk || !lk) return;
+  var out = {}, err = '';
+  document.querySelectorAll('#adm-soc-body select[data-soc-role]').forEach(function(s) {
+    if (!s.value) return;
+    var k = _fbSafeKey(s.getAttribute('data-soc-team'));
+    out[k] = out[k] || {};
+    out[k][s.getAttribute('data-soc-role')] = s.value;
+  });
+  Object.keys(out).forEach(function(k){ if (out[k].allenatore && out[k].allenatore === out[k].vice) err = k; });
+  if (err) { alert('Nella squadra '+err+' allenatore e allenatore in seconda sono la stessa persona.'); return; }
+  window.FB_ALLENATORI = window.FB_ALLENATORI || {};
+  window.FB_ALLENATORI[tk+'_'+lk] = out;
+  fbDB.ref('data/tornei/'+tk+'/'+lk+'/allenatori').set(Object.keys(out).length ? out : null).then(function() {
+    var msg = document.createElement('div'); msg.textContent = '✅ Allenatori salvati';
+    msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
+    document.body.appendChild(msg); setTimeout(function(){ msg.remove(); }, 2000);
+  }).catch(function(e){ alert('Errore salvataggio: '+e.message); });
+}
+
 // ADMIN — Cambio Squadre
 function admCsInit() {
   var sel=document.getElementById('adm-cs-torneo'); if(!sel) return;
