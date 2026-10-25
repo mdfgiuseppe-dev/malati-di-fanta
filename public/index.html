@@ -1297,29 +1297,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
   <!-- ===== SPONSOR ===== -->
   <div id="s-sponsor" class="section">
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px;padding:40px 20px;text-align:center">
-      <div style="position:relative;margin-bottom:36px">
-        <div style="position:absolute;inset:-40px;background:radial-gradient(ellipse at center,rgba(16,185,129,.15),transparent 70%);border-radius:50%;pointer-events:none"></div>
-        <img src="" id="sponsor-slim-logo" style="width:160px;height:160px;object-fit:contain;filter:drop-shadow(0 8px 40px rgba(16,185,129,.4));position:relative;z-index:1">
-      </div>
-      <div style="display:inline-flex;align-items:center;gap:10px;padding:10px 24px;background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.25);border-radius:50px;margin-bottom:24px">
-        <svg width="16" height="16" fill="none" stroke="#ef4444" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>
-        <span style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#ef4444">Non disponibile</span>
-      </div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(22px,5vw,38px);letter-spacing:3px;color:var(--text);line-height:1.1;margin-bottom:12px">
-        SPONSOR NON PREVISTI<br><span style="color:#10b981">PER QUESTO FORMAT</span>
-      </div>
-      <div style="font-size:13px;color:var(--text2);max-width:380px;line-height:1.6;margin-bottom:32px">
-        Il format <strong style="color:var(--text)">Scudetto Slim</strong> non prevede accordi commerciali con sponsor.<br>
-        Questa sezione è disponibile negli altri tornei della piattaforma.
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;width:100%;max-width:300px;margin-bottom:28px">
-        <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))"></div>
-        <div style="font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text3)">Scudetto Slim</div>
-        <div style="flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)"></div>
-      </div>
-      
-    </div>
+    <div style="padding:40px 20px;text-align:center;color:var(--text3);font-size:13px">🤝 Sezione Sponsor in preparazione.</div>
   </div><!-- /s-sponsor -->
 
   <div id="s-multe" class="section">
@@ -5111,9 +5089,6 @@ function updateLogosTornei() {
         }
       }
     });
-    var _slLogo = localStorage.getItem('adm_logo_torneo_slim');
-    var _slEl = document.getElementById('sponsor-slim-logo');
-    if (_slEl) _slEl.src = _slLogo || '';
   } catch(e) {}
 }
 function updateDashboardCounters() {
