@@ -3772,6 +3772,12 @@ function loadDataFromFirebase() {
     if (val && typeof val === 'object') window.FB_LOGHI_SQUADRE = val;
   });
 
+  // Gettoni per squadra: data/gettoni/{t_l}/{CHIAVE_SQUADRA}/{gid}/{andata|ritorno} = 'abilitato' | 'usato'
+  window.FB_GETTONI = window.FB_GETTONI || {};
+  fbLoadKey('gettoni', function(val) {
+    if (val && typeof val === 'object') window.FB_GETTONI = val;
+  });
+
   // Funzionalità abilitate per torneo da data/tornei_config/{torneo} (es. { sponsor: true })
   window.TORNEI_CONFIG = window.TORNEI_CONFIG || {};
   fbLoadKey('tornei_config', function(val) {
@@ -6937,13 +6943,6 @@ function admSelectTorneoDetail(val) {
     +'<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg2);border-radius:6px;margin-bottom:10px;font-size:12px;font-weight:700;cursor:pointer">'
     +'<input type="checkbox"'+(_torneoFeat(t.key,'sponsor')?' checked':'')+' onchange="admSetTorneoFeat(\''+t.key+'\',\'sponsor\',this.checked)" style="width:16px;height:16px;cursor:pointer">'
     +'🤝 Sponsor abilitati<span style="font-weight:400;font-size:10px;color:var(--text3);margin-left:auto">mostra la sezione Sponsor in app e in admin</span></label>'
-    +'<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg2);border-radius:6px;margin-bottom:10px;font-size:12px;font-weight:700">'
-    +'📆 Fase in corso'
-    +'<select onchange="admSetTorneoFase(\''+t.key+'\',this.value)" style="padding:4px 8px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-weight:700;outline:none;cursor:pointer">'
-    +'<option value="andata"'+(_torneoFase(t.key)==='andata'?' selected':'')+'>Andata</option>'
-    +'<option value="ritorno"'+(_torneoFase(t.key)==='ritorno'?' selected':'')+'>Ritorno</option>'
-    +'</select>'
-    +'<span style="font-weight:400;font-size:10px;color:var(--text3);margin-left:auto">girone reale: vale per i gettoni</span></div>'
     +'<div style="margin-bottom:10px">'+leghe+'</div>'
     +'<div style="display:flex;gap:8px">'
     +'<input id="adm-new-lega-label-'+ti+'" type="text" placeholder="Nome lega (es. Francia)" style="flex:1;padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none">'
@@ -7444,10 +7443,10 @@ function admRemoveLega(ti, li) {
   // Rimuovi i dati della lega da Firebase
   var _fk = tk+'_'+lk;
   fbDB.ref('data/tornei/'+tk+'/'+lk).remove();
-  ['calendario','calendario_schedule','punteggi','totali','stadio','rose','crediti'].forEach(function(n){ fbDB.ref('data/'+n+'/'+_fk).remove(); });
+  ['calendario','calendario_schedule','punteggi','totali','stadio','rose','crediti','gettoni'].forEach(function(n){ fbDB.ref('data/'+n+'/'+_fk).remove(); });
   fbDB.ref('data/images/loghi/squadre/'+tk+'/'+lk).remove();
   fbDB.ref('data/images/loghi/leghe/'+_fk).remove();
-  ['FB_SQUADRE','FB_CALENDARIO','FB_SCHEDULE','FB_PUNTEGGI','FB_TOTALI','FB_STADIO'].forEach(function(v){ if (window[v]) delete window[v][_fk]; });
+  ['FB_SQUADRE','FB_CALENDARIO','FB_SCHEDULE','FB_PUNTEGGI','FB_TOTALI','FB_STADIO','FB_GETTONI','FB_ALLENATORI'].forEach(function(v){ if (window[v]) delete window[v][_fk]; });
   if (window.FB_LOGHI_SQUADRE && window.FB_LOGHI_SQUADRE[tk]) delete window.FB_LOGHI_SQUADRE[tk][lk];
   // Rimuovi dati dal localStorage
   ['adm_rose_','adm_rose_import_','adm_crediti_base_','adm_cal_','adm_stadio_',
@@ -8123,7 +8122,7 @@ function admConfirmImport(){
   if(cT&&cT.value===tk&&cL&&cL.value===lk) admLoadRoseSquadre();
 }
 // ADMIN — Gestione Società (schede per squadra: Allenatori; in futuro Gettoni, Quote)
-var ADM_SOC_TABS = [{ key: 'allenatori', label: '👔 Allenatori' }, { key: 'utenti', label: '👤 Utenti' }];
+var ADM_SOC_TABS = [{ key: 'allenatori', label: '👔 Allenatori' }, { key: 'gettoni', label: '🎫 Gettoni' }, { key: 'utenti', label: '👤 Utenti' }];
 window._admSocTab = 'allenatori';
 function admSocInit() {
   var sel = document.getElementById('adm-soc-torneo'); if (!sel) return;
@@ -8156,6 +8155,58 @@ function admSocRender() {
   if (window._admSocTab === 'utenti') { admSocRenderUtenti(body); return; }
   if (!tk || !lk) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Seleziona torneo e lega.</div>'; return; }
   if (window._admSocTab === 'allenatori') admSocRenderAllenatori(tk, lk, body);
+  if (window._admSocTab === 'gettoni') admSocRenderGettoni(tk, lk, body);
+}
+// Moduli che richiedono gettone per la lega: [{ gid, titolo }]
+function _gettoniModuli(tk, lk) {
+  var d = MODULISTICA_DATA[_modKey(tk, lk)] || MODULISTICA_DATA[tk] || {};
+  return (d.moduli || []).filter(function(m){ return m.gettone && m.gid; }).map(function(m){
+    return { gid: m.gid, titolo: String(m.titolo || m.gid).replace(/^utilizzo\s+(gettone\s+)?/i, '') };
+  });
+}
+function _gettoneStato(tk, lk, team, gid, fase) {
+  var g = ((window.FB_GETTONI || {})[tk+'_'+lk] || {})[_fbSafeKey(team)] || {};
+  return (g[gid] || {})[fase] || '';
+}
+var GETTONE_STATI = { '': { lbl: '—', st: 'background:var(--bg2);color:var(--text3);border:1px solid var(--border)' },
+  abilitato: { lbl: '✅', st: 'background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.4)' },
+  usato: { lbl: '✔ usato', st: 'background:rgba(107,114,128,.15);color:var(--text2);border:1px solid var(--border)' } };
+function admSocRenderGettoni(tk, lk, body) {
+  var teams = admGetTeams(tk, lk), mods = _gettoniModuli(tk, lk), fase = _torneoFase(tk);
+  var h = '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;background:var(--bg2);border-radius:8px;margin-bottom:12px;font-size:12px;font-weight:700">'
+    +'📆 Fase in corso'
+    +'<select onchange="admSetTorneoFase(\''+tk+'\',this.value);admSocRender()" style="padding:4px 8px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-weight:700;outline:none;cursor:pointer">'
+    +'<option value="andata"'+(fase==='andata'?' selected':'')+'>Andata</option>'
+    +'<option value="ritorno"'+(fase==='ritorno'?' selected':'')+'>Ritorno</option></select>'
+    +'<span style="font-weight:400;font-size:10px;color:var(--text3)">vale per tutto il torneo · tocca una casella: — → ✅ abilitato → ✔ usato → —</span></div>';
+  if (!mods.length) { body.innerHTML = h + '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nessun modulo con "Richiede gettone" in Modulistica.</div>'; return; }
+  if (!teams.length) { body.innerHTML = h + '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nessuna squadra in questa lega.</div>'; return; }
+  h += '<div class="card" style="padding:0;overflow:hidden">' + teams.map(function(n) {
+    var lg = getTeamLogo(tk, lk, n);
+    return '<div style="padding:10px 14px;border-bottom:1px solid var(--border)">'
+      +'<div style="display:flex;align-items:center;font-weight:700;font-size:13px;margin-bottom:8px">'+(lg?'<img src="'+lg+'" onerror="this.style.display=\'none\'" style="width:24px;height:24px;object-fit:contain;margin-right:8px">':'')+n+'</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:8px">' + mods.map(function(m) {
+        return '<div style="flex:1 1 100px;background:var(--bg2);border-radius:8px;padding:6px 8px">'
+          +'<div style="font-size:10px;font-weight:800;text-transform:uppercase;color:var(--text2);margin-bottom:5px">'+m.titolo+'</div>'
+          +'<div style="display:flex;gap:6px">' + ['andata','ritorno'].map(function(f) {
+            var s = _gettoneStato(tk, lk, n, m.gid, f), S = GETTONE_STATI[s] || GETTONE_STATI[''];
+            return '<button data-t="'+tk+'" data-l="'+lk+'" data-team="'+n+'" data-gid="'+m.gid+'" data-fase="'+f+'" onclick="admSocCycleGettone(this)" style="flex:1;padding:5px 4px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;'+S.st+(f===fase?';outline:2px solid #f59e0b;outline-offset:1px':'')+'">'
+              +'<div style="font-size:8px;opacity:.8">'+(f==='andata'?'ANDATA':'RITORNO')+'</div>'+S.lbl+'</button>';
+          }).join('') + '</div></div>';
+      }).join('') + '</div></div>';
+  }).join('') + '</div>';
+  body.innerHTML = h;
+}
+// Clic su una casella: — → abilitato → usato → — (salvato subito su Firebase)
+function admSocCycleGettone(el) {
+  var tk = el.dataset.t, lk = el.dataset.l, k = _fbSafeKey(el.dataset.team), gid = el.dataset.gid, f = el.dataset.fase;
+  var cur = _gettoneStato(tk, lk, el.dataset.team, gid, f);
+  var next = cur === '' ? 'abilitato' : cur === 'abilitato' ? 'usato' : '';
+  var G = window.FB_GETTONI = window.FB_GETTONI || {};
+  G[tk+'_'+lk] = G[tk+'_'+lk] || {}; G[tk+'_'+lk][k] = G[tk+'_'+lk][k] || {}; G[tk+'_'+lk][k][gid] = G[tk+'_'+lk][k][gid] || {};
+  if (next) G[tk+'_'+lk][k][gid][f] = next; else delete G[tk+'_'+lk][k][gid][f];
+  fbDB.ref('data/gettoni/'+tk+'_'+lk+'/'+k+'/'+gid+'/'+f).set(next || null).catch(function(e){ alert('Errore salvataggio: '+e.message); });
+  admSocRender();
 }
 function admSocRenderUtenti(body) {
   var users = ADMIN_USERS.slice().sort(function(a,b){ return _userFull(a).localeCompare(_userFull(b)); });
