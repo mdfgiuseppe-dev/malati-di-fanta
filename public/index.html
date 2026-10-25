@@ -10943,7 +10943,7 @@ function calRenderGeneric(t, l, bodyId, nG, teams, callbackFn) {
     h+='<div style="overflow:auto"><table style="width:100%;border-collapse:collapse">';
     h+='<thead><tr style="background:var(--bg2);font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3);position:sticky;top:0;z-index:2">'
       +'<th style="padding:7px 12px;text-align:left;min-width:70px">Giornata</th>'
-      +teams.map(function(t){var fl=_uLogo(t,12);return '<th style="padding:7px 6px;min-width:70px;font-weight:800">'+fl+_teamCase(t)+'</th>';}).join('')
+      +teams.map(function(t){var fl=_uLogo(t,22,true);return '<th style="padding:7px 6px;min-width:70px;font-weight:800">'+fl+_teamCase(t)+'</th>';}).join('')
       +'</tr></thead><tbody>';
     for(var g=1;g<=nG;g++){
       var gio=cal[String(g)]||{};
