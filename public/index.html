@@ -4073,7 +4073,8 @@ function _logoImgUrl(url) {
   url = String(url || '').trim();
   if (url.indexOf('drive.google.com') === -1) return url;
   var m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w200' : url;
+  // lh3 restituisce il file originale (PNG trasparente); thumbnail lo converte in JPEG con sfondo nero
+  return m ? 'https://lh3.googleusercontent.com/d/' + m[1] : url;
 }
 function getTeamLogo(torneoKey, legaKey, team) {
   var m = window.FB_LOGHI_SQUADRE && window.FB_LOGHI_SQUADRE[torneoKey] && window.FB_LOGHI_SQUADRE[torneoKey][legaKey];
