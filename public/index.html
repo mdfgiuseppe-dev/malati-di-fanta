@@ -8215,7 +8215,6 @@ function admCsConfirm() {
     var sk=(legaKey==='it')?'slim_stadio':'slim_stadio_'+legaKey;
     var sr=localStorage.getItem(sk)||localStorage.getItem('adm_stadio_'+torneoKey+'_'+legaKey);
     if(sr){try{var sta=admCsRenameKey(admCsRenameKey(JSON.parse(sr),o.toUpperCase(),n.toUpperCase()),o,n);localStorage.setItem(sk,JSON.stringify(sta));localStorage.setItem('adm_stadio_'+torneoKey+'_'+legaKey,JSON.stringify(sta));}catch(e){}}
-    gsSaveKey('adm_stadio_', localStorage.getItem('adm_stadio_'));
     if(c.newLogo){
       fbDB.ref('data/images/loghi/squadre/'+torneoKey+'/'+legaKey+'/'+_fbSafeKey(o)).set(c.newLogo);
       window.FB_LOGHI_SQUADRE = window.FB_LOGHI_SQUADRE || {};
@@ -14004,7 +14003,6 @@ function admCsConfirm() {
     var sk=(legaKey==='it')?'slim_stadio':'slim_stadio_'+legaKey;
     var sr=localStorage.getItem(sk)||localStorage.getItem('adm_stadio_'+torneoKey+'_'+legaKey);
     if(sr){try{var sta=admCsRenameKey(admCsRenameKey(JSON.parse(sr),o.toUpperCase(),n.toUpperCase()),o,n);localStorage.setItem(sk,JSON.stringify(sta));localStorage.setItem('adm_stadio_'+torneoKey+'_'+legaKey,JSON.stringify(sta));}catch(e){}}
-    gsSaveKey('adm_stadio_', localStorage.getItem('adm_stadio_'));
     if(c.newLogo){
       fbDB.ref('data/images/loghi/squadre/'+torneoKey+'/'+legaKey+'/'+_fbSafeKey(o)).set(c.newLogo);
       window.FB_LOGHI_SQUADRE = window.FB_LOGHI_SQUADRE || {};
