@@ -9228,6 +9228,13 @@ function enterLeague(tournament, leagueKey) {
         } catch(e) { console.error('Error parsing tornei:', e); }
       }
       setTimeout(function(){
+        var _fbSq = window.FB_SQUADRE && window.FB_SQUADRE[tournament+'_'+currentLeagueKey];
+        if (!Object.keys(TEAMS_ROSE).length && _fbSq) {
+          TEAMS_ROSE = {};
+          _fbSq.forEach(function(n){ TEAMS_ROSE[n] = []; });
+          SLIM_TEAMS = _fbSq.slice();
+          if (!currentTeam) currentTeam = SLIM_TEAMS[0];
+        }
         _updateLegaDashboard(tournament+'_'+currentLeagueKey);
         buildTeamsGrid();
         showSection('dashboard', null);
@@ -14926,6 +14933,13 @@ function enterLeague(tournament, leagueKey) {
         } catch(e) { console.error('Error parsing tornei:', e); }
       }
       setTimeout(function(){
+        var _fbSq = window.FB_SQUADRE && window.FB_SQUADRE[tournament+'_'+currentLeagueKey];
+        if (!Object.keys(TEAMS_ROSE).length && _fbSq) {
+          TEAMS_ROSE = {};
+          _fbSq.forEach(function(n){ TEAMS_ROSE[n] = []; });
+          SLIM_TEAMS = _fbSq.slice();
+          if (!currentTeam) currentTeam = SLIM_TEAMS[0];
+        }
         _updateLegaDashboard(tournament+'_'+currentLeagueKey);
         buildTeamsGrid();
         showSection('dashboard', null);
