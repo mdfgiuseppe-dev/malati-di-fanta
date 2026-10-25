@@ -7394,6 +7394,10 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
   var squadre = [];
   inputs.forEach(function(inp){ if(inp.value.trim()) squadre.push(inp.value.trim()); });
   if (!squadre.length) { alert('Inserisci almeno una squadra'); return; }
+  // Firebase non accetta . # $ [ ] / nei nomi usati come chiavi (rose, crediti, calendario)
+  var _bad = squadre.filter(function(n){ return /[.#$\[\]\/]/.test(n); });
+  if (_bad.length) { alert('Questi nomi contengono caratteri non ammessi ( . # $ [ ] / ):\n\n' + _bad.join('\n') + '\n\nEsempio: scrivi "ST ETIENNE" invece di "ST. ETIENNE".'); return; }
+  if (torneo.leghe.some(function(x){ return x.key === legaKey; })) { alert('Esiste già una lega con chiave "' + legaKey + '" in questo torneo.'); return; }
   legaLabel = String(legaLabel || legaKey).toUpperCase();
 
   // Aggiungi lega al torneo
