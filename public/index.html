@@ -3632,10 +3632,16 @@ var TDM_ALBO={"serie_a_trap": {"title": "Serie A Trapattoni", "color": "#3b82f6"
 var TROPHY_MAP={"Slim Italia": "", "Slim Inghilterra": "", "Slim Germania": "", "Slim Spagna": "", "Slim Francia": "", "Slim Portogallo": "", "Slim Olanda": "", "Slim Turchia": "", "Champions League": "", "Europa League": "", "Conference League": "", "European Supercup": ""};
 
 var SLIM_TOTAL_GIORNATE = 36;
+var SLIM_STADIO_TABLE = {};
 var SLIM_INITIAL_CALENDAR ={"1":{"BARI":"VC","COMO":"VC","JUVENTUS":"PF","MILAN":"SF","NAPOLI":"VC","PALERMO":"SF","ROMA":"VF","SALERNITANA":"PC","SASSUOLO":"SC","TORINO":"SF"},"2":{"BARI":"SF","COMO":"VF","JUVENTUS":"SC","MILAN":"VC","NAPOLI":"VF","PALERMO":"SC","ROMA":"SC","SALERNITANA":"VF","SASSUOLO":"SF","TORINO":"VC"},"3":{"BARI":"VC","COMO":"SF","JUVENTUS":"PC","MILAN":"PF","NAPOLI":"SC","PALERMO":"PF","ROMA":"VF","SALERNITANA":"PC","SASSUOLO":"PC","TORINO":"PF"},"4":{"BARI":"SF","COMO":"SC","JUVENTUS":"SF","MILAN":"PC","NAPOLI":"PF","PALERMO":"VC","ROMA":"VC","SALERNITANA":"PF","SASSUOLO":"VF","TORINO":"PC"},"5":{"BARI":"SF","COMO":"SF","JUVENTUS":"PC","MILAN":"PF","NAPOLI":"VC","PALERMO":"VF","ROMA":"SC","SALERNITANA":"SC","SASSUOLO":"VC","TORINO":"SF"},"6":{"BARI":"VC","COMO":"SC","JUVENTUS":"SF","MILAN":"PC","NAPOLI":"VF","PALERMO":"VC","ROMA":"PF","SALERNITANA":"SF","SASSUOLO":"SF","TORINO":"VC"},"7":{"BARI":"SF","COMO":"SF","JUVENTUS":"VC","MILAN":"SC","NAPOLI":"VC","PALERMO":"VF","ROMA":"SC","SALERNITANA":"VC","SASSUOLO":"SF","TORINO":"VF"},"8":{"BARI":"SC","COMO":"VC","JUVENTUS":"VF","MILAN":"SF","NAPOLI":"VF","PALERMO":"SF","ROMA":"SF","SALERNITANA":"VC","SASSUOLO":"SC","TORINO":"VC"},"9":{"BARI":"PF","COMO":"VF","JUVENTUS":"VC","MILAN":"SC","NAPOLI":"VC","PALERMO":"PC","ROMA":"PC","SALERNITANA":"SF","SASSUOLO":"SF","TORINO":"PF"},"10":{"BARI":"VC","COMO":"SF","JUVENTUS":"SF","MILAN":"VF","NAPOLI":"VC","PALERMO":"SC","ROMA":"SF","SALERNITANA":"VC","SASSUOLO":"SF","TORINO":"VC"},"11":{"BARI":"VF","COMO":"VC","JUVENTUS":"SC","MILAN":"SC","NAPOLI":"SF","PALERMO":"SF","ROMA":"VC","SALERNITANA":"VF","SASSUOLO":"SC","TORINO":"VF"},"12":{"BARI":"VF","COMO":"SF","JUVENTUS":"SC","MILAN":"VF","NAPOLI":"SC","PALERMO":"VF","ROMA":"VF","SALERNITANA":"SC","SASSUOLO":"VC","TORINO":"SC"},"13":{"BARI":"SC","COMO":"VC","JUVENTUS":"VF","MILAN":"PC","NAPOLI":"VF","PALERMO":"SC","ROMA":"SC","SALERNITANA":"SF","SASSUOLO":"VF","TORINO":"PF"},"14":{"BARI":"SF","COMO":"VC","JUVENTUS":"PC","MILAN":"VF","NAPOLI":"SF","PALERMO":"VC","ROMA":"SF","SALERNITANA":"PF","SASSUOLO":"SC","TORINO":"VC"},"15":{"BARI":"PC","COMO":"PF","JUVENTUS":"SF","MILAN":"SF","NAPOLI":"PC","PALERMO":"PF","ROMA":"VC","SALERNITANA":"VC","SASSUOLO":"VC","TORINO":"SF"},"16":{"BARI":"SC","COMO":"SC","JUVENTUS":"VF","MILAN":"VC","NAPOLI":"SF","PALERMO":"VC","ROMA":"VF","SALERNITANA":"SF","SASSUOLO":"SF","TORINO":"VC"},"17":{"BARI":"SF","COMO":"PC","JUVENTUS":"VC","MILAN":"PF","NAPOLI":"VC","PALERMO":"VC","ROMA":"PF","SALERNITANA":"SF","SASSUOLO":"SF","TORINO":"PC"},"18":{"BARI":"PC","COMO":"PF","JUVENTUS":"VF","MILAN":"SC","NAPOLI":"SF","PALERMO":"SF","ROMA":"PC","SALERNITANA":"VC","SASSUOLO":"VC","TORINO":"PF"},"19":{"BARI":"PF","COMO":"SC","JUVENTUS":"PC","MILAN":"SF","NAPOLI":"VF","PALERMO":"SF","ROMA":"VC","SALERNITANA":"PF","SASSUOLO":"VC","TORINO":"PC"},"20":{"BARI":"VC","COMO":"SF","JUVENTUS":"SF","MILAN":"VC","NAPOLI":"VC","PALERMO":"VC","ROMA":"SF","SALERNITANA":"VC","SASSUOLO":"SF","TORINO":"SF"},"21":{"BARI":"VF","COMO":"SC","JUVENTUS":"VF","MILAN":"SF","NAPOLI":"PF","PALERMO":"PC","ROMA":"VC","SALERNITANA":"PF","SASSUOLO":"SC","TORINO":"PC"},"22":{"BARI":"PC","COMO":"SF","JUVENTUS":"VC","MILAN":"SC","NAPOLI":"PC","PALERMO":"PF","ROMA":"PF","SALERNITANA":"PC","SASSUOLO":"PF","TORINO":"VF"},"23":{"BARI":"PF","COMO":"PC","JUVENTUS":"SF","MILAN":"VF","NAPOLI":"SC","PALERMO":"SC","ROMA":"VC","SALERNITANA":"VF","SASSUOLO":"PF","TORINO":"PC"},"24":{"BARI":"VC","COMO":"SF","JUVENTUS":"SC","MILAN":"VC","NAPOLI":"SF","PALERMO":"SF","ROMA":"SF","SALERNITANA":"VC","SASSUOLO":"VC","TORINO":"VF"},"25":{"BARI":"PF","COMO":"PF","JUVENTUS":"PF","MILAN":"SC","NAPOLI":"PC","PALERMO":"PC","ROMA":"PC","SALERNITANA":"VF","SASSUOLO":"VF","TORINO":"SC"},"26":{"BARI":"PC","COMO":"PC","JUVENTUS":"PC","MILAN":"PF","NAPOLI":"PF","PALERMO":"VF","ROMA":"SC","SALERNITANA":"VF","SASSUOLO":"SC","TORINO":"PF"},"27":{"BARI":"SF","COMO":"VF","JUVENTUS":"VF","MILAN":"SC","NAPOLI":"VC","PALERMO":"SC","ROMA":"PF","SALERNITANA":"VC","SASSUOLO":"SF","TORINO":"PC"},"28":{"BARI":"VC","COMO":"SF","JUVENTUS":"SF","MILAN":"SF","NAPOLI":"VF","PALERMO":"SF","ROMA":"SC","SALERNITANA":"VC","SASSUOLO":"VC","TORINO":"VC"},"29":{"BARI":"","COMO":"","JUVENTUS":"","MILAN":"","NAPOLI":"","PALERMO":"","ROMA":"","SALERNITANA":"","SASSUOLO":"","TORINO":""},"30":{"BARI":"","COMO":"","JUVENTUS":"","MILAN":"","NAPOLI":"","PALERMO":"","ROMA":"","SALERNITANA":"","SASSUOLO":"","TORINO":""},"31":{"BARI":"","COMO":"","JUVENTUS":"","MILAN":"","NAPOLI":"","PALERMO":"","ROMA":"","SALERNITANA":"","SASSUOLO":"","TORINO":""},"32":{"BARI":"","COMO":"","JUVENTUS":"","MILAN":"","NAPOLI":"","PALERMO":"","ROMA":"","SALERNITANA":"","SASSUOLO":"","TORINO":""},"33":{"BARI":"","COMO":"","JUVENTUS":"","MILAN":"","NAPOLI":"","PALERMO":"","ROMA":"","SALERNITANA":"","SASSUOLO":"","TORINO":""},"34":{"BARI":"","COMO":"","JUVENTUS":"","MILAN":"","NAPOLI":"","PALERMO":"","ROMA":"","SALERNITANA":"","SASSUOLO":"","TORINO":""},"35":{"BARI":"","COMO":"","JUVENTUS":"","MILAN":"","NAPOLI":"","PALERMO":"","ROMA":"","SALERNITANA":"","SASSUOLO":"","TORINO":""},"36":{"BARI":"","COMO":"","JUVENTUS":"","MILAN":"","NAPOLI":"","PALERMO":"","ROMA":"","SALERNITANA":"","SASSUOLO":"","TORINO":""}};
 var SLIM_INITIAL_STADIO   = {"BARI": 3, "COMO": 2, "JUVENTUS": 1, "MILAN": 4, "NAPOLI": 5, "PALERMO": 2, "ROMA": 1, "SALERNITANA": 4, "SASSUOLO": 5, "TORINO": 6};
 
 function slimGetCalendar() {
+  var _tk = window._currentTourneyKey;
+  if (_tk && _tk !== 'slim') {
+    var _fbCal = window.FB_CALENDARIO && window.FB_CALENDARIO[_tk+'_'+(typeof currentLeagueKey !== 'undefined' ? currentLeagueKey : 'it')];
+    return _fbCal || {};
+  }
   // Sincronizza key con currentLeagueKey
   var lkCur = (typeof currentLeagueKey !== 'undefined' ? currentLeagueKey : 'it');
   window._currentLeagueCalKey = (lkCur === 'it') ? 'slim_calendar' : 'slim_calendar_' + lkCur;
@@ -3804,6 +3810,8 @@ function updateDashboardCounters() {
         try { _cfgN = JSON.parse(localStorage.getItem('adm_config_'+t.key)||'{}').nSquadre || 0; } catch(e){}
         var _ldLeghe = (typeof LEAGUES_DATA !== 'undefined' && LEAGUES_DATA[t.key]) ? LEAGUES_DATA[t.key].leghe : [];
         t.leghe.forEach(function(l) {
+          var _fbSq = window.FB_SQUADRE && window.FB_SQUADRE[t.key+'_'+l.key];
+          if (_fbSq && _fbSq.length) { totalClub += _fbSq.length; return; }
           var rose = {};
           try { rose = JSON.parse(localStorage.getItem('adm_rose_'+t.key+'_'+l.key)||'{}'); } catch(e){}
           if (Object.keys(rose).length) {
@@ -4935,6 +4943,21 @@ function loadDataFromFirebase() {
         if (names.length) window.FB_SQUADRE[tk + '_' + lk] = names.sort();
       });
     });
+    if (typeof updateDashboardCounters === 'function') updateDashboardCounters();
+  });
+
+  // Carica calendari da data/calendario/{torneo}_{lega}
+  window.FB_CALENDARIO = window.FB_CALENDARIO || {};
+  fbLoadKey('calendario', function(val) {
+    if (!val || typeof val !== 'object') return;
+    Object.keys(val).forEach(function(k) {
+      var c = val[k];
+      if (typeof c === 'string') { try { c = JSON.parse(c); } catch(e) { c = null; } }
+      if (!c || typeof c !== 'object') return;
+      var obj = {};
+      Object.keys(c).forEach(function(g) { if (c[g]) obj[String(g)] = c[g]; });
+      window.FB_CALENDARIO[k] = obj;
+    });
   });
 
   // Carica logo principale (fbLoadKey aggiunge 'data/' automaticamente)
@@ -4960,6 +4983,9 @@ function loadDataFromFirebase() {
   ['adm_stadio_table_global', 'admin_modulistica'].forEach(function(key) {
     fbLoadKey(key, function(val) {
       if (val) localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+      if (val && key === 'adm_stadio_table_global') {
+        try { SLIM_STADIO_TABLE = typeof val === 'string' ? JSON.parse(val) : val; } catch(e) {}
+      }
     });
   });
 }
@@ -8576,7 +8602,7 @@ function admLoadCalBody() {
   function headerRow() {
     return '<tr style="background:var(--bg2);font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3);position:sticky;top:0;z-index:2">'
       +'<th style="padding:7px 12px;text-align:left;min-width:70px">Giornata</th>'
-      + teams.map(function(t){ return '<th style="padding:7px 6px;min-width:80px">'+t+'</th>'; }).join('')
+      + teams.map(function(t){ return '<th style="padding:7px 6px;min-width:80px;text-transform:none">'+t+'</th>'; }).join('')
       +'<th style="padding:7px 6px;min-width:50px">Salva</th>'
       +'</tr>';
   }
@@ -9487,7 +9513,7 @@ function showSection(id,el){
 }
 var currentTeam='SALERNITANA',currentFilter='ALL';
 function roleBadge(r){var roles=r.split(';').map(function(x){return x.trim();}).filter(function(x){return x;});return roles.map(function(x){var c=ROLE_COLORS[x]||['rgba(107,114,128,.15)','#6b7280'];return'<span style="display:inline-block;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;background:'+c[0]+';color:'+c[1]+';margin:1px">'+x+'</span>';}).join('');}
-function buildTeamsGrid(){var g=document.getElementById('rose-teams-grid');if(!g)return;var list=Object.keys(TEAMS_ROSE).sort().concat(['INFERMERIA']);g.innerHTML=list.map(function(n){var a=n===currentTeam;var label=n.toUpperCase();return'<div class="tbtn'+(a?' active':'')+'" onclick="selectTeam(this,\''+n+'\')" style="padding:8px 4px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;font-weight:700">'+label+'</div>';}).join('');}
+function buildTeamsGrid(){var g=document.getElementById('rose-teams-grid');if(!g)return;var list=Object.keys(TEAMS_ROSE).sort().concat(['INFERMERIA']);g.innerHTML=list.map(function(n){var a=n===currentTeam;var label=n==='INFERMERIA'?'Infermeria':n;return'<div class="tbtn'+(a?' active':'')+'" onclick="selectTeam(this,\''+n+'\')" style="padding:8px 4px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;font-weight:700">'+label+'</div>';}).join('');}
 function selectTeam(el,name){currentTeam=name;currentFilter='ALL';buildTeamsGrid();updateHeader();buildFilters();renderTable();}
 function updateHeader(){
   if(currentTeam==='INFERMERIA'){
@@ -10167,6 +10193,11 @@ function closeLoginModal(){
   var e=document.getElementById('login-error');if(e)e.style.display='none';
 }
 function slimGetCalendar() {
+  var _tk = window._currentTourneyKey;
+  if (_tk && _tk !== 'slim') {
+    var _fbCal = window.FB_CALENDARIO && window.FB_CALENDARIO[_tk+'_'+(typeof currentLeagueKey !== 'undefined' ? currentLeagueKey : 'it')];
+    return _fbCal || {};
+  }
   // Sincronizza key con currentLeagueKey
   var lkCur = (typeof currentLeagueKey !== 'undefined' ? currentLeagueKey : 'it');
   window._currentLeagueCalKey = (lkCur === 'it') ? 'slim_calendar' : 'slim_calendar_' + lkCur;
@@ -10335,6 +10366,8 @@ function updateDashboardCounters() {
         try { _cfgN = JSON.parse(localStorage.getItem('adm_config_'+t.key)||'{}').nSquadre || 0; } catch(e){}
         var _ldLeghe = (typeof LEAGUES_DATA !== 'undefined' && LEAGUES_DATA[t.key]) ? LEAGUES_DATA[t.key].leghe : [];
         t.leghe.forEach(function(l) {
+          var _fbSq = window.FB_SQUADRE && window.FB_SQUADRE[t.key+'_'+l.key];
+          if (_fbSq && _fbSq.length) { totalClub += _fbSq.length; return; }
           var rose = {};
           try { rose = JSON.parse(localStorage.getItem('adm_rose_'+t.key+'_'+l.key)||'{}'); } catch(e){}
           if (Object.keys(rose).length) {
@@ -14132,7 +14165,7 @@ function admLoadCalBody() {
   function headerRow() {
     return '<tr style="background:var(--bg2);font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3);position:sticky;top:0;z-index:2">'
       +'<th style="padding:7px 12px;text-align:left;min-width:70px">Giornata</th>'
-      + teams.map(function(t){ return '<th style="padding:7px 6px;min-width:80px">'+t+'</th>'; }).join('')
+      + teams.map(function(t){ return '<th style="padding:7px 6px;min-width:80px;text-transform:none">'+t+'</th>'; }).join('')
       +'<th style="padding:7px 6px;min-width:50px">Salva</th>'
       +'</tr>';
   }
@@ -15192,7 +15225,7 @@ function showSection(id,el){
 }
 var currentTeam='SALERNITANA',currentFilter='ALL';
 function roleBadge(r){var roles=r.split(';').map(function(x){return x.trim();}).filter(function(x){return x;});return roles.map(function(x){var c=ROLE_COLORS[x]||['rgba(107,114,128,.15)','#6b7280'];return'<span style="display:inline-block;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;background:'+c[0]+';color:'+c[1]+';margin:1px">'+x+'</span>';}).join('');}
-function buildTeamsGrid(){var g=document.getElementById('rose-teams-grid');if(!g)return;var list=Object.keys(TEAMS_ROSE).sort().concat(['INFERMERIA']);g.innerHTML=list.map(function(n){var a=n===currentTeam;var label=n.toUpperCase();return'<div class="tbtn'+(a?' active':'')+'" onclick="selectTeam(this,\''+n+'\')" style="padding:8px 4px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;font-weight:700">'+label+'</div>';}).join('');}
+function buildTeamsGrid(){var g=document.getElementById('rose-teams-grid');if(!g)return;var list=Object.keys(TEAMS_ROSE).sort().concat(['INFERMERIA']);g.innerHTML=list.map(function(n){var a=n===currentTeam;var label=n==='INFERMERIA'?'Infermeria':n;return'<div class="tbtn'+(a?' active':'')+'" onclick="selectTeam(this,\''+n+'\')" style="padding:8px 4px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;font-weight:700">'+label+'</div>';}).join('');}
 function selectTeam(el,name){currentTeam=name;currentFilter='ALL';buildTeamsGrid();updateHeader();buildFilters();renderTable();}
 function updateHeader(){
   if(currentTeam==='INFERMERIA'){
