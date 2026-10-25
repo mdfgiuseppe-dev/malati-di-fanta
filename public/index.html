@@ -9864,7 +9864,19 @@ function slimRenderClassifica(){
   }
   if(penNote.length&&el){penNote.forEach(function(t){el.querySelectorAll('tr').forEach(function(row){var nc=row.querySelector('td:nth-child(3) span');if(nc&&nc.textContent===t.toUpperCase()){nc.textContent=t.toUpperCase()+' *';nc.style.color='#ef4444';}});});}
 }
-function slimRenderCalendario(){var el=document.getElementById('slim-calendario-body');if(!el)return;var cal=slimGetCalendar();var RC={VC:'rgba(16,185,129,.15);color:#10b981',VF:'rgba(16,185,129,.1);color:#34d399',PC:'rgba(59,130,246,.12);color:#3b82f6',PF:'rgba(59,130,246,.08);color:#60a5fa',SC:'rgba(239,68,68,.12);color:#ef4444',SF:'rgba(239,68,68,.08);color:#f87171'};var h='';for(var g=1;g<=SLIM_TOTAL_GIORNATE;g++){var gio=cal[String(g)]||{};var hasData=Object.values(gio).some(function(v){return v;});h+='<div style="margin-bottom:10px"><div style="font-family:\'Bebas Neue\';font-size:13px;letter-spacing:1px;color:var(--text2);padding:6px 10px;background:var(--bg2);border-radius:8px 8px 0 0;border:1px solid var(--border);border-bottom:none;display:flex;justify-content:space-between"><span>Giornata '+g+'</span>'+(hasData?'<span style="color:var(--green);font-size:10px">Completata</span>':'<span style="color:var(--text3);font-size:10px">Da giocare</span>')+'</div><div style="background:var(--card);border:1px solid var(--border);border-radius:0 0 8px 8px;padding:8px 10px;display:grid;grid-template-columns:repeat(2,1fr);gap:4px">';SLIM_TEAMS.forEach(function(team){var res=gio[team]||gio[team.toUpperCase()]||gio[team.toLowerCase()]||'';var st=RC[res]?'background:'+RC[res]:'background:var(--bg2);color:var(--text3)';h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 6px;border-radius:4px"><span style="font-size:11px;font-weight:700;display:flex;align-items:center">'+_uLogo(team,16)+team+'</span><span style="font-size:10px;font-weight:800;padding:1px 6px;border-radius:3px;'+st+'">'+(res||'--')+'</span></div>';});h+='</div></div>';}el.innerHTML=h;}
+function slimRenderCalendario() {
+  var _t = window._currentTourneyKey || 'slim';
+  var _l = (typeof currentLeagueKey !== 'undefined' ? currentLeagueKey : 'it');
+  var _schRaw = _calSchRaw(_t,_l);
+  var _schP = _schRaw ? (function(){try{return JSON.parse(_schRaw);}catch(e){return null;}})() : null;
+  var _schN = _schP ? Object.keys(_schP.giornate || _schP).length : 0;
+  var _cal = admGetCalendar(_t, _l);
+  var _calNums = Object.keys(_cal).map(Number).filter(function(n){return n>0;});
+  var _nG = _schN > 0 ? _schN : (_t !== 'slim' ? (_calNums.length > 0 ? Math.max.apply(null, _calNums) : 30) : (typeof SLIM_TOTAL_GIORNATE !== 'undefined' ? SLIM_TOTAL_GIORNATE : 36));
+  var _teams = admGetTeams(_t, _l);
+  if (!_teams.length && typeof SLIM_TEAMS !== 'undefined') _teams = SLIM_TEAMS;
+  calRenderGeneric(_t, _l, 'slim-calendario-body', _nG, _teams, 'slimRenderCalendario');
+}
 function slimRenderStadio(){var el=document.getElementById('slim-stadio-body');if(!el)return;var stadio=slimGetStadio();
   // Usa tabella globale aggiornata se disponibile
   var _stGlobal=localStorage.getItem('adm_stadio_table_global');
@@ -15920,7 +15932,99 @@ function slimRenderClassifica(){
   }
   if(penNote.length&&el){penNote.forEach(function(t){el.querySelectorAll('tr').forEach(function(row){var nc=row.querySelector('td:nth-child(3) span');if(nc&&nc.textContent===t.toUpperCase()){nc.textContent=t.toUpperCase()+' *';nc.style.color='#ef4444';}});});}
 }
-function slimRenderCalendario(){var el=document.getElementById('slim-calendario-body');if(!el)return;var cal=slimGetCalendar();var RC={VC:'rgba(16,185,129,.15);color:#10b981',VF:'rgba(16,185,129,.1);color:#34d399',PC:'rgba(59,130,246,.12);color:#3b82f6',PF:'rgba(59,130,246,.08);color:#60a5fa',SC:'rgba(239,68,68,.12);color:#ef4444',SF:'rgba(239,68,68,.08);color:#f87171'};var h='';for(var g=1;g<=SLIM_TOTAL_GIORNATE;g++){var gio=cal[String(g)]||{};var hasData=Object.values(gio).some(function(v){return v;});h+='<div style="margin-bottom:10px"><div style="font-family:\'Bebas Neue\';font-size:13px;letter-spacing:1px;color:var(--text2);padding:6px 10px;background:var(--bg2);border-radius:8px 8px 0 0;border:1px solid var(--border);border-bottom:none;display:flex;justify-content:space-between"><span>Giornata '+g+'</span>'+(hasData?'<span style="color:var(--green);font-size:10px">Completata</span>':'<span style="color:var(--text3);font-size:10px">Da giocare</span>')+'</div><div style="background:var(--card);border:1px solid var(--border);border-radius:0 0 8px 8px;padding:8px 10px;display:grid;grid-template-columns:repeat(2,1fr);gap:4px">';SLIM_TEAMS.forEach(function(team){var res=gio[team]||gio[team.toUpperCase()]||gio[team.toLowerCase()]||'';var st=RC[res]?'background:'+RC[res]:'background:var(--bg2);color:var(--text3)';h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 6px;border-radius:4px"><span style="font-size:11px;font-weight:700;display:flex;align-items:center">'+_uLogo(team,16)+team+'</span><span style="font-size:10px;font-weight:800;padding:1px 6px;border-radius:3px;'+st+'">'+(res||'--')+'</span></div>';});h+='</div></div>';}el.innerHTML=h;}
+function slimRenderCalendario() {
+  var _t = window._currentTourneyKey || 'slim';
+  var _l = (typeof currentLeagueKey !== 'undefined' ? currentLeagueKey : 'it');
+  var _schRaw = _calSchRaw(_t,_l);
+  var _schP = _schRaw ? (function(){try{return JSON.parse(_schRaw);}catch(e){return null;}})() : null;
+  var _schN = _schP ? Object.keys(_schP.giornate || _schP).length : 0;
+  var _cal = admGetCalendar(_t, _l);
+  var _calNums = Object.keys(_cal).map(Number).filter(function(n){return n>0;});
+  var _nG = _schN > 0 ? _schN : (_t !== 'slim' ? (_calNums.length > 0 ? Math.max.apply(null, _calNums) : 30) : (typeof SLIM_TOTAL_GIORNATE !== 'undefined' ? SLIM_TOTAL_GIORNATE : 36));
+  var _teams = admGetTeams(_t, _l);
+  if (!_teams.length && typeof SLIM_TEAMS !== 'undefined') _teams = SLIM_TEAMS;
+  calRenderGeneric(_t, _l, 'slim-calendario-body', _nG, _teams, 'slimRenderCalendario');
+}
+function calRenderGeneric(t, l, bodyId, nG, teams, callbackFn) {
+  var el = document.getElementById(bodyId); if(!el) return;
+  var viewKey = '_calView_'+t+'_'+l;
+  var _togKey='_calToggle_'+t+'_'+l;var _tog=window[_togKey];window[_togKey]=false;
+  var view=_tog?(window[viewKey]||'calendario'):'calendario';
+  var cal = admGetCalendar(t, l);
+  var schRaw = _calSchRaw(t,l);
+  var schParsed = schRaw ? (function(){try{return JSON.parse(schRaw);}catch(e){return null;}})() : null;
+  var sch = schParsed ? (schParsed.giornate || schParsed) : null;
+  var _scoresRaw = _calScRaw(t,l);
+  var _scores = _scoresRaw ? (function(){try{return JSON.parse(_scoresRaw);}catch(e){return null;}})() : null;
+  if (view==='calendario'&&!sch){var _hr=Object.keys(cal).some(function(g){return Object.values(cal[g]||{}).some(function(v){return v;});});if(_hr)view='rendimento';}
+  var RC = {VC:'rgba(16,185,129,.15);color:#10b981',VF:'rgba(16,185,129,.1);color:#34d399',V:'rgba(110,231,183,.15);color:#6ee7b7',PC:'rgba(59,130,246,.12);color:#3b82f6',PF:'rgba(59,130,246,.08);color:#60a5fa',P:'rgba(147,197,253,.12);color:#93c5fd',SC:'rgba(239,68,68,.12);color:#ef4444',SF:'rgba(239,68,68,.08);color:#f87171',S:'rgba(252,165,165,.12);color:#fca5a5'};
+  var _logos = {};
+  if (typeof FANTASY_LOGOS !== 'undefined') Object.keys(FANTASY_LOGOS).forEach(function(k){_logos[k.toUpperCase()]=FANTASY_LOGOS[k];});
+  var cb = callbackFn || '';
+  var toggleHtml = '<div style="display:flex;gap:6px;margin-bottom:12px">'
+    +'<button onclick="window[\''+viewKey+'\']=\'calendario\';window[\'_calToggle_'+t+'_'+l+'\']=true;'+(cb?cb+'()':'')+'" style="padding:5px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(view==='calendario'?'rgba(59,130,246,.5)':'var(--border)')+';background:'+(view==='calendario'?'rgba(59,130,246,.15)':'var(--bg2)')+';color:'+(view==='calendario'?'#3b82f6':'var(--text2)')+'">📅 RISULTATI</button>'
+    +'<button onclick="window[\''+viewKey+'\']=\'rendimento\';window[\'_calToggle_'+t+'_'+l+'\']=true;'+(cb?cb+'()':'')+'" style="padding:5px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(view==='rendimento'?'rgba(16,185,129,.5)':'var(--border)')+';background:'+(view==='rendimento'?'rgba(16,185,129,.15)':'var(--bg2)')+';color:'+(view==='rendimento'?'#10b981':'var(--text2)')+'">📊 RENDIMENTO</button>'
+    +'</div>';
+  var h = toggleHtml;
+  if (view === 'calendario') {
+    if (!sch) {
+      h += '<div style="padding:30px;text-align:center;color:var(--text3);font-size:13px">📅 Calendario non ancora importato.<br><span style="font-size:11px">Importa il file xlsx dalla sezione Admin → Calendario.</span></div>';
+    } else {
+      for (var g=1; g<=nG; g++) {
+        var matches = sch[String(g)] || [];
+        var gio = cal[String(g)] || {};
+        var hasData = Object.values(gio).some(function(v){return v;});
+        h += '<div style="margin-bottom:8px"><div style="font-family:\'Bebas Neue\';font-size:13px;letter-spacing:1px;color:var(--text2);padding:6px 10px;background:var(--bg2);border-radius:8px 8px 0 0;border:1px solid var(--border);border-bottom:none;display:flex;justify-content:space-between"><span>Giornata '+g+'</span>'+(hasData?'<span style="color:var(--green);font-size:10px">✓ Completata</span>':'<span style="color:var(--text3);font-size:10px">Da giocare</span>')+'</div>';
+        h += '<div style="background:var(--card);border:1px solid var(--border);border-radius:0 0 8px 8px;padding:6px 10px">';
+        if (!matches.length) {
+          h += '<div style="color:var(--text3);font-size:11px;text-align:center;padding:4px">Nessuna partita</div>';
+        } else {
+          h += '<div style="display:flex;flex-direction:column;gap:2px">';
+          matches.forEach(function(m) {
+            var _gk=function(obj,k){var v=obj[k];if(v!==undefined)return v;var u=(k||'').toUpperCase();var fk=Object.keys(obj).find(function(x){return x.toUpperCase()===u;});return fk?obj[fk]:'';};
+            var rH=_gk(gio,m.h),rA=_gk(gio,m.a);
+            var _symScore=(rH==='VC'||rH==='V')?'1-0':(rH==='PC'||rH==='P')?'1-1':(rH==='SC'||rH==='S')?'0-1':(rA==='VF'||rA==='V')?'0-1':(rA==='PF'||rA==='P')?'1-1':(rA==='SF'||rA==='S')?'1-0':null;
+            var _scG=typeof _scores!=='undefined'&&_scores&&_scores[String(g)];var _scK=_scG&&Object.keys(_scG).find(function(k){return k.toUpperCase()===(m.h||'').toUpperCase();});
+            var score=(_scK&&_scG[_scK])||_symScore;
+            var scoreC=_symScore?(_symScore==='1-0'?'#10b981':_symScore==='1-1'?'#3b82f6':'#ef4444'):'var(--text3)';
+            var lH=_uLogo(m.h||'',14);
+            var lA=_uLogo(m.a||'',14);
+            h += '<div style="display:grid;grid-template-columns:1fr 40px 1fr;align-items:center;gap:4px;padding:2px 0">'
+              +'<span style="display:flex;align-items:center;justify-content:flex-end;font-size:11px;font-weight:700">'+lH+_teamCase(m.h||'')+'</span>'
+              +'<span style="text-align:center;font-family:\'Bebas Neue\';font-size:13px;color:'+scoreC+';letter-spacing:1px">'+(score||'—')+'</span>'
+              +'<span style="display:flex;align-items:center;font-size:11px;font-weight:700">'+lA+_teamCase(m.a||'')+'</span>'
+              +'</div>';
+          });
+          h += '</div>';
+        }
+        h += '</div></div>';
+      }
+    }
+  } else {
+    var _gkR=function(obj,k){var v=obj[k];if(v!==undefined)return v;var u=(k||'').toUpperCase();var fk=Object.keys(obj).find(function(x){return x.toUpperCase()===u;});return fk!==undefined?obj[fk]:'';};
+    h+='<div style="overflow:auto"><table style="width:100%;border-collapse:collapse">';
+    h+='<thead><tr style="background:var(--bg2);font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3);position:sticky;top:0;z-index:2">'
+      +'<th style="padding:7px 12px;text-align:left;min-width:70px">Giornata</th>'
+      +teams.map(function(t){var fl=_uLogo(t,12);return '<th style="padding:7px 6px;min-width:70px;font-weight:800">'+fl+_teamCase(t)+'</th>';}).join('')
+      +'</tr></thead><tbody>';
+    for(var g=1;g<=nG;g++){
+      var gio=cal[String(g)]||{};
+      var hasD=Object.values(gio).some(function(v){return v;});
+      if(!hasD)continue;
+      h+='<tr style="border-bottom:1px solid var(--border)">'
+        +'<td style="padding:6px 12px;font-family:\'Bebas Neue\',sans-serif;font-size:15px;color:var(--text2)">G'+g+'</td>'
+        +teams.map(function(team){
+          var val=_gkR(gio,team);
+          var bg=RC[val]?RC[val].split(';color:')[0]:'';
+          var clr=RC[val]?RC[val].split(';color:')[1]:'var(--text3)';
+          return '<td style="padding:4px 6px;text-align:center;background:'+bg+';font-size:11px;font-weight:800;color:'+clr+'">'+(val||'—')+'</td>';
+        }).join('')
+        +'</tr>';
+    }
+    h+='</tbody></table></div>';
+  }
+  el.innerHTML = h;
+}
 function slimRenderStadio(){var el=document.getElementById('slim-stadio-body');if(!el)return;var stadio=slimGetStadio();
   // Usa tabella globale aggiornata se disponibile
   var _stGlobal=localStorage.getItem('adm_stadio_table_global');
