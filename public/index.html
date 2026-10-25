@@ -3760,7 +3760,10 @@ function slimCalcStandings() {
   });
   var sorted = SLIM_TEAMS.slice().sort(function(a,b){
     if (s[b].pt !== s[a].pt) return s[b].pt - s[a].pt;
-    return s[b].v - s[a].v;
+    if (s[b].tot !== s[a].tot) return s[b].tot - s[a].tot;
+    if (s[b].v !== s[a].v) return s[b].v - s[a].v;
+    if (s[b].gf !== s[a].gf) return s[b].gf - s[a].gf;
+    return (s[b].gf - s[b].gs) - (s[a].gf - s[a].gs);
   });
   return {standings: s, sorted: sorted, giocate: giocate};
 }
@@ -10525,7 +10528,10 @@ function slimCalcStandings() {
   });
   var sorted = SLIM_TEAMS.slice().sort(function(a,b){
     if (s[b].pt !== s[a].pt) return s[b].pt - s[a].pt;
-    return s[b].v - s[a].v;
+    if (s[b].tot !== s[a].tot) return s[b].tot - s[a].tot;
+    if (s[b].v !== s[a].v) return s[b].v - s[a].v;
+    if (s[b].gf !== s[a].gf) return s[b].gf - s[a].gf;
+    return (s[b].gf - s[b].gs) - (s[a].gf - s[a].gs);
   });
   return {standings: s, sorted: sorted, giocate: giocate};
 }
