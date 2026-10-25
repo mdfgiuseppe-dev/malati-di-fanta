@@ -7556,6 +7556,7 @@ function admAggiornaDashboard() {
   // (la dashboard legge ADMIN_TORNEI al caricamento)
   var el = document.getElementById('admin-tornei-data');
   if (el) el.textContent = JSON.stringify(ADMIN_TORNEI);
+  if (typeof updateDashboardCounters === 'function') updateDashboardCounters();
 }
 
 // ═══════════════════════════════════════════════════════
