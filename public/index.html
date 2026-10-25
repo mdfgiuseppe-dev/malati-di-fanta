@@ -8135,6 +8135,13 @@ function admCsLoadSquadre() {
       +'<input type="text" id="adm-cs-logo-'+ki+'" placeholder="'+(logoUrl||'https://... (URL immagine logo)')+'" style="width:100%;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:10px;outline:none"></div>'
       +'</div>';
   });
+  var infLogo=getTeamLogo(torneoKey,legaKey,'INFERMERIA');
+  h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border)">'
+    +(infLogo?'<img src="'+infLogo+'" onerror="this.style.opacity=0.2" style="width:32px;height:32px;object-fit:contain;border-radius:4px;flex-shrink:0">':'<div style="width:32px;height:32px;border:1px dashed var(--border);border-radius:4px;flex-shrink:0"></div>')
+    +'<div style="flex:2;min-width:0"><div style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:3px">Nome attuale</div><div style="font-size:12px;font-weight:800">🏥 INFERMERIA</div></div>'
+    +'<div style="flex:1;min-width:0"><div style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:3px">URL Logo</div>'
+    +'<input type="text" id="adm-cs-logo-INFERMERIA" placeholder="'+(infLogo||'https://... (URL immagine logo)')+'" style="width:100%;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:10px;outline:none"></div>'
+    +'</div>';
   h+='</div></div>'
     +'<div style="display:flex;gap:10px">'
     +'<button onclick="admCsPreview()" style="padding:8px 20px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#f59e0b;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">👁 Anteprima Modifiche</button>'
@@ -8145,7 +8152,7 @@ function admCsLoadSquadre() {
 function admCsPreview() {
   var torneoKey=document.getElementById('adm-cs-torneo').value;
   var legaKey=document.getElementById('adm-cs-lega').value;
-  var teams=admGetTeams(torneoKey,legaKey);
+  var teams=admGetTeams(torneoKey,legaKey).concat(['INFERMERIA']);
   var changes=[];
   teams.forEach(function(team){
     var ki=team.replace(/\s+/g,'_');
@@ -8186,7 +8193,7 @@ function admCsRenameKey(obj,oldKey,newKey){
 function admCsConfirm() {
   var torneoKey=document.getElementById('adm-cs-torneo').value;
   var legaKey=document.getElementById('adm-cs-lega').value;
-  var teams=admGetTeams(torneoKey,legaKey);
+  var teams=admGetTeams(torneoKey,legaKey).concat(['INFERMERIA']);
   var changes=[];
   teams.forEach(function(team){
     var ki=team.replace(/\s+/g,'_');
@@ -9302,14 +9309,6 @@ function enterLeague(tournament, leagueKey) {
     showPage('lega');
     // Ricarica ADMIN_TORNEI da Firebase per aggiornare nomi leghe
     fbLoadKey('tornei', function(data) {
-      if (data) {
-        try {
-          var parsed = parseTorneiData(data);
-          if (parsed.length > 0) {
-            ADMIN_TORNEI = parsed;
-          }
-        } catch(e) { console.error('Error parsing tornei:', e); }
-      }
       setTimeout(function(){
         var _fbSq = window.FB_SQUADRE && window.FB_SQUADRE[tournament+'_'+currentLeagueKey];
         if (!Object.keys(TEAMS_ROSE).length && _fbSq) {
@@ -9570,11 +9569,11 @@ function showSection(id,el){
 }
 var currentTeam='SALERNITANA',currentFilter='ALL';
 function roleBadge(r){var roles=r.split(';').map(function(x){return x.trim();}).filter(function(x){return x;});return roles.map(function(x){var c=ROLE_COLORS[x]||['rgba(107,114,128,.15)','#6b7280'];return'<span style="display:inline-block;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;background:'+c[0]+';color:'+c[1]+';margin:1px">'+x+'</span>';}).join('');}
-function buildTeamsGrid(){var g=document.getElementById('rose-teams-grid');if(!g)return;var list=Object.keys(TEAMS_ROSE).sort().concat(['INFERMERIA']);g.innerHTML=list.map(function(n){var a=n===currentTeam;var label=n.toUpperCase();return'<div class="tbtn'+(a?' active':'')+'" onclick="selectTeam(this,\''+n+'\')" style="padding:8px 4px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;font-weight:700;flex-direction:column">'+(n==='INFERMERIA'?'':_uLogo(n,28,true))+label+'</div>';}).join('');}
+function buildTeamsGrid(){var g=document.getElementById('rose-teams-grid');if(!g)return;var list=Object.keys(TEAMS_ROSE).sort().concat(['INFERMERIA']);g.innerHTML=list.map(function(n){var a=n===currentTeam;var label=n.toUpperCase();return'<div class="tbtn'+(a?' active':'')+'" onclick="selectTeam(this,\''+n+'\')" style="padding:8px 4px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;font-weight:700;flex-direction:column">'+_uLogo(n,28,true)+label+'</div>';}).join('');}
 function selectTeam(el,name){currentTeam=name;currentFilter='ALL';buildTeamsGrid();updateHeader();buildFilters();renderTable();}
 function updateHeader(){
   if(currentTeam==='INFERMERIA'){
-    var l=document.getElementById('th-logo');if(l)l.style.display='none';
+    var l=document.getElementById('th-logo');if(l){var _il=_uLogoUrl('INFERMERIA');if(_il){l.src=_il;l.style.display='block';}else{l.style.display='none';}}
     var nm=document.getElementById('th-name');if(nm)nm.textContent='INFERMERIA';
     var c=document.getElementById('th-credits-box');if(c)c.style.display='none';
     var st=document.getElementById('th-stats');if(st)st.innerHTML='';
@@ -13925,6 +13924,13 @@ function admCsLoadSquadre() {
       +'<input type="text" id="adm-cs-logo-'+ki+'" placeholder="'+(logoUrl||'https://... (URL immagine logo)')+'" style="width:100%;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:10px;outline:none"></div>'
       +'</div>';
   });
+  var infLogo=getTeamLogo(torneoKey,legaKey,'INFERMERIA');
+  h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border)">'
+    +(infLogo?'<img src="'+infLogo+'" onerror="this.style.opacity=0.2" style="width:32px;height:32px;object-fit:contain;border-radius:4px;flex-shrink:0">':'<div style="width:32px;height:32px;border:1px dashed var(--border);border-radius:4px;flex-shrink:0"></div>')
+    +'<div style="flex:2;min-width:0"><div style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:3px">Nome attuale</div><div style="font-size:12px;font-weight:800">🏥 INFERMERIA</div></div>'
+    +'<div style="flex:1;min-width:0"><div style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:3px">URL Logo</div>'
+    +'<input type="text" id="adm-cs-logo-INFERMERIA" placeholder="'+(infLogo||'https://... (URL immagine logo)')+'" style="width:100%;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:10px;outline:none"></div>'
+    +'</div>';
   h+='</div></div>'
     +'<div style="display:flex;gap:10px">'
     +'<button onclick="admCsPreview()" style="padding:8px 20px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#f59e0b;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">👁 Anteprima Modifiche</button>'
@@ -13935,7 +13941,7 @@ function admCsLoadSquadre() {
 function admCsPreview() {
   var torneoKey=document.getElementById('adm-cs-torneo').value;
   var legaKey=document.getElementById('adm-cs-lega').value;
-  var teams=admGetTeams(torneoKey,legaKey);
+  var teams=admGetTeams(torneoKey,legaKey).concat(['INFERMERIA']);
   var changes=[];
   teams.forEach(function(team){
     var ki=team.replace(/\s+/g,'_');
@@ -13976,7 +13982,7 @@ function admCsRenameKey(obj,oldKey,newKey){
 function admCsConfirm() {
   var torneoKey=document.getElementById('adm-cs-torneo').value;
   var legaKey=document.getElementById('adm-cs-lega').value;
-  var teams=admGetTeams(torneoKey,legaKey);
+  var teams=admGetTeams(torneoKey,legaKey).concat(['INFERMERIA']);
   var changes=[];
   teams.forEach(function(team){
     var ki=team.replace(/\s+/g,'_');
@@ -15029,14 +15035,6 @@ function enterLeague(tournament, leagueKey) {
     showPage('lega');
     // Ricarica ADMIN_TORNEI da Firebase per aggiornare nomi leghe
     fbLoadKey('tornei', function(data) {
-      if (data) {
-        try {
-          var parsed = parseTorneiData(data);
-          if (parsed.length > 0) {
-            ADMIN_TORNEI = parsed;
-          }
-        } catch(e) { console.error('Error parsing tornei:', e); }
-      }
       setTimeout(function(){
         var _fbSq = window.FB_SQUADRE && window.FB_SQUADRE[tournament+'_'+currentLeagueKey];
         if (!Object.keys(TEAMS_ROSE).length && _fbSq) {
@@ -15297,11 +15295,11 @@ function showSection(id,el){
 }
 var currentTeam='SALERNITANA',currentFilter='ALL';
 function roleBadge(r){var roles=r.split(';').map(function(x){return x.trim();}).filter(function(x){return x;});return roles.map(function(x){var c=ROLE_COLORS[x]||['rgba(107,114,128,.15)','#6b7280'];return'<span style="display:inline-block;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;background:'+c[0]+';color:'+c[1]+';margin:1px">'+x+'</span>';}).join('');}
-function buildTeamsGrid(){var g=document.getElementById('rose-teams-grid');if(!g)return;var list=Object.keys(TEAMS_ROSE).sort().concat(['INFERMERIA']);g.innerHTML=list.map(function(n){var a=n===currentTeam;var label=n.toUpperCase();return'<div class="tbtn'+(a?' active':'')+'" onclick="selectTeam(this,\''+n+'\')" style="padding:8px 4px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;font-weight:700;flex-direction:column">'+(n==='INFERMERIA'?'':_uLogo(n,28,true))+label+'</div>';}).join('');}
+function buildTeamsGrid(){var g=document.getElementById('rose-teams-grid');if(!g)return;var list=Object.keys(TEAMS_ROSE).sort().concat(['INFERMERIA']);g.innerHTML=list.map(function(n){var a=n===currentTeam;var label=n.toUpperCase();return'<div class="tbtn'+(a?' active':'')+'" onclick="selectTeam(this,\''+n+'\')" style="padding:8px 4px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;font-weight:700;flex-direction:column">'+_uLogo(n,28,true)+label+'</div>';}).join('');}
 function selectTeam(el,name){currentTeam=name;currentFilter='ALL';buildTeamsGrid();updateHeader();buildFilters();renderTable();}
 function updateHeader(){
   if(currentTeam==='INFERMERIA'){
-    var l=document.getElementById('th-logo');if(l)l.style.display='none';
+    var l=document.getElementById('th-logo');if(l){var _il=_uLogoUrl('INFERMERIA');if(_il){l.src=_il;l.style.display='block';}else{l.style.display='none';}}
     var nm=document.getElementById('th-name');if(nm)nm.textContent='INFERMERIA';
     var c=document.getElementById('th-credits-box');if(c)c.style.display='none';
     var st=document.getElementById('th-stats');if(st)st.innerHTML='';
