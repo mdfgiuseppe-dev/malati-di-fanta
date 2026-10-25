@@ -3354,7 +3354,40 @@ function renderModulistica(torneoKey, containerId) {
     el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:20px 0">Nessun modulo configurato per questa lega.</div>';
     return;
   }
+  // Moduli con gettone: aperti solo se una squadra dell'utente (allenatore o vice) ha il gettone abilitato nella fase in corso
+  var _gt = window._currentTourneyKey, _gl = (typeof currentLeagueKey !== 'undefined' && currentLeagueKey) ? currentLeagueKey : 'it';
+  var _cu = {}; try { _cu = JSON.parse(localStorage.getItem('current_user') || '{}') || {}; } catch(e) {}
+  var _gNeed = data.moduli.some(function(m){ return m.gettone && m.gid; });
+  function _gLock(m) {
+    if (!m.gettone || !m.gid || _cu.ruolo === 'admin') return '';
+    var al = (window.FB_ALLENATORI || {})[_gt+'_'+_gl] || {};
+    var mine = Object.keys(al).filter(function(k){ return al[k] && (al[k].allenatore === _cu.username || al[k].vice === _cu.username); });
+    if (!mine.length) return 'Nessuna squadra abbinata al tuo account in questa lega';
+    var fase = _torneoFase(_gt), G = (window.FB_GETTONI || {})[_gt+'_'+_gl] || {};
+    var st = mine.map(function(k){ return ((G[k] || {})[m.gid] || {})[fase] || ''; });
+    if (st.indexOf('abilitato') >= 0) return '';
+    return st.indexOf('usato') >= 0 ? 'Gettone già utilizzato in questa fase' : 'Disponibile dopo l\'acquisto del gettone';
+  }
+  // Rilegge gettoni e allenatori aggiornati da Firebase e ridisegna (una volta per apertura)
+  if (_gNeed && _gt && !renderModulistica._fresh) {
+    Promise.all([fbDB.ref('data/gettoni/'+_gt+'_'+_gl).once('value'), fbDB.ref('data/tornei/'+_gt+'/'+_gl+'/allenatori').once('value'), fbDB.ref('data/tornei_config/'+_gt).once('value')]).then(function(r) {
+      window.FB_GETTONI = window.FB_GETTONI || {}; window.FB_GETTONI[_gt+'_'+_gl] = r[0].val() || {};
+      window.FB_ALLENATORI = window.FB_ALLENATORI || {}; window.FB_ALLENATORI[_gt+'_'+_gl] = r[1].val() || {};
+      window.TORNEI_CONFIG = window.TORNEI_CONFIG || {}; window.TORNEI_CONFIG[_gt] = r[2].val() || {};
+      renderModulistica._fresh = true; renderModulistica(torneoKey, containerId); renderModulistica._fresh = false;
+    }).catch(function(){});
+  }
   el.innerHTML = data.moduli.map(function(m) {
+    var lock = _gLock(m);
+    if (lock) {
+      return '<div style="background:var(--card);border:2px dashed var(--border);border-radius:16px;padding:20px;display:flex;align-items:flex-start;gap:14px;opacity:.7">'
+        + '<div style="flex:1">'
+        + '<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:4px">🔒 '+m.titolo+'</div>'
+        + '<div style="font-size:11px;color:var(--text2);line-height:1.5">'+m.descrizione+'</div>'
+        + (m.immagine ? '<img src="'+_logoImgUrl(m.immagine)+'" style="width:100%;max-height:220px;object-fit:contain;margin:10px 0 4px;border-radius:8px;filter:grayscale(1)" onerror="this.style.display=\'none\'">' : '')
+        + '<div style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#f59e0b">'+lock+'</div>'
+        + '</div></div>';
+    }
     var href = m.link && m.link !== '#' ? m.link : null;
     var hex = m.colore || '#6b7280';
     var hexMap = {'#3b82f6':'59,130,246','#f59e0b':'245,158,11','#10b981':'16,185,129','#8b5cf6':'139,92,246','#ef4444':'239,68,68','#6b7280':'107,114,128'};
