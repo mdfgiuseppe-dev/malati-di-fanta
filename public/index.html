@@ -104,9 +104,13 @@ function idbRemove(key, callback) {
 
 <script>
 (function(){
+  // Le chiavi del "Ricordami" sopravvivono alla pulizia
+  var keep = ['_adminRemember', 'saved_credentials', 'saved_user_data'];
+  var saved = {};
+  keep.forEach(function(k){ var v = localStorage.getItem(k); if (v !== null) saved[k] = v; });
   localStorage.clear();
   sessionStorage.clear();
-  // IndexedDB persiste per il "Ricordami"
+  Object.keys(saved).forEach(function(k){ localStorage.setItem(k, saved[k]); });
 })();
 </script>
 <meta charset="UTF-8">
