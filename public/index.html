@@ -4640,7 +4640,7 @@ function admRenderRosaEditor(players, torneoKey, legaKey, squadra) {
     +'</div>'
     +'<table style="width:100%;min-width:320px;border-collapse:collapse;table-layout:auto">'
     +'<thead><tr style="background:var(--bg2);font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3)">'
-    +'<th style="padding:7px 10px;width:12%">Ruolo</th><th style="padding:7px 10px;width:28%">Nome</th><th style="padding:7px 10px;width:25%">Club Reale</th><th style="padding:7px 10px;width:12%;text-align:right">Costo</th><th style="padding:7px 10px;width:18%">Scadenza</th><th style="width:5%"></th>'
+    +'<th style="padding:7px 10px;width:12%">Ruolo</th><th style="padding:7px 10px;width:28%">Nome</th><th style="padding:7px 10px;width:25%">Club Reale</th><th style="padding:7px 10px;width:18%">Scadenza</th><th style="width:5%"></th>'
     +'</tr></thead><tbody>';
   players.forEach(function(p, i) {
     var t=torneoKey,l=legaKey,s=squadra,oi=p._origIdx>=0?p._origIdx:i;
@@ -4648,7 +4648,6 @@ function admRenderRosaEditor(players, torneoKey, legaKey, squadra) {
       +'<td style="padding:6px 10px"><input type="text" value="'+p.ruolo+'" data-t="'+t+'" data-l="'+l+'" data-s="'+s+'" data-i="'+oi+'" data-f="ruolo" onchange="admUpdatePlayerEl(this)" style="width:100%;background:transparent;border:none;color:var(--text);font-size:12px;outline:none"></td>'
       +'<td style="padding:6px 10px"><input type="text" value="'+p.nome+'" data-t="'+t+'" data-l="'+l+'" data-s="'+s+'" data-i="'+oi+'" data-f="nome" onchange="admUpdatePlayerEl(this)" style="width:100%;background:transparent;border:none;color:var(--text);font-weight:700;font-size:12px;outline:none"></td>'
       +'<td style="padding:6px 10px"><input type="text" value=\"'+(p.squadra||'')+'\" data-t="'+t+'" data-l="'+l+'" data-s="'+s+'" data-i="'+oi+'" data-f="squadra" onchange="admUpdatePlayerEl(this)" style="width:100%;background:transparent;border:none;color:var(--text2);font-size:12px;outline:none"></td>'
-      +'<td style="padding:6px 10px;text-align:right"><input type="number" value="'+(p.costo||0)+'" data-t="'+t+'" data-l="'+l+'" data-s="'+s+'" data-i="'+oi+'" data-f="costo" onchange="admUpdatePlayerEl(this)" style="width:60px;background:transparent;border:none;color:#10b981;font-size:13px;font-family:Bebas Neue,sans-serif;text-align:right;outline:none"></td>'
       
       +'<td style="padding:6px 8px"><input type="text" value="'+(p.scadenza||'')+'" data-t="'+t+'" data-l="'+l+'" data-s="'+s+'" data-i="'+oi+'" data-f="scadenza" onchange="admUpdatePlayerEl(this)" placeholder="gg/mm/aaaa" style="width:90px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:2px 4px;outline:none"></td>'
       +'<td style="padding:6px 4px;text-align:center"><button data-t="'+t+'" data-l="'+l+'" data-s="'+s+'" data-i="'+oi+'" onclick="admDeletePlayerEl(this)" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#ef4444;cursor:pointer;font-size:13px;border-radius:5px;width:28px;height:26px;line-height:1">🗑</button></td>'
