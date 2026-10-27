@@ -8152,6 +8152,7 @@ function admImportRoseExcel() {
   var _cb0=document.getElementById('adm-import-confirm'); if(_cb0) _cb0.style.display='none';
   if(!torneoKey||!legaKey){status.textContent='⚠️ Seleziona torneo e lega';status.style.color='#f59e0b';inp.value='';return;}
   status.textContent='⏳ Lettura file...';status.style.color='var(--text2)';
+  window._admImportFileName=file.name;
   if (/\.xlsx?$/i.test(file.name)) {
     var _go=function(){
       var rd=new FileReader();
@@ -8186,7 +8187,20 @@ function admImportRoseExcel() {
 }
 function admParseRoseRows(rows,torneoKey,legaKey,status){
   var rose={},currentLeft=null,currentRight=null,_skip=[];
-  for(var i=0;i<rows.length;i++){
+  // Formato "rosters": riga 1 = SQUADRA | costo | (vuota) ripetuto; sotto nome e costo; in fondo "totale"
+  var _ros=rows[0]&&String(rows[0][1]||'').trim().toLowerCase()==='costo';
+  if(_ros){
+    for(var rc=0;rc<rows[0].length;rc+=3){
+      var tn=String(rows[0][rc]||'').trim(); if(!tn) continue;
+      rose[tn]=rose[tn]||[];
+      for(var rr=1;rr<rows.length;rr++){
+        var pn=String((rows[rr]||[])[rc]||'').trim(); if(!pn) continue;
+        if(/^totale$/i.test(pn)) break;
+        rose[tn].push({ruolo:'',nome:pn.replace(/\s*\*+\s*$/,'').trim(),squadra:'',costo:parseInt((rows[rr]||[])[rc+1])||0});
+      }
+    }
+  }
+  for(var i=0;!_ros&&i<rows.length;i++){
     var r=rows[i];
     var v0=String(r[0]||'').trim(),v1=String(r[1]||'').trim(),v2=String(r[2]||'').trim(),v3=r[3];
     var v5=String(r[5]||'').trim(),v6=String(r[6]||'').trim(),v7=String(r[7]||'').trim(),v8=r[8];
@@ -8219,6 +8233,8 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
   // Data download indicata nel file (es. "Data download 10/07/2026")
   var _dl='';
   for(var di=0;di<Math.min(rows.length,10);di++){var _m=String((rows[di]||[])[0]||'').match(/download\s+(\d{1,2}\/\d{1,2}\/\d{4})/i);if(_m){_dl=_m[1];break;}}
+  // Formato "rosters": data nel nome del file (es. ...-rosters-1793130716455.xlsx = millisecondi)
+  if(!_dl){var _fm=String(window._admImportFileName||'').match(/(\d{13})/);if(_fm){var _fd=new Date(parseInt(_fm[1],10));if(!isNaN(_fd.getTime()))_dl=_itDate(_fd.toISOString());}}
   var infermeria=rose['INFERMERIA']||[]; delete rose['INFERMERIA'];
   if(torneoKey!=='slim'&&torneoKey!=='tsm'){
     // Squadre del file → squadre della lega (anche con nomi simili)
@@ -8241,8 +8257,14 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
       status.style.color='#ef4444';return;
     }
     var _pend={savedKeys:sk2,infermeria:infermeria,torneoKey:torneoKey,legaKey:legaKey,crediti:_cr,download:_dl};
+    // Ruolo e club mancanti (formato "rosters"): recuperati da rose e contratti già salvati
+    var _known={},_R0=_roseGet(torneoKey,legaKey).rose,_G0=_contrGet(torneoKey,legaKey).giocatori,_noRuolo=0;
+    Object.keys(_R0).forEach(function(s){(_R0[s]||[]).forEach(function(p){if(p.ruolo||p.squadra)_known[_plKey(p.nome)]={ruolo:p.ruolo,squadra:p.squadra};});});
+    Object.keys(_G0).forEach(function(k){var g=_G0[k],kk=_plKey(g.nome);if(!_known[kk]&&(g.ruolo||g.club))_known[kk]={ruolo:g.ruolo,squadra:g.club};});
+    function _fill(p){var k=_known[_plKey(p.nome)];if(k){if(!p.ruolo)p.ruolo=k.ruolo||'';if(!p.squadra)p.squadra=k.squadra||'';}if(!p.ruolo)_noRuolo++;}
+    Object.keys(sk2).forEach(function(s){sk2[s].forEach(_fill);}); infermeria.forEach(_fill);
     var _n=Object.values(sk2).reduce(function(a,b){return a+b.length;},0);
-    var _head='📋 '+_nomeL+': pronte <b>'+Object.keys(sk2).length+'</b> squadre ('+_n+' giocatori, infermeria '+infermeria.length+')'+(_dl?' · file del '+_dl:'')+(_apx.length?'<br>⚠️ Abbinate automaticamente: '+_apx.join(', '):'')+(_assenti.length?'<br>⚠️ Squadre della lega non presenti nel file (resteranno vuote): '+_assenti.join(', '):'')+(_skip.length?'<br>⚠️ Righe non riconosciute (non importate): '+_skip.join(', '):'');
+    var _head='📋 '+_nomeL+': pronte <b>'+Object.keys(sk2).length+'</b> squadre ('+_n+' giocatori, infermeria '+infermeria.length+')'+(_dl?' · file del '+_dl:'')+(_apx.length?'<br>⚠️ Abbinate automaticamente: '+_apx.join(', '):'')+(_assenti.length?'<br>⚠️ Squadre della lega non presenti nel file (resteranno vuote): '+_assenti.join(', '):'')+(_skip.length?'<br>⚠️ Righe non riconosciute (non importate): '+_skip.join(', '):'')+(_noRuolo?'<br>ℹ️ '+_noRuolo+' giocatori senza ruolo e club reale (il file non li contiene): puoi completarli in Rose Squadre':'');
     function _show(extra){
       window._admImportPending=_pend;
       status.innerHTML=_head+(extra||'')+'<br>Clicca Conferma';status.style.color='#f59e0b';
@@ -8313,7 +8335,8 @@ function admConfirmImport(){
       _cSave=_contrSave(tk,lk);
     }
     R.rose={}; Object.keys(sk).forEach(function(s){R.rose[s]=sk[s];}); R.rose.INFERMERIA=inf||[];
-    R.crediti=p.crediti||{}; R.aggiornato=oggi; if(p.download) R.download=p.download;
+    if(p.crediti&&Object.keys(p.crediti).length) R.crediti=p.crediti; // il formato "rosters" non ha i crediti: restano quelli salvati
+    R.aggiornato=oggi; if(p.download) R.download=p.download;
     var stI=document.getElementById('adm-import-status');
     Promise.all([_roseSave(tk,lk),_cSave]).then(function(){
       var n=Object.values(sk).reduce(function(a,b){return a+b.length;},0);
