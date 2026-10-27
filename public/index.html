@@ -3792,10 +3792,21 @@ function _contrGet(t, l) {
 }
 function _contrSave(t, l) { return fbDB.ref('data/contratti/'+t+'_'+l).set(JSON.stringify(_contrGet(t, l))); }
 // Chiave del giocatore nel registro: nome normalizzato; con omonimi nello stesso file si aggiunge il club
+// Con l'ID Fantacalcio (file "Lista calciatori") la chiave è "ID<numero>"
 function _contrKeys(players) {
   var seen = {};
-  players.forEach(function(x) { var k = _plKey(x.p.nome); if (seen[k]) k = k + ' | ' + _plKey(x.p.squadra); seen[k] = 1; x.k = k; });
+  players.forEach(function(x) {
+    var k = x.p.id ? 'ID' + x.p.id : _plKey(x.p.nome);
+    if (seen[k]) k = k + ' | ' + _plKey(x.p.squadra);
+    seen[k] = 1; x.k = k;
+  });
   return seen;
+}
+// Contratto attivo già presente per il giocatore: per chiave, oppure per nome se registrato senza ID
+function _contrFind(reg, x) {
+  if (reg[x.k] && reg[x.k].stato !== 'uscito') return x.k;
+  var n = _plKey(x.p.nome);
+  return Object.keys(reg).find(function(k){ var e = reg[k]; return e.stato !== 'uscito' && _plKey(e.nome) === n && (!e.id || !x.p.id || e.id === x.p.id) && (!x.p.id || !e.id); }) || null;
 }
 
 // Rose della lega (formato unico); accetta anche il vecchio { SQUADRA: [] } creato con la lega
@@ -8187,9 +8198,26 @@ function admImportRoseExcel() {
 }
 function admParseRoseRows(rows,torneoKey,legaKey,status){
   var rose={},currentLeft=null,currentRight=null,_skip=[];
+  // Formato "Lista calciatori": # | Nome | Fuori lista | Sq. | ... | R.MANTRA | ... | FantaSquadra | Costo (una riga per giocatore)
+  var _h0=(rows[0]||[]).map(function(x){return String(x).trim().toLowerCase();});
+  var _cFs=_h0.indexOf('fantasquadra');
+  var _ros=false;
+  if(_cFs>=0&&_h0.indexOf('nome')>=0){
+    _ros=true;
+    var _ci=function(n){return _h0.indexOf(n);},cId=_ci('#'),cNo=_ci('nome'),cFl=_ci('fuori lista'),cSq=_ci('sq.'),cR=_ci('r.'),cRm=_ci('r.mantra'),cCo=_ci('costo');
+    for(var lr=1;lr<rows.length;lr++){
+      var rw=rows[lr]||[],fs=String(rw[_cFs]||'').trim(),nm=String(rw[cNo]||'').trim();
+      if(!fs||!nm) continue; // svincolati
+      var ru=String((cRm>=0?rw[cRm]:'')||(cR>=0?rw[cR]:'')||'').trim().replace(/\//g,';');
+      var pp={ruolo:ru,nome:nm,squadra:String(cSq>=0?rw[cSq]:'').trim(),costo:parseInt(cCo>=0?rw[cCo]:0)||0};
+      if(cId>=0&&String(rw[cId]).trim()) pp.id=String(rw[cId]).trim();
+      if(cFl>=0&&String(rw[cFl]).trim()) pp.fuori=true;
+      (rose[fs]=rose[fs]||[]).push(pp);
+    }
+  }
   // Formato "rosters": riga 1 = SQUADRA | costo | (vuota) ripetuto; sotto nome e costo; in fondo "totale"
-  var _ros=rows[0]&&String(rows[0][1]||'').trim().toLowerCase()==='costo';
-  if(_ros){
+  if(!_ros) _ros=rows[0]&&String(rows[0][1]||'').trim().toLowerCase()==='costo';
+  if(_ros&&_cFs<0){
     for(var rc=0;rc<rows[0].length;rc+=3){
       var tn=String(rows[0][rc]||'').trim(); if(!tn) continue;
       rose[tn]=rose[tn]||[];
@@ -8277,11 +8305,12 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
       var reg=_contrGet(torneoKey,legaKey).giocatori, pl=[];
       Object.keys(sk2).forEach(function(s){sk2[s].forEach(function(p){pl.push({p:p,s:s});});});
       infermeria.forEach(function(p){pl.push({p:p,s:'INFERMERIA'});});
-      var keys=_contrKeys(pl);
+      _contrKeys(pl);
       var attivi=Object.keys(reg).filter(function(k){return reg[k].stato!=='uscito';});
-      var primo=!attivi.length;
-      var nuovi=pl.filter(function(x){return !(reg[x.k]&&reg[x.k].stato!=='uscito');});
-      var usciti=attivi.filter(function(k){return !keys[k];});
+      var primo=!attivi.length, trovati={};
+      pl.forEach(function(x){x.ek=_contrFind(reg,x);if(x.ek)trovati[x.ek]=1;});
+      var nuovi=pl.filter(function(x){return !x.ek;});
+      var usciti=attivi.filter(function(k){return !trovati[k];});
       _pend.contratti={players:pl,primo:primo,usciti:usciti};
       var acq=_dl||_itDate(new Date().toISOString());
       var inSt='padding:3px 6px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;outline:none';
@@ -8324,10 +8353,12 @@ function admConfirmImport(){
       var acqIn=((document.getElementById('adm-imp-acq')||{}).value||'').trim()||p.download||oggi;
       if(!C.primo&&!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(acqIn)){alert('Data acquisto non valida: usa il formato gg/mm/aaaa');return;}
       C.players.forEach(function(x){
-        var e=reg[x.k], base={nome:x.p.nome,ruolo:x.p.ruolo,club:x.p.squadra||'',squadra:x.s,stato:'rosa'};
+        var e=x.ek?reg[x.ek]:null, base={nome:x.p.nome,ruolo:x.p.ruolo,club:x.p.squadra||'',squadra:x.s,stato:'rosa'};
+        if(x.p.id) base.id=x.p.id;
         if(C.primo){ base.acquisto=''; base.scadenza='30/06/'+(y0||(new Date().getFullYear()+3)); }
-        else if(e&&e.stato!=='uscito'){ base.acquisto=e.acquisto||''; base.scadenza=e.scadenza; }
+        else if(e){ base.acquisto=e.acquisto||''; base.scadenza=e.scadenza; }
         else { base.acquisto=acqIn; base.scadenza=_contrScad(acqIn); }
+        if(x.ek&&x.ek!==x.k) delete reg[x.ek]; // registrato per nome: passa alla chiave per ID
         reg[x.k]=base; x.p.scadenza=base.scadenza;
       });
       C.usciti.forEach(function(k){ if(reg[k]){ reg[k].stato='uscito'; reg[k].uscita=oggi; } });
@@ -8756,7 +8787,7 @@ function admUpdatePlayer(t,l,s,i,field,val) {
   var pl = admGetPlayers(t,l,s); if(!pl[i]) return;
   pl[i][field]=val;
   if (field==='scadenza' && t!=='slim' && t!=='tsm') {
-    var reg=_contrGet(t,l).giocatori, k=_plKey(pl[i].nome);
+    var reg=_contrGet(t,l).giocatori, k=pl[i].id&&reg['ID'+pl[i].id]?'ID'+pl[i].id:_plKey(pl[i].nome);
     if (!reg[k]) k=Object.keys(reg).find(function(x){ return x.indexOf(k+' | ')===0 && reg[x].squadra===s; }) || k;
     if (reg[k]) { reg[k].scadenza=val; _contrSave(t,l); }
   }
