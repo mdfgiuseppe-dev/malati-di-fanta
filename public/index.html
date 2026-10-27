@@ -8185,16 +8185,22 @@ function admImportRoseExcel() {
   reader.readAsText(file,'UTF-8');
 }
 function admParseRoseRows(rows,torneoKey,legaKey,status){
-  var rose={},currentLeft=null,currentRight=null;
+  var rose={},currentLeft=null,currentRight=null,_skip=[];
   for(var i=0;i<rows.length;i++){
     var r=rows[i];
     var v0=String(r[0]||'').trim(),v1=String(r[1]||'').trim(),v2=String(r[2]||'').trim(),v3=r[3];
     var v5=String(r[5]||'').trim(),v6=String(r[6]||'').trim(),v7=String(r[7]||'').trim(),v8=r[8];
-    if(v0&&v0!=='Ruolo'&&!v0.startsWith('*')&&!v0.startsWith('http')&&!v0.startsWith('Crediti')&&v0.indexOf('Rose lega')<0&&v1===''&&v2===''){
-      currentLeft=v0;rose[currentLeft]=rose[currentLeft]||[];
-      if(v5&&v5!=='Ruolo'&&!v5.startsWith('Crediti')){currentRight=v5;rose[currentRight]=rose[currentRight]||[];}
+    // Nome squadra: solo se la riga sotto è l'intestazione "Ruolo | Calciatore | Squadra | Costo"
+    var _nx=rows[i+1]||[],_hL=String(_nx[0]||'').trim()==='Ruolo',_hR=String(_nx[5]||'').trim()==='Ruolo';
+    if((_hL&&v0&&v1===''&&v2==='')||(_hR&&v5&&v6==='')){
+      if(_hL&&v0){currentLeft=v0;rose[currentLeft]=rose[currentLeft]||[];}
+      if(_hR&&v5){currentRight=v5;rose[currentRight]=rose[currentRight]||[];}else if(_hL)currentRight=null;
       continue;
     }
+    // Righe con un solo testo che non sono né squadra né giocatore: segnalate nell'anteprima
+    var _sp=/^(Ruolo|Crediti|\*|http|Rose lega)/;
+    if(v0&&v1===''&&!_sp.test(v0))_skip.push('A'+(i+1)+': '+v0);
+    if(v5&&v6===''&&!_sp.test(v5))_skip.push('F'+(i+1)+': '+v5);
     if(v0==='Ruolo'||!v0) continue;
     // Salva crediti residui
     if(v0.startsWith('Crediti Residui')){
@@ -8232,7 +8238,7 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
     var _nomeL=((ADMIN_TORNEI.find(function(x){return x.key===torneoKey;})||{leghe:[]}).leghe.find(function(x){return x.key===legaKey;})||{}).label||legaKey;
     var _pend={savedKeys:sk2,infermeria:infermeria,torneoKey:torneoKey,legaKey:legaKey,crediti:_cr,download:_dl};
     var _n=Object.values(sk2).reduce(function(a,b){return a+b.length;},0);
-    var _head='📋 '+_nomeL+': pronte <b>'+Object.keys(sk2).length+'</b> squadre ('+_n+' giocatori, infermeria '+infermeria.length+')'+(_dl?' · file del '+_dl:'')+(_apx.length?'<br>⚠️ Abbinate automaticamente: '+_apx.join(', '):'')+(_assenti.length?'<br>⚠️ Squadre della lega non presenti nel file (resteranno vuote): '+_assenti.join(', '):'');
+    var _head='📋 '+_nomeL+': pronte <b>'+Object.keys(sk2).length+'</b> squadre ('+_n+' giocatori, infermeria '+infermeria.length+')'+(_dl?' · file del '+_dl:'')+(_apx.length?'<br>⚠️ Abbinate automaticamente: '+_apx.join(', '):'')+(_assenti.length?'<br>⚠️ Squadre della lega non presenti nel file (resteranno vuote): '+_assenti.join(', '):'')+(_skip.length?'<br>⚠️ Righe non riconosciute (non importate): '+_skip.join(', '):'');
     function _show(extra){
       window._admImportPending=_pend;
       status.innerHTML=_head+(extra||'')+'<br>Clicca Conferma';status.style.color='#f59e0b';
