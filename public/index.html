@@ -1070,6 +1070,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <div class="mnav-btn" onclick="showSection('coppe',this)">🏆 Coppe</div>
   <div class="mnav-btn" onclick="showSection('stadio',this)">🏟️ Stadio</div>
   <div class="mnav-btn" data-feat="sponsor" style="display:none" onclick="showSection('sponsor',this)">🤝 Sponsor</div>
+  <div class="mnav-btn" data-feat="contratti" style="display:none" onclick="showSection('contratti',this)">📝 Contratti</div>
   <div class="mnav-btn" onclick="showSection('multe',this)">⚠️ Multe</div>
   <div class="mnav-btn" onclick="showSection('modulistica',this)">📑 Moduli</div>
 </div>
@@ -1118,6 +1119,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <div class="nav-item" data-feat="sponsor" style="display:none" onclick="showSection('sponsor',this)">
     <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
     Sponsor
+  </div>
+  <div class="nav-item" data-feat="contratti" style="display:none" onclick="showSection('contratti',this)">
+    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+    Contratti
   </div>
   <div class="nav-item" onclick="showSection('multe',this)">
     <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -1298,6 +1303,13 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <div id="s-sponsor" class="section">
     <div style="padding:40px 20px;text-align:center;color:var(--text3);font-size:13px">🤝 Sezione Sponsor in preparazione.</div>
   </div><!-- /s-sponsor -->
+
+  <!-- ===== CONTRATTI ===== -->
+  <div id="s-contratti" class="section">
+    <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px">📝 <span style="color:#10b981">Contratti</span></div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:16px">Scadenza dei contratti dei giocatori della lega, dalla più vicina</div>
+    <div id="u-contratti-body"></div>
+  </div><!-- /s-contratti -->
 
   <div id="s-multe" class="section">
     <!-- TITOLO -->
@@ -3821,6 +3833,41 @@ function _infGet(t, l) {
   return window.FB_INFERMERIA[t+'_'+l] || (window.FB_INFERMERIA[t+'_'+l] = { giocatori: {} });
 }
 function _infSave(t, l) { return fbDB.ref('data/infermeria/'+t+'_'+l).set(JSON.stringify(_infGet(t, l))); }
+
+// Elenco contratti dei giocatori in rosa: scadenza più vicina in alto, a parità per nome
+function _contrDataNum(s) { var m = String(s || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); return m ? (+m[3]) * 10000 + (+m[2]) * 100 + (+m[1]) : 99999999; }
+function _contrElenco(t, l, squadra) {
+  var reg = _contrGet(t, l).giocatori;
+  return Object.keys(reg).filter(function(k){ return reg[k].stato !== 'uscito' && (!squadra || reg[k].squadra === squadra); })
+    .map(function(k){ return { k: k, c: reg[k] }; })
+    .sort(function(a, b){ return (_contrDataNum(a.c.scadenza) - _contrDataNum(b.c.scadenza)) || String(a.c.nome).localeCompare(String(b.c.nome)); });
+}
+// Tabella contratti (admin con scadenza modificabile, utente in sola lettura)
+function _contrTabella(t, l, squadra, admin) {
+  var el = _contrElenco(t, l, squadra), teams = admGetTeams(t, l);
+  var fSel = 'padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none';
+  var h = '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">'
+    + '<select onchange="'+(admin?'window._admContrSq=this.value;admSocRender()':'window._uContrSq=this.value;renderContratti()')+'" style="'+fSel+'"><option value="">Tutte le squadre</option>'
+    + teams.concat(['INFERMERIA']).map(function(n){ return '<option value="'+n+'"'+(n===squadra?' selected':'')+'>'+n+'</option>'; }).join('') + '</select>'
+    + '<span style="font-size:11px;color:var(--text3)">'+el.length+' giocatori · <span style="color:#ef4444">■</span> scaduto · <span style="color:#f59e0b">■</span> scade a fine stagione · <span style="color:#10b981">■</span> oltre</span></div>';
+  if (!el.length) return h + '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nessun contratto. I contratti si creano con l\'import delle rose.</div>';
+  var th = 'padding:7px 8px;text-align:left;font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3)';
+  h += '<div class="card" style="padding:0;overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:340px"><thead><tr style="background:var(--bg2)">'
+    + '<th style="'+th+'">Scadenza</th><th style="'+th+'">Giocatore</th><th style="'+th+'">Ruolo</th><th style="'+th+'">Club</th><th style="'+th+'">Squadra</th></tr></thead><tbody>';
+  el.forEach(function(x, i) {
+    var c = x.c, sc = scadenzaColor(c.scadenza) || { bg: 'var(--bg2)', color: 'var(--text2)' };
+    var cell = admin
+      ? '<input type="text" value="'+(c.scadenza||'')+'" data-i="'+i+'" onchange="admContrSetScad(this)" placeholder="gg/mm/aaaa" style="width:92px;padding:3px 6px;border-radius:5px;border:1px solid '+sc.color+';background:'+sc.bg+';color:'+sc.color+';font-size:11px;font-weight:700;outline:none">'
+      : '<span style="background:'+sc.bg+';color:'+sc.color+';border-radius:4px;padding:2px 6px;font-weight:700;font-size:11px;white-space:nowrap">'+(sc.scaduto?'⛔ ':'')+(c.scadenza||'—')+'</span>';
+    h += '<tr style="border-bottom:1px solid var(--border)'+(sc.scaduto?';background:rgba(239,68,68,.06)':'')+'">'
+      + '<td style="padding:7px 8px">'+cell+'</td>'
+      + '<td style="padding:7px 8px;font-weight:700;font-size:12px">'+c.nome+'</td>'
+      + '<td style="padding:7px 8px">'+(c.ruolo&&typeof roleBadge==='function'?roleBadge(c.ruolo):(c.ruolo||''))+'</td>'
+      + '<td style="padding:7px 8px;font-size:11px;color:var(--text2)">'+(c.club||'')+'</td>'
+      + '<td style="padding:7px 8px;font-size:11px;font-weight:700">'+(c.squadra||'')+'</td></tr>';
+  });
+  return h + '</tbody></table></div>';
+}
 
 // Rose della lega (formato unico); accetta anche il vecchio { SQUADRA: [] } creato con la lega
 function _roseNorm(v) {
@@ -8473,7 +8520,7 @@ function admConfirmImport(){
   if(cT&&cT.value===tk&&cL&&cL.value===lk) admLoadRoseSquadre();
 }
 // ADMIN — Gestione Società (schede per squadra: Allenatori; in futuro Gettoni, Quote)
-var ADM_SOC_TABS = [{ key: 'allenatori', label: '👔 Allenatori' }, { key: 'gettoni', label: '🎫 Gettoni' }, { key: 'infermeria', label: '🏥 Infermeria' }, { key: 'utenti', label: '👤 Utenti' }];
+var ADM_SOC_TABS = [{ key: 'allenatori', label: '👔 Allenatori' }, { key: 'gettoni', label: '🎫 Gettoni' }, { key: 'infermeria', label: '🏥 Infermeria' }, { key: 'contratti', label: '📝 Contratti' }, { key: 'utenti', label: '👤 Utenti' }];
 window._admSocTab = 'allenatori';
 function admSocInit() {
   var sel = document.getElementById('adm-soc-torneo'); if (!sel) return;
@@ -8508,6 +8555,30 @@ function admSocRender() {
   if (window._admSocTab === 'allenatori') admSocRenderAllenatori(tk, lk, body);
   if (window._admSocTab === 'gettoni') admSocRenderGettoni(tk, lk, body);
   if (window._admSocTab === 'infermeria') admSocRenderInfermeria(tk, lk, body);
+  if (window._admSocTab === 'contratti') admSocRenderContratti(tk, lk, body);
+}
+function admSocRenderContratti(tk, lk, body) {
+  if (!_torneoFeat(tk, 'contratti')) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Contratti non abilitati per questo torneo (Tornei &amp; Leghe → 📝 Contratti abilitati).</div>'; return; }
+  window._admContrList = _contrElenco(tk, lk, window._admContrSq || '');
+  body.innerHTML = _contrTabella(tk, lk, window._admContrSq || '', true);
+  // dati aggiornati da Firebase
+  if (!admSocRenderContratti._fresh) {
+    fbDB.ref('data/contratti/'+tk+'_'+lk).once('value').then(function(s){
+      window.FB_CONTRATTI = window.FB_CONTRATTI || {}; window.FB_CONTRATTI[tk+'_'+lk] = _contrNorm(s.val());
+      admSocRenderContratti._fresh = true; if (window._admSocTab === 'contratti') admSocRender(); admSocRenderContratti._fresh = false;
+    }).catch(function(){});
+  }
+}
+// Modifica a mano della scadenza: registro contratti e rosa
+function admContrSetScad(el) {
+  var v = el.value.trim(), x = (window._admContrList || [])[+el.dataset.i]; if (!x) return;
+  if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(v)) { alert('Formato data: gg/mm/aaaa'); el.value = x.c.scadenza || ''; return; }
+  var tk = document.getElementById('adm-soc-torneo').value, lk = document.getElementById('adm-soc-lega').value;
+  x.c.scadenza = v;
+  var R = _roseGet(tk, lk).rose;
+  Object.keys(R).forEach(function(s){ (R[s] || []).forEach(function(p){ if (_plKey(p.nome) === _plKey(x.c.nome)) p.scadenza = v; }); });
+  Promise.all([_contrSave(tk, lk), _roseSave(tk, lk)]).then(function(){ admSocRenderContratti._fresh = true; admSocRender(); admSocRenderContratti._fresh = false; })
+    .catch(function(e){ alert('Errore salvataggio: '+e.message); });
 }
 // ── Infermeria: squadra fanta che ha usufruito e sostituto acquistato ──
 window._admInfTmp = {};
@@ -10512,6 +10583,15 @@ function renderMulte(){
   });
   el.innerHTML=h;
 }
+// Lato utente: elenco contratti della lega aperta (dati aggiornati da Firebase)
+function renderContratti(fresh) {
+  var el = document.getElementById('u-contratti-body'); if (!el) return;
+  var t = window._currentTourneyKey, l = (typeof currentLeagueKey !== 'undefined' && currentLeagueKey) ? currentLeagueKey : 'it';
+  el.innerHTML = _contrTabella(t, l, window._uContrSq || '', false);
+  if (!fresh) fbDB.ref('data/contratti/'+t+'_'+l).once('value').then(function(s){
+    window.FB_CONTRATTI = window.FB_CONTRATTI || {}; window.FB_CONTRATTI[t+'_'+l] = _contrNorm(s.val()); renderContratti(true);
+  }).catch(function(){});
+}
 function showSection(id,el){
   document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
   var sec=document.getElementById('s-'+id);if(sec)sec.classList.add('active');
@@ -10523,6 +10603,7 @@ function showSection(id,el){
   else if(id==='stadio')slimRenderStadio();
   else if(id==='multe')renderMulte();
   else if(id==='coppe'){initCoppaLogos();closeBracket();}
+  else if(id==='contratti') renderContratti();
   else if(id==='modulistica'){ renderModulistica(_modKey(window._currentTourneyKey||'slim', window.currentLeagueKey||'it'), 'slim-modulistica-body'); }
 }
 var currentTeam='SALERNITANA',currentFilter='ALL';
