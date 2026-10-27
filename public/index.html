@@ -662,8 +662,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 @media(max-width:768px){
   .tournaments{grid-template-columns:repeat(2,1fr)!important;gap:10px!important;}
-  .t-logo-area{height:78px!important;}
-  .t-logo-area img{max-height:50px!important;}
+  .t-logo-area{height:120px!important;}
+  .t-logo-area img{max-height:96px!important;}
   .t-name{font-size:18px!important;line-height:1.3!important;display:flex!important;justify-content:center!important;align-items:center!important;width:100%!important;height:50px!important;}
   .t-body{padding:10px 8px!important;}
   .t-stats{display:flex!important;width:100%;}
@@ -674,8 +674,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 @media(max-width:480px){
   .tournaments{grid-template-columns:1fr 1fr!important;gap:8px!important;}
   .t-card{border-radius:12px!important;}
-  .t-logo-area{height:66px!important;}
-  .t-logo-area img{max-height:44px!important;}
+  .t-logo-area{height:110px!important;}
+  .t-logo-area img{max-height:88px!important;}
   .t-name{font-size:18px!important;display:flex!important;justify-content:center!important;align-items:center!important;width:100%!important;height:50px!important;}
   .t-body{padding:8px 6px!important;}
   .t-cta{font-size:9px!important;padding:6px 4px!important;}
@@ -1192,7 +1192,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
           <th style="padding:7px 10px;text-align:left;width:13%">Ruolo</th>
           <th style="padding:7px 8px;text-align:left;width:35%">Giocatore</th>
           <th style="padding:7px 8px;text-align:left;width:25%">Club Reale</th>
-          <th style="padding:7px 10px;text-align:right;width:13%">Costo</th>
           <th data-feat="contratti" style="padding:7px 8px;text-align:center;width:14%;display:none">Scadenza</th>
         </tr></thead>
         <tbody id="tbody"></tbody>
@@ -10613,7 +10612,7 @@ function renderTable(){
   var _ro=['Por','Dc','B','Dd','Ds','E','M','C','T','W','A','Pc'];
   pl=pl.slice().sort(function(a,b){var ia=_ro.indexOf(a.ruolo.split(';')[0].trim()),ib=_ro.indexOf(b.ruolo.split(';')[0].trim());if(ia!==ib)return(ia>=0?ia:99)-(ib>=0?ib:99);return a.nome.localeCompare(b.nome);});
   if(empty)empty.style.display='none';
-  if(tbody)tbody.innerHTML=pl.map(function(p){var col=p.costo>=50?'#ef4444':p.costo>=20?'#f59e0b':'var(--text2)';return'<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 10px">'+roleBadge(p.ruolo)+'</td><td style="padding:8px 8px;font-weight:700;font-size:13px">'+p.nome+'</td><td style="padding:8px 8px;font-size:12px;color:var(--text2)">'+(REAL_NAMES[p.squadra]||p.squadra||'--')+'</td><td style="padding:8px 10px;text-align:right;font-family:\'Bebas Neue\';font-size:17px;color:'+col+'">'+p.costo+'<span style="font-size:10px;font-weight:700;color:var(--text3);margin-left:1px">cr</span></td>'+(_torneoFeat(window._currentTourneyKey,'contratti')?'<td style="padding:8px 8px;font-size:11px;text-align:center">'+(p.scadenza?(function(){var _sc=scadenzaColor(p.scadenza)||{bg:'rgba(239,68,68,.15)',color:'#ef4444'};return '<span style="background:'+_sc.bg+';color:'+_sc.color+';border-radius:4px;padding:2px 5px;font-weight:700;font-size:10px">'+(_sc.scaduto?'⛔ ':'⏳ ')+p.scadenza+'</span>';})():'')+'</td>':'')+'</tr>';}).join('');
+  if(tbody)tbody.innerHTML=pl.map(function(p){var col=p.costo>=50?'#ef4444':p.costo>=20?'#f59e0b':'var(--text2)';return'<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 10px">'+roleBadge(p.ruolo)+'</td><td style="padding:8px 8px;font-weight:700;font-size:13px">'+p.nome+'</td><td style="padding:8px 8px;font-size:12px;color:var(--text2)">'+(REAL_NAMES[p.squadra]||p.squadra||'--')+'</td>'+(_torneoFeat(window._currentTourneyKey,'contratti')?'<td style="padding:8px 8px;font-size:11px;text-align:center">'+(p.scadenza?(function(){var _sc=scadenzaColor(p.scadenza)||{bg:'rgba(239,68,68,.15)',color:'#ef4444'};return '<span style="background:'+_sc.bg+';color:'+_sc.color+';border-radius:4px;padding:2px 5px;font-weight:700;font-size:10px">'+(_sc.scaduto?'⛔ ':'⏳ ')+p.scadenza+'</span>';})():'')+'</td>':'')+'</tr>';}).join('');
 }
 var showAllQual=false;
 function toggleAll(){showAllQual=!showAllQual;renderQualTable();}
