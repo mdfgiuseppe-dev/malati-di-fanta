@@ -8319,9 +8319,29 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
       status.innerHTML=_head+(extra||'')+'<br>Clicca Conferma';status.style.color='#f59e0b';
       var _cb=document.getElementById('adm-import-confirm'); if(_cb) _cb.style.display='inline-block';
     }
-    if(!_torneoFeat(torneoKey,'contratti')){_show();return;}
-    status.innerHTML=_head+'<br>⏳ Controllo contratti...';
-    fbDB.ref('data/contratti/'+torneoKey+'_'+legaKey).once('value').then(function(snap){
+    status.innerHTML=_head+'<br>⏳ Controllo infermeria e contratti...';
+    var _cOn=_torneoFeat(torneoKey,'contratti');
+    Promise.all([fbDB.ref('data/infermeria/'+torneoKey+'_'+legaKey).once('value'),_cOn?fbDB.ref('data/contratti/'+torneoKey+'_'+legaKey).once('value'):null]).then(function(res){
+      // Infermeria dell'app: ha la precedenza sul file
+      window.FB_INFERMERIA=window.FB_INFERMERIA||{}; window.FB_INFERMERIA[torneoKey+'_'+legaKey]=_infNorm(res[0].val());
+      var irec=_infGet(torneoKey,legaKey).giocatori, infC=[];
+      var inInf={}; infermeria.forEach(function(p){inInf[_plKey(p.nome)]=1;});
+      Object.keys(irec).forEach(function(k){
+        if(inInf[k]) return;
+        var t0=Object.keys(sk2).find(function(s){return sk2[s].some(function(p){return _plKey(p.nome)===k;});});
+        infC.push({k:k,nome:irec[k].giocatore,team:t0||'',rec:irec[k]});
+      });
+      _pend.infConflitti=infC;
+      var iSt='padding:3px 6px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;outline:none';
+      var infHtml=infC.length?'<br>🏥 <b>Infermeria</b>: '+infC.length+' giocatori in infermeria nell\'app non risultano in infermeria nel file'
+        +infC.map(function(c,ci){
+          var info=c.nome+' — nel file: '+(c.team||'non presente')+' — in app: infermeria ('+(c.rec.squadra||'?')+(c.rec.sostituto?', sostituito da '+c.rec.sostituto:'')+')';
+          return '<div style="display:flex;align-items:center;gap:6px;margin:3px 0;flex-wrap:wrap"><span>'+info+'</span>'
+            +(c.team?'<select data-infc="'+ci+'" style="'+iSt+'"><option value="resta">Resta in infermeria</option><option value="rientrato">È rientrato in squadra</option></select>'
+              :'<span style="color:var(--text3)">(non più nella lega: la riga verrà eliminata)</span>')+'</div>';
+        }).join(''):'';
+      if(!_cOn){_show(infHtml);return;}
+      var snap=res[1];
       window.FB_CONTRATTI=window.FB_CONTRATTI||{}; window.FB_CONTRATTI[torneoKey+'_'+legaKey]=_contrNorm(snap.val());
       var reg=_contrGet(torneoKey,legaKey).giocatori, pl=[];
       Object.keys(sk2).forEach(function(s){sk2[s].forEach(function(p){pl.push({p:p,s:s});});});
@@ -8350,8 +8370,8 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
               :nuovi.map(function(y){return y.p.nome+' ('+y.s+')';}).join(', '))+'</details>':'')
           +(usciti.length?'<details style="margin-top:4px"><summary style="cursor:pointer">Usciti</summary>'+usciti.map(function(k){return reg[k].nome+(reg[k].squadra?' ('+reg[k].squadra+')':'');}).join(', ')+'</details>':'');
       }
-      _show(x);
-    }).catch(function(e){status.textContent='❌ Errore lettura contratti: '+e.message;status.style.color='#ef4444';});
+      _show(infHtml+x);
+    }).catch(function(e){status.textContent='❌ Errore lettura infermeria/contratti: '+e.message;status.style.color='#ef4444';});
     return;
   }
   var savedKeys={};
@@ -8372,7 +8392,20 @@ function admConfirmImport(){
   var sk=p.savedKeys,inf=p.infermeria,tk=p.torneoKey,lk=p.legaKey;
   if(tk!=='slim'&&tk!=='tsm'){
     var R=_roseGet(tk,lk), oggi=_itDate(new Date().toISOString());
-    var C=p.contratti, _cSave=null;
+    var C=p.contratti, _cSave=null, _iSave=null;
+    // Infermeria dell'app contro il file: "resta" lo tiene in infermeria, "rientrato"/assente cancella la riga
+    if(p.infConflitti&&p.infConflitti.length){
+      var IR=_infGet(tk,lk).giocatori; inf=inf||[];
+      p.infConflitti.forEach(function(c,ci){
+        var s0=document.querySelector('#adm-import-status select[data-infc="'+ci+'"]');
+        var ch=c.team?(s0?s0.value:'resta'):'assente';
+        if(ch==='resta'){
+          var arr=sk[c.team]||[], ix=arr.findIndex(function(q){return _plKey(q.nome)===c.k;});
+          if(ix>=0){ var mv=arr.splice(ix,1)[0]; inf.push(mv); if(C) C.players.forEach(function(x){ if(x.p===mv) x.s='INFERMERIA'; }); }
+        } else delete IR[c.k];
+      });
+      _iSave=_infSave(tk,lk);
+    }
     if(C){
       var reg=_contrGet(tk,lk).giocatori;
       var y0=parseInt((document.getElementById('adm-imp-scad0')||{}).value,10);
@@ -8405,7 +8438,7 @@ function admConfirmImport(){
     if(p.crediti&&Object.keys(p.crediti).length) R.crediti=p.crediti; // il formato "rosters" non ha i crediti: restano quelli salvati
     R.aggiornato=oggi; if(p.download) R.download=p.download;
     var stI=document.getElementById('adm-import-status');
-    Promise.all([_roseSave(tk,lk),_cSave]).then(function(){
+    Promise.all([_roseSave(tk,lk),_cSave,_iSave]).then(function(){
       var n=Object.values(sk).reduce(function(a,b){return a+b.length;},0);
       if(stI){stI.textContent='✅ Salvate su Firebase '+Object.keys(sk).length+' squadre ('+n+' giocatori)';stI.style.color='#10b981';}
     }).catch(function(e){ if(stI){stI.textContent='❌ Errore salvataggio: '+e.message;stI.style.color='#ef4444';} });
