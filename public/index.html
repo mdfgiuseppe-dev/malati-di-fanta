@@ -3812,6 +3812,17 @@ function _contrFind(reg, x, used) {
   return null;
 }
 
+// Infermeria: data/infermeria/{t_l} = JSON { giocatori: { NOME_NORMALIZZATO: { giocatore, squadra, sostituto, data } } }
+function _infNorm(v) {
+  if (typeof v === 'string') { try { v = JSON.parse(v); } catch(e) { v = null; } }
+  return (v && typeof v === 'object' && v.giocatori) ? v : { giocatori: {} };
+}
+function _infGet(t, l) {
+  window.FB_INFERMERIA = window.FB_INFERMERIA || {};
+  return window.FB_INFERMERIA[t+'_'+l] || (window.FB_INFERMERIA[t+'_'+l] = { giocatori: {} });
+}
+function _infSave(t, l) { return fbDB.ref('data/infermeria/'+t+'_'+l).set(JSON.stringify(_infGet(t, l))); }
+
 // Rose della lega (formato unico); accetta anche il vecchio { SQUADRA: [] } creato con la lega
 function _roseNorm(v) {
   if (typeof v === 'string') { try { v = JSON.parse(v); } catch(e) { v = null; } }
@@ -3874,6 +3885,13 @@ function loadDataFromFirebase() {
   fbLoadKey('rose', function(val) {
     if (!val || typeof val !== 'object') return;
     Object.keys(val).forEach(function(k) { window.FB_ROSE[k] = _roseNorm(val[k]); });
+  });
+
+  // Infermeria per lega: data/infermeria/{t_l}
+  window.FB_INFERMERIA = window.FB_INFERMERIA || {};
+  fbLoadKey('infermeria', function(val) {
+    if (!val || typeof val !== 'object') return;
+    Object.keys(val).forEach(function(k) { window.FB_INFERMERIA[k] = _infNorm(val[k]); });
   });
 
   // Contratti per lega: data/contratti/{t_l}
@@ -7565,7 +7583,7 @@ function admRemoveLega(ti, li) {
   // Rimuovi i dati della lega da Firebase
   var _fk = tk+'_'+lk;
   fbDB.ref('data/tornei/'+tk+'/'+lk).remove();
-  ['calendario','calendario_schedule','punteggi','totali','stadio','rose','crediti','gettoni'].forEach(function(n){ fbDB.ref('data/'+n+'/'+_fk).remove(); });
+  ['calendario','calendario_schedule','punteggi','totali','stadio','rose','crediti','gettoni','contratti','infermeria'].forEach(function(n){ fbDB.ref('data/'+n+'/'+_fk).remove(); });
   fbDB.ref('data/images/loghi/squadre/'+tk+'/'+lk).remove();
   fbDB.ref('data/images/loghi/leghe/'+_fk).remove();
   ['FB_SQUADRE','FB_CALENDARIO','FB_SCHEDULE','FB_PUNTEGGI','FB_TOTALI','FB_STADIO','FB_GETTONI','FB_ALLENATORI'].forEach(function(v){ if (window[v]) delete window[v][_fk]; });
@@ -8424,7 +8442,7 @@ function admConfirmImport(){
   if(cT&&cT.value===tk&&cL&&cL.value===lk) admLoadRoseSquadre();
 }
 // ADMIN — Gestione Società (schede per squadra: Allenatori; in futuro Gettoni, Quote)
-var ADM_SOC_TABS = [{ key: 'allenatori', label: '👔 Allenatori' }, { key: 'gettoni', label: '🎫 Gettoni' }, { key: 'utenti', label: '👤 Utenti' }];
+var ADM_SOC_TABS = [{ key: 'allenatori', label: '👔 Allenatori' }, { key: 'gettoni', label: '🎫 Gettoni' }, { key: 'infermeria', label: '🏥 Infermeria' }, { key: 'utenti', label: '👤 Utenti' }];
 window._admSocTab = 'allenatori';
 function admSocInit() {
   var sel = document.getElementById('adm-soc-torneo'); if (!sel) return;
@@ -8458,6 +8476,90 @@ function admSocRender() {
   if (!tk || !lk) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Seleziona torneo e lega.</div>'; return; }
   if (window._admSocTab === 'allenatori') admSocRenderAllenatori(tk, lk, body);
   if (window._admSocTab === 'gettoni') admSocRenderGettoni(tk, lk, body);
+  if (window._admSocTab === 'infermeria') admSocRenderInfermeria(tk, lk, body);
+}
+// ── Infermeria: squadra fanta che ha usufruito e sostituto acquistato ──
+window._admInfTmp = {};
+function admSocRenderInfermeria(tk, lk, body) {
+  var R = _roseGet(tk, lk).rose, infK = _roseKey(R, 'INFERMERIA'), inf = R[infK] || [];
+  var rec = _infGet(tk, lk).giocatori, teams = admGetTeams(tk, lk);
+  var sel = 'padding:6px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none;width:100%';
+  var btn = 'padding:6px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;';
+  window._admInfList = inf.map(function(p){ return p.nome; });
+  var h = '';
+  if (!inf.length) h += '<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Nessun giocatore in infermeria.</div>';
+  else h += '<div class="card" style="padding:0;overflow:hidden">' + inf.map(function(p, i) {
+    var k = _plKey(p.nome), r = rec[k] || {}, tmp = window._admInfTmp[k] || {};
+    var sq = tmp.squadra !== undefined ? tmp.squadra : (r.squadra || ''), so = tmp.sostituto !== undefined ? tmp.sostituto : (r.sostituto || '');
+    var pls = sq ? (R[_roseKey(R, sq)] || []).slice().sort(function(a,b){ return a.nome.localeCompare(b.nome); }) : [];
+    return '<div style="padding:10px 14px;border-bottom:1px solid var(--border)">'
+      +'<div style="font-weight:700;font-size:13px;margin-bottom:8px">🏥 '+p.nome+' <span style="font-weight:400;font-size:11px;color:var(--text3)">'+[p.squadra, p.ruolo].filter(Boolean).join(' · ')+'</span>'
+      +(r.data?'<span style="font-weight:400;font-size:10px;color:var(--text3)"> · dal '+r.data+'</span>':'')+'</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">'
+      +'<div style="flex:1 1 140px"><div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:3px">Squadra fanta</div>'
+      +'<select data-i="'+i+'" onchange="admInfSetSquadra(this)" style="'+sel+'"><option value="">— Scegli —</option>'+teams.map(function(t){ return '<option value="'+t+'"'+(t===sq?' selected':'')+'>'+t+'</option>'; }).join('')+'</select></div>'
+      +'<div style="flex:1 1 160px"><div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:3px">Sostituito da</div>'
+      +'<select data-i="'+i+'" onchange="admInfSetSost(this)" style="'+sel+'"'+(sq?'':' disabled')+'><option value="">'+(sq?'— Scegli —':'prima la squadra')+'</option>'
+      +pls.map(function(x){ return '<option value="'+x.nome+'"'+(x.nome===so?' selected':'')+'>'+x.nome+(x.squadra?' ('+x.squadra+')':'')+'</option>'; }).join('')+'</select></div>'
+      +'<button data-i="'+i+'" onclick="admInfSave(this)" style="'+btn+'background:#10b981;color:#fff;border:none">💾 Salva</button>'
+      +'<button data-i="'+i+'" onclick="admInfElimina(this)" style="'+btn+'background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#ef4444">🗑 Elimina</button>'
+      +'</div></div>';
+  }).join('') + '</div>';
+  // + Aggiungi: giocatore di una delle squadre spostato in infermeria
+  var opts = teams.map(function(t) {
+    var pl = (R[_roseKey(R, t)] || []).slice().sort(function(a,b){ return a.nome.localeCompare(b.nome); });
+    return pl.length ? '<optgroup label="'+t+'">'+pl.map(function(x){ return '<option value="'+t+'|||'+x.nome+'">'+x.nome+(x.squadra?' ('+x.squadra+')':'')+'</option>'; }).join('')+'</optgroup>' : '';
+  }).join('');
+  h += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;align-items:center">'
+    +'<select id="adm-inf-add" style="'+sel+';flex:1 1 220px;width:auto"><option value="">+ Aggiungi giocatore in infermeria…</option>'+opts+'</select>'
+    +'<button onclick="admInfAggiungi()" style="'+btn+'background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#10b981">+ Aggiungi</button></div>';
+  body.innerHTML = h;
+}
+function _admInfCtx(el) {
+  var tk = document.getElementById('adm-soc-torneo').value, lk = document.getElementById('adm-soc-lega').value;
+  var nome = (window._admInfList || [])[+el.dataset.i];
+  return { tk: tk, lk: lk, nome: nome, k: _plKey(nome) };
+}
+function admInfSetSquadra(el) { var c = _admInfCtx(el); window._admInfTmp[c.k] = { squadra: el.value, sostituto: '' }; admSocRender(); }
+function admInfSetSost(el) { var c = _admInfCtx(el); var t = window._admInfTmp[c.k] = window._admInfTmp[c.k] || {}; if (t.squadra === undefined) t.squadra = ((_infGet(c.tk, c.lk).giocatori[c.k]) || {}).squadra || ''; t.sostituto = el.value; }
+function _admInfMsg(txt, col) { var m = document.createElement('div'); m.textContent = txt; m.style.cssText = 'position:fixed;top:70px;right:20px;background:'+(col||'#10b981')+';color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999'; document.body.appendChild(m); setTimeout(function(){ m.remove(); }, 2000); }
+function admInfSave(el) {
+  var c = _admInfCtx(el), rec = _infGet(c.tk, c.lk).giocatori, old = rec[c.k] || {}, t = window._admInfTmp[c.k] || {};
+  var sq = t.squadra !== undefined ? t.squadra : (old.squadra || ''), so = t.sostituto !== undefined ? t.sostituto : (old.sostituto || '');
+  if (!sq) { alert('Scegli la squadra fanta'); return; }
+  rec[c.k] = { giocatore: c.nome, squadra: sq, sostituto: so, data: old.data || _itDate(new Date().toISOString()) };
+  delete window._admInfTmp[c.k];
+  _infSave(c.tk, c.lk).then(function(){ _admInfMsg('✅ Infermeria salvata'); admSocRender(); }).catch(function(e){ alert('Errore salvataggio: '+e.message); });
+}
+// Il giocatore torna subito nella rosa della sua squadra; la riga viene tolta da Firebase
+function admInfElimina(el) {
+  var c = _admInfCtx(el), rec = _infGet(c.tk, c.lk).giocatori, r = rec[c.k] || {}, t = window._admInfTmp[c.k] || {};
+  var sq = r.squadra || t.squadra || '';
+  if (!sq) { alert('Scegli prima la squadra fanta in cui torna '+c.nome); return; }
+  if (!confirm(c.nome+' torna nella rosa di '+sq+'.\nLa riga dell\'infermeria viene eliminata. Continuare?')) return;
+  var R = _roseGet(c.tk, c.lk).rose, infK = _roseKey(R, 'INFERMERIA'), inf = R[infK] || [];
+  var idx = inf.findIndex(function(p){ return p.nome === c.nome; });
+  if (idx >= 0) { var p = inf.splice(idx, 1)[0]; var tk2 = _roseKey(R, sq); (R[tk2] = R[tk2] || []).push(p); }
+  delete rec[c.k]; delete window._admInfTmp[c.k];
+  var reg = _contrGet(c.tk, c.lk).giocatori, ck = Object.keys(reg).find(function(x){ return reg[x].stato !== 'uscito' && _plKey(reg[x].nome) === c.k; });
+  var ps = [_roseSave(c.tk, c.lk), _infSave(c.tk, c.lk)];
+  if (ck) { reg[ck].squadra = sq; ps.push(_contrSave(c.tk, c.lk)); }
+  Promise.all(ps).then(function(){ _admInfMsg('✅ '+c.nome+' tornato in '+sq); admSocRender(); }).catch(function(e){ alert('Errore salvataggio: '+e.message); });
+}
+// Sposta in infermeria un giocatore di una squadra
+function admInfAggiungi() {
+  var v = (document.getElementById('adm-inf-add') || {}).value || ''; if (!v) { alert('Scegli un giocatore'); return; }
+  var tk = document.getElementById('adm-soc-torneo').value, lk = document.getElementById('adm-soc-lega').value;
+  var sq = v.split('|||')[0], nome = v.split('|||')[1];
+  var R = _roseGet(tk, lk).rose, from = R[_roseKey(R, sq)] || [], idx = from.findIndex(function(p){ return p.nome === nome; });
+  if (idx < 0) return;
+  if (!confirm('Spostare '+nome+' ('+sq+') in infermeria?')) return;
+  var p = from.splice(idx, 1)[0], infK = _roseKey(R, 'INFERMERIA'); (R[infK] = R[infK] || []).push(p);
+  _infGet(tk, lk).giocatori[_plKey(nome)] = { giocatore: nome, squadra: sq, sostituto: '', data: _itDate(new Date().toISOString()) };
+  var reg = _contrGet(tk, lk).giocatori, ck = Object.keys(reg).find(function(x){ return reg[x].stato !== 'uscito' && _plKey(reg[x].nome) === _plKey(nome); });
+  var ps = [_roseSave(tk, lk), _infSave(tk, lk)];
+  if (ck) { reg[ck].squadra = 'INFERMERIA'; ps.push(_contrSave(tk, lk)); }
+  Promise.all(ps).then(function(){ _admInfMsg('✅ '+nome+' spostato in infermeria'); admSocRender(); }).catch(function(e){ alert('Errore salvataggio: '+e.message); });
 }
 // Moduli che richiedono gettone per la lega: [{ gid, titolo }]
 function _gettoniModuli(tk, lk) {
@@ -10127,6 +10229,7 @@ function enterLeague(tournament, leagueKey) {
     // Ricarica ADMIN_TORNEI da Firebase per aggiornare nomi leghe
     fbLoadKey('tornei', function(data) {
       // Rose aggiornate della lega
+      fbDB.ref('data/infermeria/'+tournament+'_'+currentLeagueKey).once('value').then(function(s){ window.FB_INFERMERIA = window.FB_INFERMERIA || {}; window.FB_INFERMERIA[tournament+'_'+currentLeagueKey] = _infNorm(s.val()); }).catch(function(){});
       fbDB.ref('data/rose/'+tournament+'_'+currentLeagueKey).once('value').then(function(s){
         window.FB_ROSE = window.FB_ROSE || {}; window.FB_ROSE[tournament+'_'+currentLeagueKey] = _roseNorm(s.val());
         _userApplyRose(tournament, currentLeagueKey);
@@ -10468,7 +10571,8 @@ function renderTable(){
   var q=document.getElementById('search')?document.getElementById('search').value.toLowerCase():'';
   var _tk=currentTeam;
   if(currentTeam!=='INFERMERIA'&&!TEAMS_ROSE[currentTeam]){Object.keys(TEAMS_ROSE).forEach(function(k){if(k.toUpperCase()===currentTeam.toUpperCase())_tk=k;});}
-  var pl=currentTeam==='INFERMERIA'?INFERMERIA.map(function(p){return{ruolo:p.ruolo,primary:p.ruolo,nome:p.nome,squadra:p.squadra||'--',costo:0};}): (TEAMS_ROSE[_tk]||[]);
+  var _infR=((window.FB_INFERMERIA||{})[(window._currentTourneyKey||'')+'_'+(typeof currentLeagueKey!=='undefined'?currentLeagueKey:'')]||{giocatori:{}}).giocatori;
+  var pl=currentTeam==='INFERMERIA'?INFERMERIA.map(function(p){var r=_infR[_plKey(p.nome)];return{ruolo:p.ruolo,primary:p.ruolo,nome:p.nome+(r&&r.squadra?' — '+r.squadra+(r.sostituto?' — sostituito da '+r.sostituto:''):''),squadra:p.squadra||'--',costo:0,scadenza:p.scadenza};}): (TEAMS_ROSE[_tk]||[]);
   var gMap={Difesa:['Por','Dc','B','Dd','Ds'],Centrocampo:['E','M','C','T','W'],Attacco:['Pc','A']};
   if(currentFilter!=='ALL'){var al=gMap[currentFilter]||[currentFilter];pl=pl.filter(function(p){return p.ruolo.split(';').some(function(r){return al.indexOf(r.trim())>-1;});});}
   if(q)pl=pl.filter(function(p){return p.nome.toLowerCase().indexOf(q)>-1||(REAL_NAMES[p.squadra]||p.squadra||'').toLowerCase().indexOf(q)>-1;});
