@@ -8236,6 +8236,10 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
     }
     var sk2={};Object.keys(_map).forEach(function(sq){sk2[_map[sq]]=rose[sq];if(rose._crediti&&rose._crediti[sq]!==undefined)_cr[_map[sq]]=rose._crediti[sq];});
     var _nomeL=((ADMIN_TORNEI.find(function(x){return x.key===torneoKey;})||{leghe:[]}).leghe.find(function(x){return x.key===legaKey;})||{}).label||legaKey;
+    if(!Object.keys(sk2).length){
+      status.innerHTML='❌ Nel file non ho trovato nessuna squadra (righe "Nome squadra" seguite da "Ruolo | Calciatore | Squadra | Costo"). Il formato del file non è quello atteso: niente è stato importato.'+(_skip.length?'<br>Righe lette: '+_skip.slice(0,8).join(', '):'');
+      status.style.color='#ef4444';return;
+    }
     var _pend={savedKeys:sk2,infermeria:infermeria,torneoKey:torneoKey,legaKey:legaKey,crediti:_cr,download:_dl};
     var _n=Object.values(sk2).reduce(function(a,b){return a+b.length;},0);
     var _head='📋 '+_nomeL+': pronte <b>'+Object.keys(sk2).length+'</b> squadre ('+_n+' giocatori, infermeria '+infermeria.length+')'+(_dl?' · file del '+_dl:'')+(_apx.length?'<br>⚠️ Abbinate automaticamente: '+_apx.join(', '):'')+(_assenti.length?'<br>⚠️ Squadre della lega non presenti nel file (resteranno vuote): '+_assenti.join(', '):'')+(_skip.length?'<br>⚠️ Righe non riconosciute (non importate): '+_skip.join(', '):'');
