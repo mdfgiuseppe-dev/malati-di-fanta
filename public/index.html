@@ -1187,11 +1187,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
           <div style="font-weight:800;font-size:14px" id="th-name">—</div>
           <div style="display:flex;gap:10px;margin-top:4px" id="th-stats"></div>
         </div>
-        <div id="th-credits-box" style="text-align:right;display:none">
-          <div style="font-size:9px;color:var(--text2);font-weight:700">CREDITI ROSA</div>
-          <div style="font-family:'Bebas Neue';font-size:22px;color:#10b981" id="th-credits-v">—</div>
-        </div>
       </div>
+      <div id="u-crediti-panel" style="padding:10px 14px;border-bottom:1px solid var(--border);display:none"></div>
       <table style="width:100%;min-width:320px;border-collapse:collapse;table-layout:auto">
         <thead><tr style="background:var(--bg2);font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--text3)">
           <th style="padding:7px 10px;text-align:left;width:13%">Ruolo</th>
@@ -3880,6 +3877,55 @@ function _contrTabella(t, l, squadra, admin) {
   return h + '</tbody></table></div>';
 }
 
+// Multe: data/multe/{t_l} = JSON { SQUADRA: { richiami, penalita, multe, ultima } }
+function _multeGet(t, l) {
+  window.FB_MULTE = window.FB_MULTE || {};
+  return window.FB_MULTE[t+'_'+l] || (window.FB_MULTE[t+'_'+l] = {});
+}
+function _multeNorm(v) { if (typeof v === 'string') { try { v = JSON.parse(v); } catch(e) { v = null; } } return (v && typeof v === 'object') ? v : {}; }
+function _multeSave(t, l) { return fbDB.ref('data/multe/'+t+'_'+l).set(JSON.stringify(_multeGet(t, l))); }
+function _multeTeam(t, l, team) { var m = _multeGet(t, l); return m[team] || m[String(team).toUpperCase()] || { richiami: 0, penalita: 0, multe: 0 }; }
+// Crediti della squadra: attuali (data/rose crediti, import o modifica manuale), stadio e multe in tempo reale, sponsor se abilitati
+function _creditiSquadra(t, l, team) {
+  var cr = _roseGet(t, l).crediti || {}, k = Object.keys(cr).find(function(x){ return x.toUpperCase() === String(team).toUpperCase(); });
+  return {
+    attuali: k !== undefined ? cr[k] : null,
+    stadio: admCalcCreditiStadio(t, l, team),
+    sponsor: _torneoFeat(t, 'sponsor') ? admCalcCreditiSponsor(t, l, team) : null,
+    multe: parseFloat(_multeTeam(t, l, team).multe) || 0
+  };
+}
+function _creditiBoxes(t, l, team, admin) {
+  var c = _creditiSquadra(t, l, team);
+  function box(lbl, val, col, sub, extra) {
+    return '<div style="flex:1 1 110px;background:'+(extra||'var(--bg2)')+';border-radius:10px;padding:10px;text-align:center">'
+      +'<div style="font-size:9px;font-weight:700;color:'+col+';text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">'+lbl+'</div>'
+      +'<div style="font-family:Bebas Neue,sans-serif;font-size:26px;color:'+col+';line-height:1">'+val+'</div>'
+      +(sub?'<div style="font-size:9px;color:var(--text3);margin-top:3px">'+sub+'</div>':'')+'</div>';
+  }
+  var h = '<div style="display:flex;flex-wrap:wrap;gap:8px">'
+    + box('💰 Crediti attuali', c.attuali === null ? '—' : c.attuali, '#f59e0b', '', 'rgba(245,158,11,.08)')
+    + box('Crediti stadio', c.stadio, '#3b82f6', 'dai risultati in casa')
+    + (c.sponsor !== null ? box('Crediti sponsor', c.sponsor, '#8b5cf6', 'obiettivi raggiunti') : '')
+    + box('Multe crediti', (c.multe ? '−' : '') + c.multe, '#ef4444', 'da Multe & Sanzioni', 'rgba(239,68,68,.08)');
+  if (admin) h += '<div style="flex:1 1 140px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:10px;text-align:center">'
+    +'<div style="font-size:9px;font-weight:700;color:#10b981;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Modifica crediti attuali</div>'
+    +'<div style="display:flex;gap:6px;align-items:center;justify-content:center"><input type="number" step="0.5" id="adm-cr-att" value="'+(c.attuali === null ? '' : c.attuali)+'" style="width:80px;background:transparent;border:none;border-bottom:2px solid #10b981;color:#10b981;font-family:Bebas Neue,sans-serif;font-size:24px;text-align:center;outline:none">'
+    +'<button data-t="'+t+'" data-l="'+l+'" data-s="'+team+'" onclick="admSaveCreditiAttualiEl(this)" style="padding:5px 10px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">💾</button></div></div>';
+  return h + '</div>';
+}
+function admSaveCreditiAttualiEl(el) {
+  var t = el.dataset.t, l = el.dataset.l, s = el.dataset.s, v = document.getElementById('adm-cr-att').value.trim();
+  var R = _roseGet(t, l); R.crediti = R.crediti || {};
+  var k = Object.keys(R.crediti).find(function(x){ return x.toUpperCase() === s.toUpperCase(); }) || s;
+  if (v === '') delete R.crediti[k]; else R.crediti[k] = parseFloat(v) || 0;
+  _roseSave(t, l).then(function(){
+    var m = document.createElement('div'); m.textContent = '✅ Crediti attuali '+s+': '+(v === '' ? '—' : v); m.style.cssText = 'position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
+    document.body.appendChild(m); setTimeout(function(){ m.remove(); }, 2000);
+    admLoadRosaGiocatori();
+  }).catch(function(e){ alert('Errore salvataggio: '+e.message); });
+}
+
 // Rose della lega (formato unico); accetta anche il vecchio { SQUADRA: [] } creato con la lega
 function _roseNorm(v) {
   if (typeof v === 'string') { try { v = JSON.parse(v); } catch(e) { v = null; } }
@@ -3942,6 +3988,13 @@ function loadDataFromFirebase() {
   fbLoadKey('rose', function(val) {
     if (!val || typeof val !== 'object') return;
     Object.keys(val).forEach(function(k) { window.FB_ROSE[k] = _roseNorm(val[k]); });
+  });
+
+  // Multe per lega: data/multe/{t_l}
+  window.FB_MULTE = window.FB_MULTE || {};
+  fbLoadKey('multe', function(val) {
+    if (!val || typeof val !== 'object') return;
+    Object.keys(val).forEach(function(k) { window.FB_MULTE[k] = _multeNorm(val[k]); });
   });
 
   // Infermeria per lega: data/infermeria/{t_l}
@@ -4718,6 +4771,10 @@ function admRenderRosaEditor(players, torneoKey, legaKey, squadra) {
     +'</div></div>';
 
   // ─── Pannello Crediti ───────────────────────────────────────────
+  if (torneoKey!=='slim' && torneoKey!=='tsm') {
+    if (squadra !== 'INFERMERIA') h += '<div class="card" style="padding:16px;margin-top:12px"><div style="font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:1px;margin-bottom:12px">💰 Crediti <span style="color:#10b981">Squadra</span></div>'+_creditiBoxes(torneoKey, legaKey, squadra, true)+'</div>';
+    return h;
+  }
   var crStadio = admCalcCreditiStadio(torneoKey, legaKey, squadra);
   var crSponsor = admCalcCreditiSponsor(torneoKey, legaKey, squadra);
   var crGestione = admGetCreditiGestione(torneoKey, legaKey, squadra);
@@ -5218,9 +5275,7 @@ function slimGetStadio() {
 function slimCalcStandings() {
   var cal = slimGetCalendar();
   var stadio = slimGetStadio();
-  var multeKey = 'slim_multe_' + (typeof currentLeagueKey !== 'undefined' ? currentLeagueKey : 'it');
-  var multeRaw = localStorage.getItem(multeKey);
-  var multeData = multeRaw ? JSON.parse(multeRaw) : {};
+  var multeData = _multeGet(window._currentTourneyKey || 'slim', (typeof currentLeagueKey !== 'undefined' ? currentLeagueKey : 'it'));
   var s = {};
   var teamKeyMap = {};
   SLIM_TEAMS.forEach(function(t) {
@@ -6952,9 +7007,7 @@ function admLoadMulteBody() {
   var legaKey = document.getElementById('adm-mul-lega').value;
   var el = document.getElementById('adm-mul-body'); if(!el||!legaKey) return;
 
-  var multeKey = admGetMulteKey(torneoKey, legaKey);
-  var stored = localStorage.getItem(multeKey);
-  var data = stored ? JSON.parse(stored) : {};
+  var data = JSON.parse(JSON.stringify(_multeGet(torneoKey, legaKey)));
   var teams = admGetTeams(torneoKey, legaKey);
 
   var h = '<div class="card" style="padding:0;overflow:hidden">'
@@ -7048,10 +7101,9 @@ function admSaveMulteEl(el) {
   var t=el.dataset.t, l=el.dataset.l;
   var key = t+'_'+l;
   var data = (window._admMulteTemp && window._admMulteTemp[key]) ? window._admMulteTemp[key] : {};
-  var multeKey = admGetMulteKey(t, l);
-  localStorage.setItem(multeKey, JSON.stringify(data));
+  window.FB_MULTE = window.FB_MULTE || {}; window.FB_MULTE[key] = JSON.parse(JSON.stringify(data));
+  _multeSave(t, l).catch(function(e){ alert('Errore salvataggio multe: '+e.message); });
   if(window._admMulteTemp) delete window._admMulteTemp[key];
-  gsSaveMulte(t, l, data);
   var msg=document.createElement('div');msg.textContent='✅ Multe & Sanzioni salvate'+(GS_ONLINE?' · Sincronizzato':'');msg.style.cssText='position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';document.body.appendChild(msg);setTimeout(function(){msg.remove();},2000);
   admLoadMulteBody();
 }
@@ -7639,7 +7691,7 @@ function admRemoveLega(ti, li) {
   // Rimuovi i dati della lega da Firebase
   var _fk = tk+'_'+lk;
   fbDB.ref('data/tornei/'+tk+'/'+lk).remove();
-  ['calendario','calendario_schedule','punteggi','totali','stadio','rose','crediti','gettoni','contratti','infermeria'].forEach(function(n){ fbDB.ref('data/'+n+'/'+_fk).remove(); });
+  ['calendario','calendario_schedule','punteggi','totali','stadio','rose','crediti','gettoni','contratti','infermeria','multe'].forEach(function(n){ fbDB.ref('data/'+n+'/'+_fk).remove(); });
   fbDB.ref('data/images/loghi/squadre/'+tk+'/'+lk).remove();
   fbDB.ref('data/images/loghi/leghe/'+_fk).remove();
   ['FB_SQUADRE','FB_CALENDARIO','FB_SCHEDULE','FB_PUNTEGGI','FB_TOTALI','FB_STADIO','FB_GETTONI','FB_ALLENATORI'].forEach(function(v){ if (window[v]) delete window[v][_fk]; });
@@ -10342,6 +10394,7 @@ function enterLeague(tournament, leagueKey) {
     // Ricarica ADMIN_TORNEI da Firebase per aggiornare nomi leghe
     fbLoadKey('tornei', function(data) {
       // Rose aggiornate della lega
+      fbDB.ref('data/multe/'+tournament+'_'+currentLeagueKey).once('value').then(function(s){ window.FB_MULTE = window.FB_MULTE || {}; window.FB_MULTE[tournament+'_'+currentLeagueKey] = _multeNorm(s.val()); }).catch(function(){});
       fbDB.ref('data/infermeria/'+tournament+'_'+currentLeagueKey).once('value').then(function(s){ window.FB_INFERMERIA = window.FB_INFERMERIA || {}; window.FB_INFERMERIA[tournament+'_'+currentLeagueKey] = _infNorm(s.val()); }).catch(function(){});
       fbDB.ref('data/rose/'+tournament+'_'+currentLeagueKey).once('value').then(function(s){
         window.FB_ROSE = window.FB_ROSE || {}; window.FB_ROSE[tournament+'_'+currentLeagueKey] = _roseNorm(s.val());
@@ -10574,9 +10627,7 @@ function renderMulte(){
   var el=document.getElementById('slim-multe-body');
   if(!el)return;
   var teams=(typeof SLIM_TEAMS!=='undefined')?SLIM_TEAMS:[];
-  var multeKey='slim_multe_'+(window.currentLeagueKey||'it');
-  var stored=localStorage.getItem(multeKey);
-  var data=stored?JSON.parse(stored):{};
+  var data=_multeGet(window._currentTourneyKey||'slim', window.currentLeagueKey||'it');
   var h='';
   teams.forEach(function(team){
     var d=data[team]||{richiami:0,penalita:0,multe:0,ultima:'—'};
@@ -10626,42 +10677,18 @@ function updateHeader(){
     var l=document.getElementById('th-logo');if(l){var _il=_uLogoUrl('INFERMERIA');if(_il){l.src=_il;l.style.display='block';}else{l.style.display='none';}}
     var nm=document.getElementById('th-name');if(nm)nm.textContent='INFERMERIA';
     var c=document.getElementById('th-credits-box');if(c)c.style.display='none';
+    var cp=document.getElementById('u-crediti-panel');if(cp)cp.style.display='none';
     var st=document.getElementById('th-stats');if(st)st.innerHTML='';
     return;
   }
   var fl=_uLogoUrl(currentTeam)||FANTASY_LOGOS[currentTeam];var le=document.getElementById('th-logo');
   if(le){if(fl){le.src=fl;le.style.display='block';}else{le.style.display='none';}}
   var nm=document.getElementById('th-name');if(nm)nm.textContent=currentTeam;
-  var cb=document.getElementById('th-credits-box');if(cb)cb.style.display='block';
-  var cv=document.getElementById('th-credits-v');
-  if(cv){
-    var _legaKey = window.currentLeagueKey||'it';
-    // Crediti: base (adm_crediti_base) + movimenti (diff costi rosa) - multe
-    var _admCrObj = JSON.parse(localStorage.getItem('adm_crediti_base_slim_'+_legaKey)||'{}');
-    var _userCred = JSON.parse(localStorage.getItem('user_crediti_slim_'+_legaKey)||'{}');
-    var _baseCr = (_admCrObj[currentTeam]!==undefined) ? _admCrObj[currentTeam]
-                : (_userCred[currentTeam]!==undefined) ? _userCred[currentTeam]
-                : (CREDITS[currentTeam]!==undefined ? CREDITS[currentTeam] : null);
-    // Fallback case-insensitive (CSV Leghe FC usa MAIUSCOLO, ALL_LEAGUES_DATA usa ProperCase)
-    if (_baseCr===null||_baseCr===undefined) {
-      var _ctU=currentTeam.toUpperCase();
-      Object.keys(_admCrObj).forEach(function(k){if(k.toUpperCase()===_ctU&&_admCrObj[k]!==undefined)_baseCr=_admCrObj[k];});
-      if(_baseCr===null||_baseCr===undefined) Object.keys(_userCred).forEach(function(k){if(k.toUpperCase()===_ctU&&_userCred[k]!==undefined)_baseCr=_userCred[k];});
-      if(_baseCr===null||_baseCr===undefined) Object.keys(CREDITS).forEach(function(k){if(k.toUpperCase()===_ctU&&CREDITS[k]!==undefined)_baseCr=CREDITS[k];});
-    }
-    // Movimenti: costi rosa originale - costi rosa attuale
-    var _rosaImport = JSON.parse(localStorage.getItem('adm_rose_import_slim_'+_legaKey)||localStorage.getItem('adm_rose_slim_'+_legaKey)||'{}');
-    var _rosaOrig2 = _rosaImport[currentTeam]||_rosaImport[currentTeam.toUpperCase()]||(window._TEAMS_ROSE_IT&&(window._TEAMS_ROSE_IT[currentTeam]||window._TEAMS_ROSE_IT[currentTeam.toUpperCase()]))||[];
-    var _costiOrig2 = _rosaOrig2.reduce(function(s,p){return s+(parseFloat(p.costo)||0);},0);
-    var _rosaAtt2 = TEAMS_ROSE[currentTeam]||[];
-    var _costiAtt2 = _rosaAtt2.reduce(function(s,p){return s+(parseFloat(p.costo)||0);},0);
-    var _movUser = _rosaOrig2.length > 0 ? (_costiOrig2 - _costiAtt2) : 0;
-    var _multeKey2 = 'slim_multe_'+_legaKey;
-    var _multeRaw2 = localStorage.getItem(_multeKey2);
-    var _crMulUser = 0;
-    if (_multeRaw2) { try { var _mdu=JSON.parse(_multeRaw2); var _mqu=_mdu[currentTeam]||_mdu[currentTeam.toUpperCase()]||{}; _crMulUser=parseFloat(_mqu.multe)||0; } catch(e){} }
-    var _credVal = _baseCr !== null ? Math.round((_baseCr + _movUser - _crMulUser)*10)/10 : '--';
-    cv.textContent = _credVal;
+  // Crediti della squadra (attuali, stadio, sponsor se abilitati, multe)
+  var cpan=document.getElementById('u-crediti-panel');
+  if(cpan){
+    if(currentTeam==='INFERMERIA'||!window._currentTourneyKey){cpan.style.display='none';}
+    else{cpan.style.display='block';cpan.innerHTML=_creditiBoxes(window._currentTourneyKey, window.currentLeagueKey||'it', currentTeam, false);}
   }
   var pl=TEAMS_ROSE[currentTeam]||[];
   // Conteggio per linea Mantra (ruolo principale = primo ruolo)
