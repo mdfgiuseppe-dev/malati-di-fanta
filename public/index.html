@@ -3911,7 +3911,7 @@ function _creditiBoxes(t, l, team, admin) {
     + (c.sponsor !== null ? box('Crediti sponsor', c.sponsor, '#8b5cf6', 'obiettivi raggiunti') : '')
     + box('Multe in crediti', (c.multe ? '−' : '') + c.multe, '#ef4444', 'da Multe & Sanzioni', 'rgba(239,68,68,.08)')
     + box('Richiami', c.richiami, '#f59e0b', 'da Multe & Sanzioni', 'rgba(245,158,11,.08)')
-    + box('Penalità in punti in classifica di campionato', (c.penalita ? '−' : '') + c.penalita, '#ef4444', 'da Multe e Sanzioni', 'rgba(239,68,68,.08)');
+    + box('Penalità in punti in classifica di campionato', (c.penalita ? '−' : '') + c.penalita, '#ef4444', 'da Multe & Sanzioni', 'rgba(239,68,68,.08)');
   if (admin) h += '<div style="flex:1 1 140px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:10px;text-align:center">'
     +'<div style="font-size:9px;font-weight:700;color:#10b981;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Modifica crediti attuali</div>'
     +'<div style="display:flex;gap:6px;align-items:center;justify-content:center"><input type="number" step="0.5" id="adm-cr-att" value="'+(c.attuali === null ? '' : c.attuali)+'" style="width:80px;background:transparent;border:none;border-bottom:2px solid #10b981;color:#10b981;font-family:Bebas Neue,sans-serif;font-size:24px;text-align:center;outline:none">'
