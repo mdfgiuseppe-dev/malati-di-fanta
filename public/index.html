@@ -4208,7 +4208,7 @@ function renderQualifUtente(fresh) {
       d.onmouseout = function() { this.style.borderColor = 'var(--border)'; this.style.transform = ''; this.style.boxShadow = ''; };
       d.innerHTML = (lg ? '<img src="' + lg + '" style="width:80px;height:80px;object-fit:contain;display:block;margin:0 auto 12px;filter:drop-shadow(0 4px 16px ' + col + '66)">' : '<div style="font-size:52px;line-height:80px;margin-bottom:12px">📊</div>')
         + '<div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:4px">' + _regEsc(q.nome) + '</div>'
-        + '<div style="font-size:9px;font-weight:700;color:' + col + ';letter-spacing:1px;text-transform:uppercase">Vedi classifica →</div>';
+        + '<div style="font-size:9px;font-weight:700;color:' + col + ';letter-spacing:1px;text-transform:uppercase">Entra nella competizione →</div>';
       hub.insertBefore(d, hub.firstChild);
     });
     if (!hub.children.length) { var e0 = document.createElement('div'); e0.className = 'u-qcard'; e0.style.cssText = 'grid-column:1/-1;padding:30px;text-align:center;color:var(--text3);font-size:13px'; e0.textContent = '🏆 Nessuna competizione ancora disponibile.'; hub.appendChild(e0); }
