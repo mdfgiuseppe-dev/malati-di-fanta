@@ -3842,6 +3842,13 @@ function _contrElenco(t, l, squadra) {
     .map(function(k){ return { k: k, c: reg[k] }; })
     .sort(function(a, b){ return (_contrDataNum(a.c.scadenza) - _contrDataNum(b.c.scadenza)) || String(a.c.nome).localeCompare(String(b.c.nome)); });
 }
+// Ricerca per nome nella tabella contratti (filtra le righe senza ridisegnare)
+function _contrFiltra(inp) {
+  window._contrQ = inp.value;
+  var q = _plKey(inp.value), box = inp.parentNode.parentNode, n = 0;
+  box.querySelectorAll('tbody tr[data-n]').forEach(function(tr) { var ok = !q || tr.getAttribute('data-n').indexOf(q) >= 0; tr.style.display = ok ? '' : 'none'; if (ok) n++; });
+  var c = box.querySelector('.contr-n'); if (c) c.textContent = n;
+}
 // Tabella contratti (admin con scadenza modificabile, utente in sola lettura)
 function _contrTabella(t, l, squadra, admin) {
   var el = _contrElenco(t, l, squadra), teams = admGetTeams(t, l);
@@ -3849,7 +3856,8 @@ function _contrTabella(t, l, squadra, admin) {
   var h = '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">'
     + '<select onchange="'+(admin?'window._admContrSq=this.value;admSocRender()':'window._uContrSq=this.value;renderContratti()')+'" style="'+fSel+'"><option value="">Tutte le squadre</option>'
     + teams.concat(['INFERMERIA']).map(function(n){ return '<option value="'+n+'"'+(n===squadra?' selected':'')+'>'+n+'</option>'; }).join('') + '</select>'
-    + '<span style="font-size:11px;color:var(--text3)">'+el.length+' giocatori · <span style="color:#ef4444">■</span> scaduto · <span style="color:#f59e0b">■</span> scade a fine stagione · <span style="color:#10b981">■</span> oltre</span></div>';
+    + '<input type="search" placeholder="🔍 Cerca giocatore…" value="'+(window._contrQ||'').replace(/"/g,'&quot;')+'" oninput="_contrFiltra(this)" style="'+fSel+';flex:1 1 160px;min-width:0">'
+    + '<span style="font-size:11px;color:var(--text3)"><span class="contr-n">'+el.filter(function(x){ var q=_plKey(window._contrQ||''); return !q || _plKey(x.c.nome).indexOf(q)>=0; }).length+'</span> giocatori · <span style="color:#ef4444">■</span> scaduto · <span style="color:#f59e0b">■</span> scade a fine stagione · <span style="color:#10b981">■</span> oltre</span></div>';
   if (!el.length) return h + '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nessun contratto. I contratti si creano con l\'import delle rose.</div>';
   var th = 'padding:7px 8px;text-align:left;font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3)';
   h += '<div class="card" style="padding:0;overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:340px"><thead><tr style="background:var(--bg2)">'
@@ -3859,7 +3867,8 @@ function _contrTabella(t, l, squadra, admin) {
     var cell = admin
       ? '<input type="text" value="'+(c.scadenza||'')+'" data-i="'+i+'" onchange="admContrSetScad(this)" placeholder="gg/mm/aaaa" style="width:92px;padding:3px 6px;border-radius:5px;border:1px solid '+sc.color+';background:'+sc.bg+';color:'+sc.color+';font-size:11px;font-weight:700;outline:none">'
       : '<span style="background:'+sc.bg+';color:'+sc.color+';border-radius:4px;padding:2px 6px;font-weight:700;font-size:11px;white-space:nowrap">'+(sc.scaduto?'⛔ ':'')+(c.scadenza||'—')+'</span>';
-    h += '<tr style="border-bottom:1px solid var(--border)'+(sc.scaduto?';background:rgba(239,68,68,.06)':'')+'">'
+    var _q = _plKey(window._contrQ || ''), _nk = _plKey(c.nome);
+    h += '<tr data-n="'+_nk.replace(/"/g,'&quot;')+'" style="border-bottom:1px solid var(--border)'+(sc.scaduto?';background:rgba(239,68,68,.06)':'')+(_q && _nk.indexOf(_q) < 0 ? ';display:none' : '')+'">'
       + '<td style="padding:7px 8px">'+cell+'</td>'
       + '<td style="padding:7px 8px;font-weight:700;font-size:12px">'+c.nome+'</td>'
       + '<td style="padding:7px 8px">'+(c.ruolo&&typeof roleBadge==='function'?roleBadge(c.ruolo):(c.ruolo||''))+'</td>'
