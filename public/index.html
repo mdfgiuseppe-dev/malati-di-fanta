@@ -4003,9 +4003,15 @@ function _qNorm(v) {
 function _qGet(t) { window.FB_QUALIF = window.FB_QUALIF || {}; return window.FB_QUALIF[t] || (window.FB_QUALIF[t] = _qNorm(null)); }
 function _qSave(t) { return fbDB.ref('data/qualificazioni/' + t).set(JSON.stringify(_qGet(t))); }
 function _qFresh(t) {
-  return fbDB.ref('data/qualificazioni/' + t).once('value').then(function(s) { window.FB_QUALIF = window.FB_QUALIF || {}; window.FB_QUALIF[t] = _qNorm(s.val()); });
+  return Promise.all([fbDB.ref('data/qualificazioni/' + t).once('value'), fbDB.ref('data/images/loghi/qualificazioni/' + t).once('value')]).then(function(r) {
+    window.FB_QUALIF = window.FB_QUALIF || {}; window.FB_QUALIF[t] = _qNorm(r[0].val());
+    window.FB_LOGHI_QUALIF = window.FB_LOGHI_QUALIF || {}; window.FB_LOGHI_QUALIF[t] = r[1].val() || {};
+  });
 }
 function _qItem(t, id) { return _qGet(t).lista.find(function(q) { return q.id === id; }); }
+// Logo della qualificazione: data/images/loghi/qualificazioni/{torneo}/{id}
+function _qLogoRaw(t, id) { return ((window.FB_LOGHI_QUALIF || {})[t] || {})[id] || ''; }
+function _qLogoUrl(t, id) { var u = _qLogoRaw(t, id); return u ? _logoImgUrl(u) : ''; }
 function _qDati(t, id) { var D = _qGet(t).dati; D[id] = D[id] || {}; D[id].giornate = D[id].giornate || {}; D[id].ordine = D[id].ordine || []; return D[id]; }
 // Tutte le squadre di tutte le leghe del torneo
 function _qTeams(t) {
@@ -4114,7 +4120,7 @@ function admQRender() {
     var ng = Object.keys(_qDati(t, q.id).giornate).length;
     h += '<div class="card" style="padding:12px 14px;margin-bottom:10px;border-left:4px solid ' + (q.colore || '#f59e0b') + '">'
       + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-      + (q.logo ? '<img src="' + _logoImgUrl(q.logo) + '" style="width:36px;height:36px;object-fit:contain">' : '')
+      + (_qLogoUrl(t, q.id) ? '<img src="' + _qLogoUrl(t, q.id) + '" style="width:36px;height:36px;object-fit:contain">' : '')
       + '<div style="flex:1;min-width:140px"><div style="font-weight:800;font-size:14px">' + _regEsc(q.nome) + (q.visibile === false ? ' <span style="font-size:9px;color:var(--text3)">(nascosta agli utenti)</span>' : '') + '</div>'
       + '<div style="font-size:11px;color:var(--text3)">' + (q.tipo === 'f1' ? 'Formula 1' : 'Somma punti') + ' · giornate ' + ng + '/' + q.giornate + ' · ' + (q.zone || []).map(function(z) { return _regEsc(z.nome) + ' ' + z.posti; }).join(' · ') + '</div></div></div>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'
@@ -4133,6 +4139,7 @@ function admQForm(id) {
   if (!window._admQEdit || window._admQEdit._id !== id) {
     var src = id ? _qItem(t, id) : { nome: 'Qualificazione Coppe Europee', colore: '#f59e0b', logo: '', giornate: 10, tipo: 'totale', f1: Q_F1_DEFAULT.slice(), zone: [{ nome: 'Champions League', posti: 16, colore: '#f59e0b' }, { nome: 'Europa League', posti: 16, colore: '#f97316' }, { nome: 'Conference League', posti: 16, colore: '#10b981' }], visibile: true };
     window._admQEdit = JSON.parse(JSON.stringify(src)); window._admQEdit._id = id;
+    window._admQEdit.logo = id ? _qLogoRaw(t, id) : '';
     if (!window._admQEdit.f1 || !window._admQEdit.f1.length) window._admQEdit.f1 = Q_F1_DEFAULT.slice();
   }
   var E = window._admQEdit, n = _qTeams(t).length;
@@ -4174,15 +4181,21 @@ function admQForm(id) {
 function admQSalvaForm() {
   var t = _admQT(), E = window._admQEdit, Q = _qGet(t);
   if (!E.nome || !E.nome.trim()) { alert('Inserisci il nome'); return; }
-  var item = JSON.parse(JSON.stringify(E)); delete item._id;
+  var item = JSON.parse(JSON.stringify(E)); delete item._id; delete item.logo;
   if (E._id) { var i = Q.lista.findIndex(function(q) { return q.id === E._id; }); item.id = E._id; Q.lista[i] = item; }
   else { item.id = 'q' + Date.now().toString(36); Q.lista.push(item); }
-  _qSave(t).then(function() { window._admQEdit = null; window._admQView = null; _admInfMsg('✅ Qualificazione salvata'); admQRender(); }).catch(function(e) { alert('Errore salvataggio: ' + e.message); });
+  // Logo nella cartella dei loghi
+  var logo = (E.logo || '').trim();
+  window.FB_LOGHI_QUALIF = window.FB_LOGHI_QUALIF || {}; window.FB_LOGHI_QUALIF[t] = window.FB_LOGHI_QUALIF[t] || {};
+  if (logo) window.FB_LOGHI_QUALIF[t][item.id] = logo; else delete window.FB_LOGHI_QUALIF[t][item.id];
+  Promise.all([_qSave(t), fbDB.ref('data/images/loghi/qualificazioni/' + t + '/' + item.id).set(logo || null)]).then(function() { window._admQEdit = null; window._admQView = null; _admInfMsg('✅ Qualificazione salvata'); admQRender(); }).catch(function(e) { alert('Errore salvataggio: ' + e.message); });
 }
 function admQElimina(id) {
   var t = _admQT(), Q = _qGet(t), q = _qItem(t, id);
   if (!confirm('Eliminare "' + q.nome + '" con tutte le giornate e la classifica?')) return;
   Q.lista = Q.lista.filter(function(x) { return x.id !== id; }); delete Q.dati[id];
+  fbDB.ref('data/images/loghi/qualificazioni/' + t + '/' + id).remove();
+  if (window.FB_LOGHI_QUALIF && window.FB_LOGHI_QUALIF[t]) delete window.FB_LOGHI_QUALIF[t][id];
   _qSave(t).then(function() { _admInfMsg('✅ Qualificazione eliminata', '#ef4444'); admQRender(); });
 }
 // Sposta una squadra di un posto (solo tra pari punti) e salva l'ordine
@@ -4288,7 +4301,7 @@ function renderQualifUtente(fresh) {
     var tab = st.tab || 'classifica', bt = function(on, c) { return 'padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid ' + (on ? c : 'var(--border)') + ';background:' + (on ? c + '22' : 'var(--bg2)') + ';color:' + (on ? c : 'var(--text2)'); };
     var col = q.colore || '#f59e0b';
     var h = (L.length > 1 ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">' + L.map(function(x) { return '<button onclick="window._uQ.id=\'' + x.id + '\';renderQualifUtente(true)" style="' + bt(x.id === q.id, x.colore || '#f59e0b') + '">' + _regEsc(x.nome) + '</button>'; }).join('') + '</div>' : '')
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">' + (q.logo ? '<img src="' + _logoImgUrl(q.logo) + '" style="width:56px;height:56px;object-fit:contain">' : '')
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">' + (_qLogoUrl(t, q.id) ? '<img src="' + _qLogoUrl(t, q.id) + '" style="width:56px;height:56px;object-fit:contain">' : '')
       + '<div style="font-family:\'Bebas Neue\';font-size:22px;letter-spacing:1px;color:' + col + '">' + _regEsc(q.nome) + '</div></div>'
       + '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap"><button onclick="window._uQ.tab=\'classifica\';renderQualifUtente(true)" style="' + bt(tab === 'classifica', col) + '">📊 Classifica generale</button>'
       + '<button onclick="window._uQ.tab=\'giornate\';renderQualifUtente(true)" style="' + bt(tab === 'giornate', col) + '">📅 Giornate</button></div>';
@@ -4372,6 +4385,8 @@ function loadDataFromFirebase() {
     if (!val || typeof val !== 'object') return;
     Object.keys(val).forEach(function(k) { window.FB_QUALIF[k] = _qNorm(val[k]); });
   });
+  window.FB_LOGHI_QUALIF = window.FB_LOGHI_QUALIF || {};
+  fbLoadKey('images/loghi/qualificazioni', function(val) { if (val && typeof val === 'object') window.FB_LOGHI_QUALIF = val; });
 
   // Regolamento disciplinare (uguale per tutti i tornei)
   fbLoadKey('regolamento_multe', function(val) {
