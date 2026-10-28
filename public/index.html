@@ -2604,17 +2604,13 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
       Rose Squadre
     </div>
-    <div class="nav-item" id="adm-nav-scambi" onclick="showAdminSection('scambi',this);admScInit()" ontouchend="event.preventDefault();showAdminSection('scambi',this);admScInit()">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
-      Scambio Giocatori
-    </div>
     <div class="nav-item" id="adm-nav-calendario" onclick="showAdminSection('calendario',this)" ontouchend="event.preventDefault();showAdminSection('calendario',this)">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       Calendario
     </div>
     <div class="nav-item" id="adm-nav-qualif" onclick="showAdminSection('qualif',this)" ontouchend="event.preventDefault();showAdminSection('qualif',this)">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
-      Qualificazioni
+      Qualificazioni alle Coppe
     </div>
     <div class="nav-item" id="adm-nav-coppe" onclick="showAdminSection('coppe',this)" ontouchend="event.preventDefault();showAdminSection('coppe',this)">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/><path d="M12 16v6M8 22h8"/></svg>
@@ -2670,9 +2666,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
         <option value="utenti">👥 Utenti</option>
         <option value="tornei">🏆 Tornei &amp; Leghe</option>
         <option value="rose">👤 Rose Squadre</option>
-        <option value="scambi">🔄 Scambio Giocatori</option>
         <option value="calendario">📅 Calendario</option>
-        <option value="qualif">📊 Qualificazioni</option>
+        <option value="qualif">📊 Qualificazioni alle Coppe</option>
         <option value="coppe">🏆 Coppe</option>
         <option value="stadio">🏟️ Stadio</option>
         <option value="sponsor">❤️ Sponsor</option>
@@ -3061,7 +3056,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
     <!-- ===== QUALIFICAZIONI ===== -->
     <div id="adm-s-qualif" class="adm-section" style="display:none">
-      <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px">Qualificazioni <span style="color:#f59e0b">Coppe</span></div>
+      <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px">Qualificazioni <span style="color:#f59e0b">alle Coppe</span></div>
       <div style="font-size:11px;color:var(--text2);margin-bottom:16px">Fase a punti con tutte le squadre di tutte le leghe del torneo: la classifica decide chi va in ogni coppa</div>
       <select id="adm-q-torneo" onchange="admQTorneo()" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;margin-bottom:14px"><option value="">-- Seleziona Torneo --</option></select>
       <div id="adm-q-body"></div>
@@ -4290,30 +4285,55 @@ function admQImport(inp, id, g) {
 
 // ── Lato utente: qualificazioni del torneo nella sezione Coppe ──
 function renderQualifUtente(fresh) {
-  var el = document.getElementById('u-qualif'); if (!el) return;
-  var t = window._currentTourneyKey; if (!t) { el.innerHTML = ''; return; }
-  var L = _qGet(t).lista.filter(function(q) { return q.visibile !== false; });
+  var el = document.getElementById('u-qualif'), hub = document.getElementById('coppe-hub'); if (!el) return;
+  var t = window._currentTourneyKey;
+  var L = t ? _qGet(t).lista.filter(function(q) { return q.visibile !== false; }) : [];
   var st = window._uQ = window._uQ || {};
-  if (!L.length) el.innerHTML = '';
+  // Card delle qualificazioni in testa alle card delle coppe
+  if (hub) {
+    hub.querySelectorAll('.u-qcard').forEach(function(c) { c.remove(); });
+    L.slice().reverse().forEach(function(q) {
+      var col = q.colore || '#f59e0b', lg = _qLogoUrl(t, q.id), d = document.createElement('div');
+      d.className = 'u-qcard';
+      d.setAttribute('onclick', "openQualifUtente('" + q.id + "')");
+      d.style.cssText = 'background:var(--card);border:2px solid var(--border);border-radius:18px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .25s';
+      d.onmouseover = function() { this.style.borderColor = col; this.style.transform = 'translateY(-4px)'; this.style.boxShadow = '0 8px 30px ' + col + '33'; };
+      d.onmouseout = function() { this.style.borderColor = 'var(--border)'; this.style.transform = ''; this.style.boxShadow = ''; };
+      d.innerHTML = (lg ? '<img src="' + lg + '" style="width:80px;height:80px;object-fit:contain;display:block;margin:0 auto 12px;filter:drop-shadow(0 4px 16px ' + col + '66)">' : '<div style="font-size:52px;line-height:80px;margin-bottom:12px">📊</div>')
+        + '<div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:4px">' + _regEsc(q.nome) + '</div>'
+        + '<div style="font-size:9px;font-weight:700;color:' + col + ';letter-spacing:1px;text-transform:uppercase">Vedi classifica →</div>';
+      hub.insertBefore(d, hub.firstChild);
+    });
+  }
+  // Pannello della qualificazione aperta
+  if (!st.open || !L.some(function(q) { return q.id === st.open; })) { st.open = null; el.innerHTML = ''; }
   else {
-    if (!st.id || !L.some(function(q) { return q.id === st.id; })) st.id = L[0].id;
-    var q = _qItem(t, st.id), ng = Object.keys(_qDati(t, q.id).giornate).map(Number).sort(function(a, b) { return a - b; });
-    var tab = st.tab || 'classifica', bt = function(on, c) { return 'padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid ' + (on ? c : 'var(--border)') + ';background:' + (on ? c + '22' : 'var(--bg2)') + ';color:' + (on ? c : 'var(--text2)'); };
-    var col = q.colore || '#f59e0b';
-    var h = (L.length > 1 ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">' + L.map(function(x) { return '<button onclick="window._uQ.id=\'' + x.id + '\';renderQualifUtente(true)" style="' + bt(x.id === q.id, x.colore || '#f59e0b') + '">' + _regEsc(x.nome) + '</button>'; }).join('') + '</div>' : '')
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">' + (_qLogoUrl(t, q.id) ? '<img src="' + _qLogoUrl(t, q.id) + '" style="width:56px;height:56px;object-fit:contain">' : '')
+    var q = _qItem(t, st.open), ng = Object.keys(_qDati(t, q.id).giornate).map(Number).sort(function(a, b) { return a - b; });
+    var tab = st.tab || 'classifica', col = q.colore || '#f59e0b', lg = _qLogoUrl(t, q.id);
+    var bt = function(on) { return 'padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid ' + (on ? col : 'var(--border)') + ';background:' + (on ? col + '22' : 'var(--bg2)') + ';color:' + (on ? col : 'var(--text2)'); };
+    var h = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">'
+      + '<div onclick="closeQualifUtente()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;color:var(--text2)">'
+      + '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Torna alle Coppe</div>'
+      + (lg ? '<img src="' + lg + '" style="width:40px;height:40px;object-fit:contain">' : '')
       + '<div style="font-family:\'Bebas Neue\';font-size:22px;letter-spacing:1px;color:' + col + '">' + _regEsc(q.nome) + '</div></div>'
-      + '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap"><button onclick="window._uQ.tab=\'classifica\';renderQualifUtente(true)" style="' + bt(tab === 'classifica', col) + '">📊 Classifica generale</button>'
-      + '<button onclick="window._uQ.tab=\'giornate\';renderQualifUtente(true)" style="' + bt(tab === 'giornate', col) + '">📅 Giornate</button></div>';
+      + '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap"><button onclick="window._uQ.tab=\'classifica\';renderQualifUtente(true)" style="' + bt(tab === 'classifica') + '">📊 Classifica generale</button>'
+      + '<button onclick="window._uQ.tab=\'giornate\';renderQualifUtente(true)" style="' + bt(tab === 'giornate') + '">📅 Giornate</button></div>';
     if (tab === 'giornate') {
-      var g = st.g && ng.indexOf(st.g) >= 0 ? st.g : (ng[ng.length - 1] || 1);
+      var g = st.g && st.g <= q.giornate ? st.g : (ng[ng.length - 1] || 1);
       var opts = ''; for (var i = 1; i <= q.giornate; i++) opts += '<option value="' + i + '"' + (i === g ? ' selected' : '') + '>Giornata ' + i + '</option>';
       h += '<select onchange="window._uQ.g=parseInt(this.value);renderQualifUtente(true)" style="padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none;margin-bottom:10px">' + opts + '</select>' + _qGiornataHtml(t, q.id, g);
     } else h += _qClassificaHtml(t, q.id, false);
-    el.innerHTML = '<div class="card" style="padding:14px;margin-bottom:20px">' + h + '</div>';
+    el.innerHTML = h;
   }
-  if (!fresh) _qFresh(t).then(function() { renderQualifUtente(true); }).catch(function() {});
+  if (hub) hub.style.display = st.open ? 'none' : 'grid';
+  if (!fresh && t) _qFresh(t).then(function() { renderQualifUtente(true); }).catch(function() {});
 }
+function openQualifUtente(id) {
+  var st = window._uQ = window._uQ || {}; st.open = id; st.tab = 'classifica'; st.g = null;
+  var bp = document.getElementById('bracket-panel'); if (bp) bp.style.display = 'none';
+  renderQualifUtente(true);
+}
+function closeQualifUtente() { if (window._uQ) window._uQ.open = null; renderQualifUtente(true); }
 
 // Rose della lega (formato unico); accetta anche il vecchio { SQUADRA: [] } creato con la lega
 function _roseNorm(v) {
@@ -11070,7 +11090,7 @@ function showSection(id,el){
   else if(id==='calendario')slimRenderCalendario();
   else if(id==='stadio')slimRenderStadio();
   else if(id==='multe')renderMulte();
-  else if(id==='coppe'){initCoppaLogos();closeBracket();renderQualifUtente();}
+  else if(id==='coppe'){initCoppaLogos();if(window._uQ)window._uQ.open=null;closeBracket();renderQualifUtente();}
   else if(id==='contratti') renderContratti();
   else if(id==='modulistica'){ renderModulistica(_modKey(window._currentTourneyKey||'slim', window.currentLeagueKey||'it'), 'slim-modulistica-body'); }
 }
