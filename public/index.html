@@ -1242,47 +1242,14 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <!-- ===== COPPE EUROPEE ===== -->
   <div id="s-coppe" class="section">
     <!-- HEADER -->
-    <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px"><span style="color:#f59e0b">Coppe Europee</span></div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:24px">Scudetto Slim · Clicca su una competizione per vedere il tabellone</div>
+    <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px"><span style="color:#f59e0b">Coppe</span></div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:24px">Clicca su una competizione per vederne classifica o tabellone</div>
 
     <!-- QUALIFICAZIONI (data/qualificazioni) -->
     <div id="u-qualif"></div>
 
-    <!-- PANNELLO PRINCIPALE: 4 LOGHI -->
-    <div id="coppe-hub" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:500px;margin:0 auto 24px">
-      <div onclick="openCoppa('cl')" id="coppa-card-cl"
-           style="background:var(--card);border:2px solid var(--border);border-radius:18px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .25s"
-           onmouseover="this.style.borderColor='#f59e0b';this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 30px #f59e0b33'"
-           onmouseout="this.style.borderColor='var(--border)';this.style.transform='';this.style.boxShadow=''">
-        <img src="" id="logo-cl" style="width:80px;height:80px;object-fit:contain;display:block;margin:0 auto 12px;filter:drop-shadow(0 4px 16px #f59e0b66)">
-        <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:4px">Champions League</div>
-        <div style="font-size:9px;font-weight:700;color:#f59e0b;letter-spacing:1px;text-transform:uppercase">Vedi tabellone →</div>
-      </div>
-      <div onclick="openCoppa('el')" id="coppa-card-el"
-           style="background:var(--card);border:2px solid var(--border);border-radius:18px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .25s"
-           onmouseover="this.style.borderColor='#f97316';this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 30px #f9731633'"
-           onmouseout="this.style.borderColor='var(--border)';this.style.transform='';this.style.boxShadow=''">
-        <img src="" id="logo-el" style="width:80px;height:80px;object-fit:contain;display:block;margin:0 auto 12px;filter:drop-shadow(0 4px 16px #f9731666)">
-        <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:4px">Europa League</div>
-        <div style="font-size:9px;font-weight:700;color:#f97316;letter-spacing:1px;text-transform:uppercase">Vedi tabellone →</div>
-      </div>
-      <div onclick="openCoppa('conf')" id="coppa-card-conf"
-           style="background:var(--card);border:2px solid var(--border);border-radius:18px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .25s"
-           onmouseover="this.style.borderColor='#10b981';this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 30px #10b98133'"
-           onmouseout="this.style.borderColor='var(--border)';this.style.transform='';this.style.boxShadow=''">
-        <img src="" id="logo-conf" style="width:80px;height:80px;object-fit:contain;display:block;margin:0 auto 12px;filter:drop-shadow(0 4px 16px #10b98166)">
-        <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:4px">Conference League</div>
-        <div style="font-size:9px;font-weight:700;color:#10b981;letter-spacing:1px;text-transform:uppercase">Vedi tabellone →</div>
-      </div>
-      <div onclick="openCoppa('sc')" id="coppa-card-sc"
-           style="background:var(--card);border:2px solid var(--border);border-radius:18px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .25s"
-           onmouseover="this.style.borderColor='#8b5cf6';this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 30px #8b5cf633'"
-           onmouseout="this.style.borderColor='var(--border)';this.style.transform='';this.style.boxShadow=''">
-        <img src="" id="logo-sc" style="width:80px;height:80px;object-fit:contain;display:block;margin:0 auto 12px;filter:drop-shadow(0 4px 16px #8b5cf666)">
-        <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:4px">European Supercup</div>
-        <div style="font-size:9px;font-weight:700;color:#8b5cf6;letter-spacing:1px;text-transform:uppercase">Vedi tabellone →</div>
-      </div>
-    </div>
+    <!-- CARD DELLE COMPETIZIONI (create da admin: qualificazioni, poi coppe) -->
+    <div id="coppe-hub" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:500px;margin:0 auto 24px"></div>
 
     <!-- BRACKET PANEL (nascosto inizialmente) -->
     <div id="bracket-panel" style="display:none">
@@ -2869,66 +2836,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       <div id="adm-rose-body"></div>
     </div>
 
-    <!-- ===== SCAMBIO GIOCATORI ===== -->
-    <div id="adm-s-scambi" class="adm-section" style="display:none;color:var(--text);background:var(--bg)">
-      <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px">Scambio <span style="color:#8b5cf6">Giocatori</span></div>
-      <div style="font-size:11px;color:var(--text2);margin-bottom:20px">Trasferisci giocatori tra squadre della stessa lega</div>
-
-      <!-- Selezione torneo/lega -->
-      <div class="card" style="padding:16px;margin-bottom:16px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div>
-            <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Torneo</div>
-            <select id="adm-sc-torneo" onchange="admScLoadLeghe()" style="width:100%;padding:8px 10px;background:#1e293b;border:1px solid var(--border);border-radius:8px;color:#fff;font-size:13px;outline:none">
-              <option value="" style="color:#fff;background:#1e293b">-- Seleziona --</option>
-            </select>
-          </div>
-          <div>
-            <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Lega</div>
-            <select id="adm-sc-lega" onchange="admScLoadSquadre()" style="width:100%;padding:8px 10px;background:#1e293b;border:1px solid var(--border);border-radius:8px;color:#fff;font-size:13px;outline:none">
-              <option value="" style="color:#fff;background:#1e293b">-- Seleziona --</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Squadre e giocatori -->
-      <div id="adm-sc-body" style="display:none">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-          <!-- Squadra A -->
-          <div class="card" style="padding:14px">
-            <div style="font-size:11px;font-weight:800;color:#8b5cf6;text-transform:uppercase;margin-bottom:8px">Squadra A</div>
-            <select id="adm-sc-sqA" onchange="admScLoadPlayers('A')" style="width:100%;padding:7px 10px;background:#1e293b;border:1px solid var(--border);border-radius:8px;color:#fff;font-size:12px;outline:none;margin-bottom:8px">
-              <option value="">-- Seleziona --</option>
-            </select>
-            <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px">Giocatori da cedere</div>
-            <div id="adm-sc-playersA" style="max-height:200px;overflow-y:auto"></div>
-            <div style="margin-top:8px">
-              <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px">Crediti da aggiungere</div>
-              <input id="adm-sc-crA" type="number" min="0" value="0" placeholder="0" style="width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none">
-            </div>
-          </div>
-          <!-- Squadra B -->
-          <div class="card" style="padding:14px">
-            <div style="font-size:11px;font-weight:800;color:#10b981;text-transform:uppercase;margin-bottom:8px">Squadra B</div>
-            <select id="adm-sc-sqB" onchange="admScLoadPlayers('B')" style="width:100%;padding:7px 10px;background:#1e293b;border:1px solid var(--border);border-radius:8px;color:#fff;font-size:12px;outline:none;margin-bottom:8px">
-              <option value="">-- Seleziona --</option>
-            </select>
-            <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px">Giocatori da cedere</div>
-            <div id="adm-sc-playersB" style="max-height:200px;overflow-y:auto"></div>
-            <div style="margin-top:8px">
-              <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px">Crediti da aggiungere</div>
-              <input id="adm-sc-crB" type="number" min="0" value="0" placeholder="0" style="width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none">
-            </div>
-          </div>
-        </div>
-        <!-- Riepilogo -->
-        <div id="adm-sc-riepilogo" style="display:none;background:var(--bg2);border-radius:10px;padding:14px;margin-bottom:12px;font-size:12px"></div>
-        <button onclick="admScPreview()" style="width:100%;padding:10px;background:#8b5cf6;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;margin-bottom:8px">👁 Anteprima Scambio</button>
-        <button id="adm-sc-confirm-btn" onclick="admScConfirm()" style="width:100%;padding:10px;background:#10b981;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;display:none">Conferma Scambio</button>
-      </div>
-    </div>
-
 <!-- ===== CALENDARIO ===== -->
     <div id="adm-s-calendario" class="adm-section" style="display:none">
       <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px">Gestione <span style="color:#ef4444">Calendario</span></div>
@@ -4304,6 +4211,7 @@ function renderQualifUtente(fresh) {
         + '<div style="font-size:9px;font-weight:700;color:' + col + ';letter-spacing:1px;text-transform:uppercase">Vedi classifica →</div>';
       hub.insertBefore(d, hub.firstChild);
     });
+    if (!hub.children.length) { var e0 = document.createElement('div'); e0.className = 'u-qcard'; e0.style.cssText = 'grid-column:1/-1;padding:30px;text-align:center;color:var(--text3);font-size:13px'; e0.textContent = '🏆 Nessuna competizione ancora disponibile.'; hub.appendChild(e0); }
   }
   // Pannello della qualificazione aperta
   if (!st.open || !L.some(function(q) { return q.id === st.open; })) { st.open = null; el.innerHTML = ''; }
@@ -4738,8 +4646,8 @@ function showAdminSection(id, el) {
   ['adm-rose-body','adm-cal-body','adm-sp-body','adm-stad-body',
    'adm-global-stadio-table-body','adm-sponsor-catalog-body',
    'adm-cop-editor-body','adm-cop-config-body','adm-stagioni-body',
-   'adm-mul-body','adm-sc-playersA',
-   'adm-sc-playersB','adm-sc-riepilogo','adm-cs-body','adm-soc-body','adm-soc-tabs',
+   'adm-mul-body',
+   'adm-cs-body','adm-soc-body','adm-soc-tabs',
    'adm-utenti-body','adm-tornei-body','adm-tornei-detail','adm-mod-body'].forEach(function(bid){
     var b = document.getElementById(bid); if(b) b.innerHTML='';
   });
@@ -4749,7 +4657,6 @@ function showAdminSection(id, el) {
    'adm-sp-torneo','adm-sp-lega','adm-sp-squadra',
    'adm-stad-torneo','adm-stad-lega',
    'adm-mul-torneo','adm-mul-lega',
-   'adm-sc-torneo','adm-sc-lega','adm-sc-sqA','adm-sc-sqB',
    'adm-cs-torneo','adm-cs-lega',
    'adm-cop-torneo','adm-import-torneo','adm-import-lega',
    'adm-cat-torneo','adm-mod-sel-torneo','adm-tornei-select'].forEach(function(sid){
@@ -4801,7 +4708,6 @@ function showAdminSection(id, el) {
   if (id==='modulistica') admRenderModulistica(true);
   if (id==='multe') { admInitSelettori('mul', true); window._admReg = null; admRegMulteRender(); }
   if (id==='impostazioni') admInitImpostazioni();
-  if (id==='scambi') admScInit();
 
   // Chiudi sidenav su mobile
   closeAdminSidenav();
@@ -4834,196 +4740,6 @@ var _wzData = { key:'', label:'', formato:'classic', giornate:34, nSquadre:10, c
 
 
 
-// ADMIN - Scambio Giocatori
-function admScInit() {
-  var sel = document.getElementById('adm-sc-torneo'); if(!sel) return;
-  // Reset torneo
-  sel.value='';
-  sel.innerHTML = '';
-  var opt0 = document.createElement('option');
-  opt0.value=''; opt0.textContent='-- Seleziona --';
-  opt0.style.cssText='color:#fff;background:#1e293b';
-  sel.appendChild(opt0);
-  ADMIN_TORNEI.forEach(function(t) {
-    var o = document.createElement('option');
-    o.value=t.key; o.textContent=t.label;
-    o.style.cssText='color:#fff;background:#1e293b';
-    sel.appendChild(o);
-  });
-  // Reset lega
-  var selL = document.getElementById('adm-sc-lega');
-  selL.value='';
-  selL.innerHTML='<option value="" style="color:#fff;background:#1e293b">-- Seleziona --</option>';
-  // Reset tutto il resto
-  document.getElementById('adm-sc-body').style.display='none';
-  document.getElementById('adm-sc-riepilogo').style.display='none';
-  document.getElementById('adm-sc-confirm-btn').style.display='none';
-}
-function admScLoadLeghe() {
-  var tk = document.getElementById('adm-sc-torneo').value;
-  var sel = document.getElementById('adm-sc-lega');
-  sel.innerHTML='';
-  var opt0 = document.createElement('option');
-  opt0.value=''; opt0.textContent='-- Seleziona --';
-  opt0.style.cssText='color:#fff;background:#1e293b';
-  sel.appendChild(opt0);
-  document.getElementById('adm-sc-body').style.display='none';
-  var t = ADMIN_TORNEI.find(function(x){return x.key===tk;});
-  if (!t) return;
-  t.leghe.slice().sort(function(a,b){return a.label.localeCompare(b.label);}).forEach(function(l) {
-    var o = document.createElement('option');
-    o.value=l.key; o.textContent=l.label;
-    o.style.cssText='color:#fff;background:#1e293b';
-    sel.appendChild(o);
-  });
-}
-function admScLoadSquadre() {
-  var tk = document.getElementById('adm-sc-torneo').value;
-  var lk = document.getElementById('adm-sc-lega').value;
-  if (!tk||!lk) return;
-  var teams = admGetTeams(tk, lk).slice().sort(function(a,b){return a.localeCompare(b);}).concat(['INFERMERIA']);
-  ['A','B'].forEach(function(side) {
-    var sel = document.getElementById('adm-sc-sq'+side);
-    sel.innerHTML = '<option value="">-- Seleziona --</option>';
-    teams.forEach(function(sq) {
-      var o = document.createElement('option');
-      o.value=sq; o.textContent=String(sq).toUpperCase(); o.style.color='#000';
-      sel.appendChild(o);
-    });
-    document.getElementById('adm-sc-players'+side).innerHTML = '';
-  });
-  document.getElementById('adm-sc-body').style.display = 'block';
-  document.getElementById('adm-sc-riepilogo').style.display = 'none';
-  document.getElementById('adm-sc-confirm-btn').style.display = 'none';
-}
-function admScLoadPlayers(side) {
-  var tk = document.getElementById('adm-sc-torneo').value;
-  var lk = document.getElementById('adm-sc-lega').value;
-  var sq = document.getElementById('adm-sc-sq'+side).value;
-  var el = document.getElementById('adm-sc-players'+side);
-  if (!sq) { el.innerHTML=''; return; }
-  var players = admGetPlayers(tk, lk, sq);
-  var ruoliOrder = ['Por','Dc','Dd','Ds','E','M','C','T','W','A','Pc','P','D'];
-  players = players.slice().sort(function(a,b){
-    var ia=ruoliOrder.indexOf((a.ruolo||'').split(';')[0].trim());
-    var ib=ruoliOrder.indexOf((b.ruolo||'').split(';')[0].trim());
-    if(ia!==ib)return(ia>=0?ia:99)-(ib>=0?ib:99);
-    return (a.nome||'').localeCompare(b.nome||'');
-  });
-  el.innerHTML = players.map(function(p){
-    return '<label style="display:flex;align-items:center;gap:6px;padding:5px 4px;border-bottom:1px solid var(--border);cursor:pointer;font-size:11px">'
-      +'<input type="checkbox" data-nome="'+p.nome+'" style="cursor:pointer">'
-      +'<span style="color:var(--text3);width:28px;flex-shrink:0">'+(p.ruolo||'')+'</span>'
-      +'<span style="flex:1;font-weight:600">'+p.nome+'</span>'
-      +'<span style="color:#10b981;font-family:Bebas Neue,sans-serif">'+p.costo+'</span>'
-      +'</label>';
-  }).join('') || '<div style="color:var(--text3);font-size:11px;padding:8px">Nessun giocatore</div>';
-  document.getElementById('adm-sc-riepilogo').style.display='none';
-  document.getElementById('adm-sc-confirm-btn').style.display='none';
-}
-function admScGetSelected(side) {
-  var names=[];
-  document.getElementById('adm-sc-players'+side).querySelectorAll('input:checked').forEach(function(cb){names.push(cb.dataset.nome);});
-  return names;
-}
-function admScPreview() {
-  var sqA=document.getElementById('adm-sc-sqA').value;
-  var sqB=document.getElementById('adm-sc-sqB').value;
-  var selA=admScGetSelected('A'), selB=admScGetSelected('B');
-  var crA=parseFloat(document.getElementById('adm-sc-crA').value)||0;
-  var crB=parseFloat(document.getElementById('adm-sc-crB').value)||0;
-  if (!sqA||!sqB){alert('Seleziona entrambe le squadre');return;}
-  if (sqA===sqB){alert('Le squadre devono essere diverse');return;}
-  if (!selA.length&&!selB.length&&!crA&&!crB){alert('Seleziona almeno un giocatore o crediti');return;}
-  var h='<div style="font-weight:800;font-size:13px;margin-bottom:10px;color:#8b5cf6">Riepilogo Scambio</div>';
-  h+='<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:start">';
-  h+='<div><div style="font-weight:700;color:#8b5cf6;margin-bottom:4px">'+sqA+' cede:</div>';
-  h+=selA.length?selA.map(function(n){return '<div style="font-size:11px;padding:2px 0">- '+n+'</div>';}).join(''):'<div style="font-size:11px;color:var(--text3)">Nessun giocatore</div>';
-  if(crA>0)h+='<div style="font-size:11px;color:#f59e0b;margin-top:4px">+ '+crA+' cr</div>';
-  h+='</div><div style="font-size:20px;text-align:center;padding-top:16px">&harr;</div>';
-  h+='<div><div style="font-weight:700;color:#10b981;margin-bottom:4px">'+sqB+' cede:</div>';
-  h+=selB.length?selB.map(function(n){return '<div style="font-size:11px;padding:2px 0">- '+n+'</div>';}).join(''):'<div style="font-size:11px;color:var(--text3)">Nessun giocatore</div>';
-  if(crB>0)h+='<div style="font-size:11px;color:#f59e0b;margin-top:4px">+ '+crB+' cr</div>';
-  h+='</div></div>';
-  var el=document.getElementById('adm-sc-riepilogo');
-  el.innerHTML=h; el.style.display='block';
-  document.getElementById('adm-sc-confirm-btn').style.display='block';
-}
-function admScConfirm() {
-  var tk=document.getElementById('adm-sc-torneo').value;
-  var lk=document.getElementById('adm-sc-lega').value;
-  var sqA=document.getElementById('adm-sc-sqA').value;
-  var sqB=document.getElementById('adm-sc-sqB').value;
-  var selA=admScGetSelected('A'), selB=admScGetSelected('B');
-  var crA=parseFloat(document.getElementById('adm-sc-crA').value)||0;
-  var crB=parseFloat(document.getElementById('adm-sc-crB').value)||0;
-  // Carica TUTTE le rose di tutte le squadre
-  var roseKey='adm_rose_'+tk+'_'+lk;
-  var savedRose={};
-  try{savedRose=JSON.parse(localStorage.getItem(roseKey)||'{}');}catch(e){}
-  var rose={};
-  var allTeams=admGetTeams(tk,lk);
-  allTeams.forEach(function(sq){
-    if(savedRose[sq]&&savedRose[sq].length>0) rose[sq]=savedRose[sq];
-    else rose[sq]=admGetPlayers(tk,lk,sq);
-  });
-  // Assicura che sqA/sqB esistano in rose
-  if (!rose[sqA]) rose[sqA] = admGetPlayers(tk,lk,sqA);
-  if (!rose[sqB]) rose[sqB] = admGetPlayers(tk,lk,sqB);
-  if (!rose[sqA] || !rose[sqB]) { alert('Errore: squadre non trovate'); return; }
-  // Esegui lo scambio sulle copie
-  var pA=rose[sqA].slice();
-  var pB=rose[sqB].slice();
-  selA.forEach(function(n){
-    var i=pA.findIndex(function(p){return p.nome===n;});
-    if(i>=0) pB.push(pA.splice(i,1)[0]);
-  });
-  selB.forEach(function(n){
-    var i=pB.findIndex(function(p){return p.nome===n;});
-    if(i>=0) pA.push(pB.splice(i,1)[0]);
-  });
-  rose[sqA]=pA; rose[sqB]=pB;
-  // Salva infermeria separatamente se coinvolta
-  if (sqA==='INFERMERIA' || sqB==='INFERMERIA') {
-    var infSq = sqA==='INFERMERIA' ? sqA : sqB;
-    var infPl = sqA==='INFERMERIA' ? pA : pB;
-    localStorage.setItem('adm_infermeria_'+tk+'_'+lk, JSON.stringify(infPl));
-    gsSaveKey('adm_infermeria_'+tk+'_'+lk, JSON.stringify(infPl));
-    if (tk==='slim'&&lk==='it') { INFERMERIA = infPl; if(window._INFERMERIA_IT) window._INFERMERIA_IT = infPl.slice(); }
-    delete rose[infSq]; // non salvare INFERMERIA dentro adm_rose_*
-  }
-  // Aggiorna TEAMS_ROSE in memoria
-  if (tk==='slim'&&lk==='it'&&typeof TEAMS_ROSE!=='undefined') {
-    Object.keys(rose).forEach(function(sq){ var _k=Object.keys(TEAMS_ROSE).find(function(k){return k.toLowerCase()===sq.toLowerCase();})||sq; TEAMS_ROSE[_k]=rose[sq]; });
-    if (typeof window._TEAMS_ROSE_IT !== 'undefined') Object.keys(rose).forEach(function(sq){ var _k=Object.keys(window._TEAMS_ROSE_IT).find(function(k){return k.toLowerCase()===sq.toLowerCase();})||sq; window._TEAMS_ROSE_IT[_k]=rose[sq]; });
-  }
-  localStorage.setItem(roseKey,JSON.stringify(rose));
-  gsSaveKey(roseKey, JSON.stringify(rose));
-  // Aggiorna crediti se necessario
-  if(crA>0||crB>0){
-    var crKey='adm_crediti_base_'+tk+'_'+lk;
-    var cr={};try{cr=JSON.parse(localStorage.getItem(crKey)||'{}');}catch(e){}
-    if(crA>0){cr[sqA]=(parseFloat(cr[sqA])||0)-crA;cr[sqB]=(parseFloat(cr[sqB])||0)+crA;}
-    if(crB>0){cr[sqB]=(parseFloat(cr[sqB])||0)-crB;cr[sqA]=(parseFloat(cr[sqA])||0)+crB;}
-    localStorage.setItem(crKey,JSON.stringify(cr)); syncCreditiToUser(tk,lk,cr);
-  }
-  if(typeof gsCall==='function'&&GS_ONLINE) gsCall({action:'saveRose',torneo:tk,lega:lk,data:JSON.stringify(rose)},null);
-  document.getElementById('adm-sc-riepilogo').style.display='none';
-  document.getElementById('adm-sc-confirm-btn').style.display='none';
-  // Reset selezioni
-  // Reset completo
-  document.getElementById('adm-sc-sqA').value='';
-  document.getElementById('adm-sc-sqB').value='';
-  document.getElementById('adm-sc-crA').value='0';
-  document.getElementById('adm-sc-crB').value='0';
-  document.getElementById('adm-sc-playersA').innerHTML='';
-  document.getElementById('adm-sc-playersB').innerHTML='';
-  document.getElementById('adm-sc-body').style.display='none';
-  var msg=document.createElement('div');
-  msg.textContent='Scambio completato!';
-  msg.style.cssText='position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
-  document.body.appendChild(msg);setTimeout(function(){msg.remove();},2500);
-}
 
 
 
@@ -7784,7 +7500,6 @@ function admWizardUpdateLeaguesData(key, label, leghe) {
 
 
 
-// ADMIN - Scambio Giocatori
 
 
 function admAddTorneo() {
