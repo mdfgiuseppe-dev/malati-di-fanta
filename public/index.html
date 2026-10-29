@@ -3380,10 +3380,9 @@ function fbLoadKey(key, callback) {
 // ═════════════════════════════════════════════════════════════════
 // PARSING TORNEI DA data/tornei
 // ═════════════════════════════════════════════════════════════════
-// Metadati dei tornei (codificati, caricati da data/tornei per le leghe)
-var TORNEI_METADATA = {
-  slm: { label: 'SCUDETTO SLIM', formato: 'mantra', color: '#3bf748' }
-};
+// Metadati dei tornei: data/tornei_meta/{chiave} = { label, formato, color, giornate, nSquadre, crediti, trofeo }
+var TORNEI_METADATA = {};
+function _torneoMeta(t) { return TORNEI_METADATA[t] || {}; }
 
 // Leghe label da codice (chiavi in data/tornei sono chiavi lingua: it, fr, en, ecc.)
 var LEGHE_LABELS = {
@@ -3399,89 +3398,28 @@ var LEGHE_LABELS = {
 
 // Carica tornei da data/tornei e costruisce ADMIN_TORNEI
 function loadTorneiFromFirebase() {
-  fbLoadKey('tornei', function(val) {
-    if (val && typeof val === 'object') {
-      console.log('   Object.keys(raw):', Object.keys(val).join('|'));
-      Object.keys(val).forEach(function(k) {
-        console.log('   chiave raw[' + k + '] lunghezza:', k.length, 'contenuto:', JSON.stringify(k));
-      });
-    }
-
-    if (!val || typeof val !== 'object') {
-      console.error('❌ data/tornei non trovato o non è oggetto');
-      return;
-    }
-
-    // Se val è un array numerato {0: {...}, 1: {...}}, convertilo a oggetto
-    if (Array.isArray(val)) {
-      console.warn('⚠️ data/tornei è un array, convertendo...');
-      var obj = {};
-      val.forEach(function(item) {
-        if (item && typeof item === 'object') {
-          console.log('   merging item:', item);
-          Object.assign(obj, item);
-        }
-      });
-      val = obj;
-      console.log('   dopo conversione, chiavi:', Object.keys(val));
-    }
-
+  // Tornei = data/tornei_meta (dati del torneo) + data/tornei (leghe e squadre); anche un torneo senza leghe è valido
+  Promise.all([fbDB.ref('data/tornei_meta').once('value'), fbDB.ref('data/tornei').once('value')]).then(function(r) {
+    var meta = r[0].val() || {}, val = r[1].val() || {};
+    if (Array.isArray(val)) { var obj = {}; val.forEach(function(it) { if (it && typeof it === 'object') Object.assign(obj, it); }); val = obj; }
+    Object.keys(TORNEI_METADATA).forEach(function(k) { delete TORNEI_METADATA[k]; });
+    Object.keys(meta).forEach(function(k) { if (meta[k] && typeof meta[k] === 'object') TORNEI_METADATA[k] = meta[k]; });
     var tornei = [];
-
-    // Per ogni torneo in data/tornei
-    console.log('   val keys:', Object.keys(val));
-    console.log('   TORNEI_METADATA:', TORNEI_METADATA);
-    console.log('   TORNEI_METADATA keys:', Object.keys(TORNEI_METADATA));
-    Object.keys(val).forEach(function(tkey) {
-      console.log('   [iterando] tkey =', tkey, ', length:', tkey.length);
-      var meta = TORNEI_METADATA[tkey];
-      console.log('   TORNEI_METADATA[' + tkey + '] =', meta);
-      if (!meta) {
-        console.warn('⚠️ Nessun metadata per torneo:', tkey);
-        return; // skip tornei senza metadata
-      }
-
-      var tdata = val[tkey];
-      var leghe = [];
-
-      // Estrai le leghe (chiavi delle lingue)
-      if (tdata && typeof tdata === 'object') {
-        Object.keys(tdata).forEach(function(lkey) {
-          leghe.push({
-            key: lkey,
-            label: String((tdata[lkey] && tdata[lkey].label) || LEGHE_LABELS[lkey] || lkey).toUpperCase()
-          });
-        });
-      }
-
-      tornei.push({
-        key: tkey,
-        label: meta.label,
-        formato: meta.formato,
-        color: meta.color,
-        leghe: leghe
+    Object.keys(TORNEI_METADATA).forEach(function(tkey) {
+      var m = TORNEI_METADATA[tkey], tdata = val[tkey], leghe = [];
+      if (tdata && typeof tdata === 'object') Object.keys(tdata).forEach(function(lkey) {
+        leghe.push({ key: lkey, label: String((tdata[lkey] && tdata[lkey].label) || LEGHE_LABELS[lkey] || lkey).toUpperCase() });
       });
+      tornei.push({ key: tkey, label: String(m.label || tkey).toUpperCase(), formato: m.formato || 'classic', color: m.color || '#3b82f6', leghe: leghe });
     });
-
-
-    if (tornei.length > 0) {
-      // Popola ADMIN_TORNEI
-      ADMIN_TORNEI.length = 0;
-      tornei.forEach(function(t) { ADMIN_TORNEI.push(t); });
-
-      // Ricarica UI
-      if (typeof renderTournamentCards === 'function') {
-        renderTournamentCards();
-      }
-      if (typeof syncLeaguesDataFromAdmin === 'function') {
-        syncLeaguesDataFromAdmin();
-      }
-      // Carica loghi delle card DOPO che le card sono renderizzate
-      if (typeof updateLogosTornei === 'function') {
-        updateLogosTornei();
-      }
-    }
-  });
+    Object.keys(val).forEach(function(k) { if (!TORNEI_METADATA[k]) console.warn('⚠️ Torneo senza dati in data/tornei_meta:', k); });
+    ADMIN_TORNEI.length = 0;
+    tornei.forEach(function(t) { ADMIN_TORNEI.push(t); });
+    if (typeof renderTournamentCards === 'function') renderTournamentCards();
+    if (typeof syncLeaguesDataFromAdmin === 'function') syncLeaguesDataFromAdmin();
+    if (typeof updateLogosTornei === 'function') updateLogosTornei();
+    if (typeof admRenderTornei === 'function' && document.getElementById('adm-tornei-select')) admRenderTornei();
+  }).catch(function(e) { console.error('❌ Caricamento tornei:', e); });
 }
 
 // Funzione generica: converte cualunque formato Firebase a array
@@ -5554,7 +5492,7 @@ function updateDashboardCounters() {
       if (clubEl) {
         var totalClub = 0;
         var _cfgN = 0;
-        try { _cfgN = JSON.parse(localStorage.getItem('adm_config_'+t.key)||'{}').nSquadre || 0; } catch(e){}
+        _cfgN = +_torneoMeta(t.key).nSquadre || 0;
         var _ldLeghe = (typeof LEAGUES_DATA !== 'undefined' && LEAGUES_DATA[t.key]) ? LEAGUES_DATA[t.key].leghe : [];
         t.leghe.forEach(function(l) {
           var _fbSq = window.FB_SQUADRE && window.FB_SQUADRE[t.key+'_'+l.key];
@@ -5662,7 +5600,7 @@ function selectTournament(key, el) {
 
   // Numero club per lega da adm_config o da adm_rose
   var _cfgClub = 0;
-  try { _cfgClub = JSON.parse(localStorage.getItem('adm_config_'+key)||'{}').nSquadre || 0; } catch(e){}
+  _cfgClub = +_torneoMeta(key).nSquadre || 0;
 
   dati.leghe.slice().sort(function(a,b){return a.label.localeCompare(b.label);}).forEach(function(lega) {
     var _lk = lega.key;
@@ -7288,7 +7226,8 @@ function admUpdateTorneoColor(ti, color) {
   var t = ADMIN_TORNEI[ti];
   if (!t) return;
   t.color = color;
-  admSaveTornei();
+  if (TORNEI_METADATA[t.key]) TORNEI_METADATA[t.key].color = color;
+  fbDB.ref('data/tornei_meta/' + t.key + '/color').set(color);
   if (typeof renderTournamentCards === 'function') renderTournamentCards();
   setTimeout(function() {
     if (typeof updateLogosTornei === 'function') updateLogosTornei();
@@ -7359,7 +7298,9 @@ function admWizardStep(n) {
     _wzData.crediti = parseInt(document.getElementById('wz-crediti').value)||250;
     _wzData.trofeoUrl = (document.getElementById('wz-trofeo')||{}).value||'';
     _wzData.color = (document.getElementById('wz-color')||{}).value||'#3b82f6';
-    admWizardRenderLeghe();
+    if (!/^[a-z0-9_-]+$/.test(_wzData.key)) { alert('Chiave non valida: usa solo lettere minuscole, numeri, - e _'); return; }
+    if (TORNEI_METADATA[_wzData.key] || ADMIN_TORNEI.some(function(t){ return t.key === _wzData.key; })) { alert('Esiste già un torneo con chiave "'+_wzData.key+'"'); return; }
+    admWizardRenderRiepilogo();
   }
   if (n===3) {
     if (!_wzData.leghe.length) { alert('Aggiungi almeno una lega'); return; }
@@ -7441,7 +7382,7 @@ function admWizardRenderRiepilogo() {
     +'<div><span style="color:var(--text3)">Squadre/lega:</span> <b>'+_wzData.nSquadre+'</b></div>'
     +'<div><span style="color:var(--text3)">Crediti:</span> <b>'+_wzData.crediti+'</b></div>'
     +'</div>'
-    +'<div style="margin-top:10px;font-size:12px"><span style="color:var(--text3)">Leghe:</span> <b>'+legheStr+'</b></div>'
+    +'<div style="margin-top:10px;font-size:11px;color:var(--text3)">Le leghe si aggiungono dopo, dal dettaglio del torneo.</div>'
     +'</div>';
   // Squadre per lega
   _wzData.leghe.slice().sort(function(a,b){return a.label.localeCompare(b.label);}).forEach(function(lega) {
@@ -7452,28 +7393,22 @@ function admWizardRenderRiepilogo() {
 }
 
 function admWizardConfirm() {
-  // Crea il torneo base (senza leghe)
-  var torneo = { key: _wzData.key, label: _wzData.label, formato: _wzData.formato, color: _wzData.color, leghe: [] };
-  ADMIN_TORNEI.push(torneo);
-  admSaveTornei();
-
-  var torneoLabel = _wzData.label;
-
-  // Reset wizard
-  _wzData = { key:'', label:'', formato:'classic', giornate:34, nSquadre:10, crediti:250, color:'#3b82f6', leghe:[], squadrePerLega:{} };
-  admWizardStep(1);
-  document.getElementById('wz-key').value='';
-  document.getElementById('wz-label').value='';
-  document.getElementById('wz-color').value='#3b82f6';
-
-  admRenderTornei();
-  admAggiornaDashboard();
-
-  var msg = document.createElement('div');
-  msg.textContent = '✅ Torneo "'+torneoLabel+'" creato! Ora crea le leghe.';
-  msg.style.cssText = 'position:fixed;top:70px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';
-  document.body.appendChild(msg);
-  setTimeout(function(){msg.remove();},3000);
+  var k = _wzData.key, label = String(_wzData.label || '').toUpperCase();
+  if (!k || !label) { alert('Compila chiave e nome torneo'); return; }
+  if (TORNEI_METADATA[k]) { alert('Esiste già un torneo con chiave "'+k+'"'); return; }
+  var meta = { label: label, formato: _wzData.formato, color: _wzData.color, giornate: _wzData.giornate, nSquadre: _wzData.nSquadre, crediti: _wzData.crediti, trofeo: _wzData.trofeoUrl || '' };
+  fbDB.ref('data/tornei_meta/' + k).set(meta).then(function() {
+    TORNEI_METADATA[k] = meta;
+    ADMIN_TORNEI.push({ key: k, label: label, formato: meta.formato, color: meta.color, leghe: [] });
+    _wzData = { key:'', label:'', formato:'classic', giornate:34, nSquadre:10, crediti:250, color:'#3b82f6', leghe:[], squadrePerLega:{} };
+    admWizardStep(1);
+    ['wz-key','wz-label','wz-trofeo'].forEach(function(id){ var e = document.getElementById(id); if (e) e.value = ''; });
+    var wc = document.getElementById('wz-color'); if (wc) wc.value = '#3b82f6';
+    admRenderTornei();
+    admReopenTorneo(ADMIN_TORNEI.findIndex(function(t){ return t.key === k; }));
+    admAggiornaDashboard();
+    _admInfMsg('✅ Torneo "'+label+'" creato! Ora aggiungi le leghe.');
+  }).catch(function(e) { alert('Errore salvataggio torneo: ' + e.message); });
 }
 
 function admWizardUpdateLeaguesData(key, label, leghe) {
@@ -7677,17 +7612,28 @@ function admEditTrofeoLega(ti, li) {
   document.body.appendChild(msg);
   setTimeout(function(){msg.remove();},2000);
 }
-function admConfirmRemoveTorneo(ti) {
-  var t = ADMIN_TORNEI[ti];
-  if (!confirm('Eliminare il torneo "' + (t?t.label:'') + '"?\nTutti i dati saranno cancellati.')) return;
-  admRemoveTorneo(ti);
-}
+function admConfirmRemoveTorneo(ti) { admRemoveTorneo(ti); }
 function admRemoveTorneo(ti) {
-  if (!confirm('Eliminare il torneo "'+ADMIN_TORNEI[ti].label+'"?')) return;
-  ADMIN_TORNEI.splice(ti, 1);
-  admSaveTornei();
-  admRenderTornei();
-  admAggiornaDashboard();
+  var t = ADMIN_TORNEI[ti]; if (!t) return;
+  var conf = prompt('Eliminare il torneo "' + t.label + '" con TUTTE le sue leghe e tutti i dati su Firebase?\n(squadre, calendari, risultati, rose, contratti, stadio, multe, gettoni, qualificazioni, loghi)\n\nL\'operazione non può essere annullata.\nPer confermare scrivi la chiave del torneo: ' + t.key);
+  if (conf === null) return;
+  if (conf.trim() !== t.key) { alert('Chiave non corretta: torneo NON eliminato.'); return; }
+  var tk = t.key, ops = [];
+  t.leghe.forEach(function(l) {
+    var fk = tk + '_' + l.key;
+    ['calendario','calendario_schedule','punteggi','totali','stadio','rose','crediti','gettoni','contratti','infermeria','multe'].forEach(function(n){ ops.push(fbDB.ref('data/'+n+'/'+fk).remove()); });
+    ops.push(fbDB.ref('data/images/loghi/leghe/'+fk).remove());
+    ['FB_SQUADRE','FB_CALENDARIO','FB_SCHEDULE','FB_PUNTEGGI','FB_TOTALI','FB_STADIO','FB_GETTONI','FB_ALLENATORI','FB_ROSE','FB_CONTRATTI','FB_INFERMERIA','FB_MULTE'].forEach(function(v){ if (window[v]) delete window[v][fk]; });
+  });
+  ['tornei','tornei_meta','tornei_config','qualificazioni','images/loghi/squadre','images/loghi/tornei','images/loghi/qualificazioni'].forEach(function(n){ ops.push(fbDB.ref('data/'+n+'/'+tk).remove()); });
+  Promise.all(ops).then(function() {
+    delete TORNEI_METADATA[tk];
+    ADMIN_TORNEI.splice(ti, 1);
+    if (typeof LEAGUES_DATA !== 'undefined') delete LEAGUES_DATA[tk];
+    admRenderTornei();
+    admAggiornaDashboard();
+    _admInfMsg('✅ Torneo "' + t.label + '" eliminato', '#ef4444');
+  }).catch(function(e) { alert('Errore eliminazione: ' + e.message); });
 }
 
 function admAddLega(ti) {
@@ -7703,8 +7649,7 @@ function admAddLegaWizard(ti, legaKey, legaLabel) {
   var torneo = ADMIN_TORNEI[ti];
   if (!torneo) return;
   // Recupera config dal torneo (da altra lega esistente o da adm_config)
-  var config = {};
-  try { config = JSON.parse(localStorage.getItem('adm_config_'+torneo.key)||'{}'); } catch(e){}
+  var config = _torneoMeta(torneo.key);
   var giornate = config.giornate || 34;
   var nSquadre = config.nSquadre || 10;
   var crediti = config.crediti || 250;
@@ -7755,11 +7700,6 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
   torneo.leghe.sort(function(a,b){return a.label.localeCompare(b.label);});
   admSaveTornei();
 
-  // Salva config del torneo se non esiste
-  var _existingConfig = localStorage.getItem('adm_config_'+torneo.key);
-  if (!_existingConfig) {
-    localStorage.setItem('adm_config_'+torneo.key, JSON.stringify({giornate:giornate,nSquadre:nSquadre,crediti:crediti,formato:torneo.formato||'classic',label:torneo.label,leghe:torneo.leghe}));
-  }
   // Salva struttura dati
   var rose = {};
   var cr = {};
