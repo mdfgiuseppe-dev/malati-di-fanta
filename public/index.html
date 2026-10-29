@@ -1047,10 +1047,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 <div class="topbar">
   <img class="topbar-logo" src="" alt="MdF" onclick="showPage('dashboard');_adminClickCount=(_adminClickCount||0)+1;_resetAdminClick();if(_adminClickCount>=3){_adminClickCount=0;openAdminLogin();}">
   <div class="breadcrumb">
-    <span style="cursor:pointer;color:var(--green)" onclick="showPage('dashboard')">Scudetto Slim</span>
+    <span style="cursor:pointer;color:var(--green)" onclick="showPage('dashboard')"></span>
     <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     <img id="breadcrumb-logo" src="" style="height:16px;width:auto;object-fit:contain;">
-    <b id="breadcrumb-league">Italia</b>
+    <b id="breadcrumb-league"></b>
   </div>
   <div class="topbar-right">
     <div id="pg-theme-btn" onclick="toggleTheme()" title="Cambia tema" style="width:34px;height:34px;border-radius:9px;background:var(--card2,rgba(255,255,255,.08));border:1px solid var(--border,rgba(255,255,255,.1));display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;transition:all .2s">☀️</div>
@@ -5859,7 +5859,7 @@ function _updateLegaDashboard(leagueKey) {
   }
   var _torneoShort = _admTK ? _admTK.charAt(0).toUpperCase()+_admTK.slice(1) : '';
   var bcEl = document.getElementById('breadcrumb-league');
-  if (bcEl) bcEl.textContent = breadcrumbNames[_realLK] || _dynLegaLabel || _realLK.toUpperCase();
+  if (bcEl) bcEl.textContent = String(_dynLegaLabel || breadcrumbNames[_realLK] || _realLK).toUpperCase();
   var nameEl = document.querySelector('.league-info-name');
   var subEl  = document.querySelector('.league-info-sub');
   if (nameEl) nameEl.textContent = legaNames[leagueKey] || _dynLegaLabel || _realLK.toUpperCase();
@@ -5886,18 +5886,18 @@ function _updateLegaDashboard(leagueKey) {
   var titleEl = document.getElementById('lega-dash-title');
   if (titleEl) titleEl.textContent = (legaNames[leagueKey] || _dynLegaLabel || _realLK).toUpperCase();
   // Logo della lega: carica da Firebase
+  // Nome del torneo nella barra in alto
+  var _bcT = document.querySelector('#page-lega .breadcrumb > span');
+  if (_bcT && _admTK) _bcT.textContent = (_torneoMeta(_admTK).label || _admTK).toUpperCase();
   if (_admTK && _realLK) {
-    var fbPath = 'data/images/loghi/leghe/'+_admTK+'_'+_realLK;
-    fbDB.ref(fbPath).once('value', function(snapshot) {
-      var fbLogo = snapshot.val();
-      if (fbLogo) {
-        fbLogo = _normalizeImgUrl(fbLogo);
-        var bcLogoEl = document.getElementById('breadcrumb-logo');
-        var lgLogoEl = document.getElementById('league-logo');
-        if (bcLogoEl) bcLogoEl.src = fbLogo;
-        if (lgLogoEl) lgLogoEl.src = fbLogo;
-      }
-    });
+    // Logo della lega; se non c'è, il logo del torneo (mai quello della lega aperta prima)
+    var bcLogoEl = document.getElementById('breadcrumb-logo'), lgLogoEl = document.getElementById('league-logo');
+    [bcLogoEl, lgLogoEl].forEach(function(e){ if (e) { e.src = ''; e.style.visibility = 'hidden'; } });
+    Promise.all([fbDB.ref('data/images/loghi/leghe/'+_admTK+'_'+_realLK).once('value'), fbDB.ref('data/images/loghi/tornei/'+_admTK).once('value')]).then(function(r) {
+      var u = r[0].val() || r[1].val() || '';
+      u = u ? _logoImgUrl(u) : '';
+      [bcLogoEl, lgLogoEl].forEach(function(e){ if (e) { e.src = u; e.style.visibility = u ? 'visible' : 'hidden'; } });
+    }).catch(function(){});
   }
   var _ds=document.getElementById('lega-dash-sub'); if(_ds) _ds.textContent='Fantacalcio Manageriale · Modalità '+_formatoLabel();
   renderPodio();
@@ -11165,6 +11165,7 @@ function _resetAdminClick() {
 
 function _applyLogoMain(url) {
   if (!url) return;
+  url = _logoImgUrl(url);
   document.querySelectorAll('.sp-logo, .topbar-logo').forEach(function(el){ el.src = url; });
   // Aggiorna icona PWA (schermata Home)
   var _ati = document.querySelector('link[rel="apple-touch-icon"]');
