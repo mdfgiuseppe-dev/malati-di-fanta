@@ -1081,10 +1081,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 <nav class="sidenav">
   <div class="sidenav-header">
     <div class="league-logo-row">
-      <img id="league-logo" class="league-logo" src="" alt="Slim Italia">
+      <img id="league-logo" class="league-logo" src="" alt="">
       <div>
-        <div class="league-info-name">Slim Italia</div>
-        <div class="league-info-sub">10 squadre · Mantra</div>
+        <div class="league-info-name"></div>
+        <div class="league-info-sub"></div>
       </div>
     </div>
     <div class="league-season">⚽ Stagione 2026/27</div>
@@ -5863,7 +5863,7 @@ function _updateLegaDashboard(leagueKey) {
   var nameEl = document.querySelector('.league-info-name');
   var subEl  = document.querySelector('.league-info-sub');
   if (nameEl) nameEl.textContent = legaNames[leagueKey] || _dynLegaLabel || _realLK.toUpperCase();
-  var nTeams = Object.keys(TEAMS_ROSE).length;
+  var nTeams = ((window.FB_SQUADRE || {})[_admTK + '_' + _realLK] || []).length || Object.keys(TEAMS_ROSE).length;
   if (subEl) subEl.textContent = nTeams + ' squadre · ' + _formatoLabel();
   // Trofeo: carica da Firebase
   var trophyEl = document.getElementById('lega-dash-trophy');
@@ -10785,20 +10785,6 @@ function _showComingSoon(leagueKey) {
   showPage('coming-soon');
 }
 
-function _updateLeagueHeader(tournament, leagueKey) {
-  var nameEl = document.querySelector('.league-info-name');
-  var subEl  = document.querySelector('.league-info-sub');
-  var seasonEl = document.querySelector('.league-season');
-  var leagueNames = {
-    'it':'Slim Italia','en':'Slim Inghilterra','de':'Slim Germania',
-    'es':'Slim Spagna','fr':'Slim Francia','pt':'Slim Portogallo',
-    'nl':'Slim Olanda','tr':'Slim Turchia'
-  };
-  var nTeams = Object.keys(TEAMS_ROSE).length;
-  if (nameEl) nameEl.textContent = leagueNames[leagueKey] || 'Slim '+leagueKey.toUpperCase();
-  if (subEl)  subEl.textContent  = nTeams + ' squadre · ' + _formatoLabel();
-  if (seasonEl) seasonEl.textContent = '⚽ Stagione 2026/27';
-}
 function goBackToLega(){
   currentTournament = null;
   var container = document.getElementById('leagues-container');
