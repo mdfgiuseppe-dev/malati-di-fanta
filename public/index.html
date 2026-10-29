@@ -1163,6 +1163,9 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       <!-- Sottotitolo -->
       <div style="position:relative;z-index:2;font-size:clamp(9px,2.5vw,11px);font-weight:800;letter-spacing:clamp(2px,1vw,4px);text-transform:uppercase;color:#10b981">Fantacalcio Manageriale · Modalità Mantra</div>
 
+      <!-- Podio (provvisorio / campione) -->
+      <div id="lega-dash-podio" style="position:relative;z-index:2;width:100%"></div>
+
     </div>
 
     <style>
@@ -5737,6 +5740,75 @@ var INFERMERIA = [];
 var CREDITS = {};
 var SLIM_TEAMS = [];
 
+// ── Podio della dashboard: provvisorio durante il campionato, definitivo (CAMPIONE, corona, coriandoli) a calendario completo ──
+function _podioStato() {
+  var t = window._currentTourneyKey, l = (typeof currentLeagueKey !== 'undefined' && currentLeagueKey) ? currentLeagueKey : 'it';
+  var cal = slimGetCalendar() || {}, sch = ((window.FB_SCHEDULE || {})[t + '_' + l] || {}).giornate || {};
+  var giocate = Object.keys(cal).filter(function(g) { return Object.values(cal[g] || {}).some(function(v) { return v; }); }).map(Number);
+  var ultima = giocate.length ? Math.max.apply(null, giocate) : 0;
+  // Campionato finito: ogni partita di ogni giornata del calendario ha l'esito
+  var gs = Object.keys(sch), finito = gs.length > 0 && gs.every(function(g) {
+    var C = cal[g] || {}, ks = Object.keys(C).reduce(function(o, k) { o[k.toUpperCase()] = C[k]; return o; }, {});
+    return (sch[g] || []).every(function(m) { return ks[String(m.h || '').toUpperCase()] && ks[String(m.a || '').toUpperCase()]; });
+  });
+  if (!gs.length) { var mg = +(_torneoMeta(t).giornate || 0); finito = mg > 0 && giocate.length >= mg; }
+  return { giocate: giocate.length, ultima: ultima, finito: finito };
+}
+function renderPodio() {
+  var el = document.getElementById('lega-dash-podio'); if (!el) return;
+  var st = _podioStato();
+  if (!st.giocate || typeof slimCalcStandings !== 'function' || !SLIM_TEAMS.length) { el.innerHTML = ''; return; }
+  var R = slimCalcStandings(), top = R.sorted.slice(0, 3), fin = st.finito;
+  if (top.length < 3) { el.innerHTML = ''; return; }
+  var MED = [
+    { g: 'linear-gradient(180deg,#fef3c7 0%,#fbbf24 35%,#d97706 75%,#92400e 100%)', c: '#fbbf24', h: 96 },
+    { g: 'linear-gradient(180deg,#f8fafc 0%,#cbd5e1 35%,#94a3b8 75%,#475569 100%)', c: '#cbd5e1', h: 72 },
+    { g: 'linear-gradient(180deg,#ffedd5 0%,#fb923c 35%,#c2410c 75%,#7c2d12 100%)', c: '#fb923c', h: 56 }
+  ];
+  function col(i) {
+    var team = top[i], m = MED[i], lg = _uLogoUrl(team), first = i === 0, sz = first ? (fin ? 66 : 56) : 44;
+    return '<div class="pd-col' + (first ? ' pd-first' : '') + '" style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center">'
+      + (first && fin ? '<div class="pd-crown">👑</div>' : '')
+      + (lg ? '<img src="' + lg + '" onerror="this.style.display=\'none\'" style="width:' + sz + 'px;height:' + sz + 'px;object-fit:contain;filter:drop-shadow(0 4px 12px ' + m.c + '88)' + (first ? ';animation:dash-float 3.2s ease-in-out infinite' : '') + '">' : '<div style="height:' + sz + 'px"></div>')
+      + '<div style="font-size:' + (first ? 12 : 10) + 'px;font-weight:800;color:var(--text);margin:6px 0 6px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.5px">' + team + '</div>'
+      + '<div class="pd-step" style="width:100%;height:' + m.h + 'px;background:' + m.g + ';border-radius:10px 10px 0 0;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:' + (fin ? 1 : .55) + ';box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 6px 20px ' + m.c + '33">'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:' + (first ? 38 : 30) + 'px;line-height:1;color:rgba(255,255,255,.95);text-shadow:0 2px 0 rgba(0,0,0,.25)">' + (i + 1) + '</div>'
+      + (first && fin ? '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:2px;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.3)">CAMPIONE</div>' : '')
+      + (fin ? '<div class="pd-shine"></div>' : '')
+      + '</div></div>';
+  }
+  var h = '<style>'
+    + '.pd-crown{font-size:26px;line-height:1;margin-bottom:-4px;animation:pd-crown 2.4s ease-in-out infinite;filter:drop-shadow(0 2px 6px rgba(251,191,36,.7))}'
+    + '@keyframes pd-crown{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-5px) rotate(6deg)}}'
+    + '.pd-shine{position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);animation:pd-shine 3.5s ease-in-out infinite}'
+    + '@keyframes pd-shine{0%{left:-60%}60%,100%{left:130%}}'
+    + '.pd-confetto{position:fixed;top:-12px;width:8px;height:12px;border-radius:2px;z-index:9998;pointer-events:none;animation:pd-fall linear forwards}'
+    + '@keyframes pd-fall{to{transform:translateY(105vh) rotate(720deg);opacity:.9}}'
+    + '</style>'
+    + '<div onclick="showSection(\'classifica\',null)" style="cursor:pointer;position:relative;width:100%;max-width:360px;margin:clamp(16px,4vw,24px) auto 0">'
+    + (fin ? '<div style="position:absolute;left:50%;top:-30px;transform:translateX(-50%);width:160px;height:200px;background:radial-gradient(ellipse at top,rgba(251,191,36,.35),transparent 70%);pointer-events:none"></div>' : '')
+    + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:' + (fin ? 22 : 16) + 'px;letter-spacing:3px;color:' + (fin ? '#fbbf24' : 'var(--text2)') + ';margin-bottom:10px">' + (fin ? '🏆 CAMPIONE' : 'Classifica dopo la ' + st.ultima + 'ª giornata') + '</div>'
+    + '<div style="display:flex;align-items:flex-end;gap:8px">' + col(1) + col(0) + col(2) + '</div>'
+    + '<div style="height:6px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin-top:0"></div>'
+    + (fin ? '' : '<div style="font-size:9px;color:var(--text3);margin-top:6px;letter-spacing:1px;text-transform:uppercase">Tocca per la classifica completa</div>')
+    + '</div>';
+  el.innerHTML = h;
+  // Coriandoli: una volta per lega a sessione, solo a campionato finito
+  var key = (window._currentTourneyKey || '') + '_' + (typeof currentLeagueKey !== 'undefined' ? currentLeagueKey : '');
+  window._podioConfetti = window._podioConfetti || {};
+  if (fin && !window._podioConfetti[key]) {
+    window._podioConfetti[key] = true;
+    var cols = ['#fbbf24', '#f59e0b', '#fde68a', '#ffffff', '#10b981', '#d97706'];
+    for (var i = 0; i < 70; i++) {
+      var c = document.createElement('div'); c.className = 'pd-confetto';
+      c.style.left = (Math.random() * 100) + 'vw'; c.style.background = cols[i % cols.length];
+      c.style.animationDuration = (2.5 + Math.random() * 2.5) + 's'; c.style.animationDelay = (Math.random() * 1.2) + 's';
+      c.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+      document.body.appendChild(c);
+      (function(cc) { setTimeout(function() { cc.remove(); }, 6500); })(c);
+    }
+  }
+}
 function _updateLegaDashboard(leagueKey) {
   // Normalizza: trova torneoKey e legaKey reale (gestisce 'tsm_it' con l.key='it')
   var _admTK = ''; var _realLK = leagueKey;
@@ -5818,6 +5890,7 @@ function _updateLegaDashboard(leagueKey) {
       }
     });
   }
+  renderPodio();
 }
 
 
@@ -10762,6 +10835,7 @@ function showSection(id,el){
   var sec=document.getElementById('s-'+id);if(sec)sec.classList.add('active');
   document.querySelectorAll('.nav-item, .mnav-btn').forEach(function(n){n.classList.remove('active');});
   if(el)el.classList.add('active');
+  if(id==='dashboard') renderPodio();
   if(id==='rose'){buildTeamsGrid();updateHeader();buildFilters();renderTable();}
   else if(id==='classifica')slimRenderClassifica();
   else if(id==='calendario')slimRenderCalendario();
