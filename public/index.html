@@ -7696,16 +7696,14 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
 
   // Salva struttura dati
   var rose = {};
-  var cr = {};
   var cal = {};
-  squadre.forEach(function(s){ rose[s]=[]; cr[s]=crediti; });
+  squadre.forEach(function(s){ rose[s]=[]; });
   for (var g=1; g<=giornate; g++) {
     cal[String(g)] = {};
     squadre.forEach(function(s){ cal[String(g)][s.toUpperCase()]=''; });
   }
   // Salva su Firebase
   fbDB.ref('data/rose/'+torneo.key+'_'+legaKey).set(JSON.stringify(rose));
-  fbDB.ref('data/crediti/'+torneo.key+'_'+legaKey).set(JSON.stringify(cr));
   fbDB.ref('data/calendario/'+torneo.key+'_'+legaKey).set(JSON.stringify(cal));
   // Salva squadre su Firebase (percorso strutturato per tornei)
   var _sqObj = {};
@@ -7717,7 +7715,6 @@ function admAddLegaConfirm(ti, legaKey, legaLabel, giornate, nSquadre, crediti) 
 
   localStorage.setItem('adm_rose_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
   localStorage.setItem('adm_rose_import_'+torneo.key+'_'+legaKey, JSON.stringify(rose));
-  localStorage.setItem('adm_crediti_base_'+torneo.key+'_'+legaKey, JSON.stringify(cr)); syncCreditiToUser(torneo.key, legaKey, cr);
   localStorage.setItem('adm_cal_'+torneo.key+'_'+legaKey, JSON.stringify(cal));
 
   // Aggiorna LEAGUES_DATA (crea struttura se non esiste)
