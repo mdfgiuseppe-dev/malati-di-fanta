@@ -1161,7 +1161,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       <div id="lega-dash-title" style="position:relative;z-index:2;font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,10vw,56px);letter-spacing:clamp(3px,1.5vw,6px);color:var(--text);line-height:1;margin-bottom:10px;text-shadow:0 2px 20px rgba(16,185,129,.15)">SLIM ITALIA</div>
 
       <!-- Sottotitolo -->
-      <div style="position:relative;z-index:2;font-size:clamp(9px,2.5vw,11px);font-weight:800;letter-spacing:clamp(2px,1vw,4px);text-transform:uppercase;color:#10b981">Fantacalcio Manageriale · Modalità Mantra</div>
+      <div id="lega-dash-sub" style="position:relative;z-index:2;font-size:clamp(9px,2.5vw,11px);font-weight:800;letter-spacing:clamp(2px,1vw,4px);text-transform:uppercase;color:#10b981">Fantacalcio Manageriale · Modalità Mantra</div>
 
       <!-- Podio (provvisorio / campione) -->
       <div id="lega-dash-podio" style="position:relative;z-index:2;width:100%"></div>
@@ -3074,6 +3074,14 @@ var REAL_NAMES={"Ata": "Atalanta", "Bol": "Bologna", "Cag": "Cagliari", "Com": "
 var ROLE_COLORS={"Por":["rgba(245,166,35,.15)","#f5a623"],"Ds":["rgba(76,154,30,.15)","#4c9a1e"],"Dc":["rgba(76,154,30,.15)","#4c9a1e"],"Dd":["rgba(76,154,30,.15)","#4c9a1e"],"B":["rgba(76,154,30,.15)","#4c9a1e"],"E":["rgba(42,113,214,.15)","#2a71d6"],"M":["rgba(42,113,214,.15)","#2a71d6"],"C":["rgba(42,113,214,.15)","#2a71d6"],"W":["rgba(196,27,201,.15)","#c41bc9"],"T":["rgba(196,27,201,.15)","#c41bc9"],"A":["rgba(190,22,40,.15)","#be1628"],"Pc":["rgba(190,22,40,.15)","#be1628"]};
 var ALL_ROLES=['Por','Ds','Dc','Dd','B','E','M','C','W','T','A','Pc'];
 var ROLE_GROUPS={Portiere:['Por'],Difesa:['Ds','Dc','Dd','B'],Centrocampo:['E','M','C'],Trequarti:['W','T'],Attacco:['A','Pc']};
+// Classic: P · D · C · A (stessi colori delle linee Mantra)
+var ALL_ROLES_CLASSIC=['P','D','C','A'];
+var ROLE_GROUPS_CLASSIC={Portiere:['P'],Difesa:['D'],Centrocampo:['C'],Attacco:['A']};
+ROLE_COLORS.P=ROLE_COLORS.Por; ROLE_COLORS.D=ROLE_COLORS.Dc;
+function _formato(t){ var m=(typeof _torneoMeta==='function')?_torneoMeta(t||window._currentTourneyKey):{}; return m.formato==='classic'?'classic':'mantra'; }
+function _roles(t){ return _formato(t)==='classic'?ALL_ROLES_CLASSIC:ALL_ROLES; }
+function _roleGroups(t){ return _formato(t)==='classic'?ROLE_GROUPS_CLASSIC:ROLE_GROUPS; }
+function _formatoLabel(t){ return _formato(t)==='classic'?'Classic':'Mantra'; }
 var PDF_MAP_REG={"ilc": "https://drive.google.com/file/d/1ysbwce7AvJnmANjKiB-1K1RuVINZiyyi/preview", "ilm": "https://drive.google.com/file/d/1p3sAwyaZL4wS_4seHsFeKRASKNZ3Z44U/preview", "slim": "https://drive.google.com/file/d/1JZngqv7dBpm6paCfH94NB79Mq4rVpsvy/preview", "tdm": "https://drive.google.com/file/d/1Gel57VaxoUl2VndxJSSHbKEVkrkJtOMq/preview", "tsm": "https://drive.google.com/file/d/1rIaxQoYkfslCeKMkHj6Ty2USu_A-KkkT/preview"};
 var ALBO_PDF_MAP={"ilc": "https://drive.google.com/file/d/1t7hoZHxDPk3Uc-Uhc2AqWTvir1Se2yvF/preview", "ilm": "https://drive.google.com/file/d/1GssqxUF3aVpt0iKHTjSRe9jMUsrCgiui/preview", "slim": "https://drive.google.com/file/d/1icb0q5h-pfzz7y8tMOBVqp_vYjkEOzVj/preview", "tsm": "https://drive.google.com/file/d/1mGVdIjqYq8-g1s5MIeWc31b3W_Jb3fjQ/preview", "tdm": "https://drive.google.com/file/d/1IwzQjAUxm9AsxZcCCWDG5qlB4gut-soA/preview"};
 var SLIM_CONFIG={"n_leghe": 8, "n_club": 80, "leghe": ["Italia", "Inghilterra", "Germania", "Spagna", "Francia", "Portogallo", "Olanda", "Turchia"]};
@@ -4820,7 +4828,7 @@ function admLoadRosaGiocatori() {
   }
 }
 function admRenderRosaEditor(players, torneoKey, legaKey, squadra) {
-  var _ro=torneoKey==='tsm'?['P','D','C','A']:ALL_ROLES;
+  var _ro=_roles(torneoKey);
   var _origPlayers=admGetPlayers(torneoKey, legaKey, squadra);
   players=players.slice().sort(function(a,b){var ia=_ro.indexOf(a.ruolo.split(';')[0].trim()),ib=_ro.indexOf(b.ruolo.split(';')[0].trim());if(ia!==ib)return(ia>=0?ia:99)-(ib>=0?ib:99);return a.nome.localeCompare(b.nome);});
   players.forEach(function(p){var oi=_origPlayers.findIndex(function(o){return o.nome===p.nome&&o.ruolo===p.ruolo;});p._origIdx=oi>=0?oi:_origPlayers.findIndex(function(o){return o.nome===p.nome;});});
@@ -5856,7 +5864,7 @@ function _updateLegaDashboard(leagueKey) {
   var subEl  = document.querySelector('.league-info-sub');
   if (nameEl) nameEl.textContent = legaNames[leagueKey] || _dynLegaLabel || _realLK.toUpperCase();
   var nTeams = Object.keys(TEAMS_ROSE).length;
-  if (subEl) subEl.textContent = nTeams + ' squadre · Mantra';
+  if (subEl) subEl.textContent = nTeams + ' squadre · ' + _formatoLabel();
   // Trofeo: carica da Firebase
   var trophyEl = document.getElementById('lega-dash-trophy');
   if (trophyEl && _admTK && _realLK) {
@@ -5890,6 +5898,7 @@ function _updateLegaDashboard(leagueKey) {
       }
     });
   }
+  var _ds=document.getElementById('lega-dash-sub'); if(_ds) _ds.textContent='Fantacalcio Manageriale · Modalità '+_formatoLabel();
   renderPodio();
 }
 
@@ -8482,7 +8491,8 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
     for(var lr=1;lr<rows.length;lr++){
       var rw=rows[lr]||[],fs=String(rw[_cFs]||'').trim(),nm=String(rw[cNo]||'').trim();
       if(!fs||!nm) continue; // svincolati
-      var ru=String((cRm>=0?rw[cRm]:'')||(cR>=0?rw[cR]:'')||'').trim().replace(/\//g,';');
+      var _cls=_formato(torneoKey)==='classic';
+      var ru=String((_cls?(cR>=0?rw[cR]:''):(cRm>=0?rw[cRm]:''))||(cR>=0?rw[cR]:'')||'').trim().replace(/\//g,';');
       var pp={ruolo:ru,nome:nm,squadra:String(cSq>=0?rw[cSq]:'').trim(),costo:parseInt(cCo>=0?rw[cCo]:0)||0};
       if(cId>=0&&String(rw[cId]).trim()) pp.id=String(rw[cId]).trim();
       if(cFl>=0&&String(rw[cFl]).trim()) pp.fuori=true;
@@ -10786,7 +10796,7 @@ function _updateLeagueHeader(tournament, leagueKey) {
   };
   var nTeams = Object.keys(TEAMS_ROSE).length;
   if (nameEl) nameEl.textContent = leagueNames[leagueKey] || 'Slim '+leagueKey.toUpperCase();
-  if (subEl)  subEl.textContent  = nTeams + ' squadre · Mantra';
+  if (subEl)  subEl.textContent  = nTeams + ' squadre · ' + _formatoLabel();
   if (seasonEl) seasonEl.textContent = '⚽ Stagione 2026/27';
 }
 function goBackToLega(){
@@ -10870,23 +10880,24 @@ function updateHeader(){
   var pl=TEAMS_ROSE[currentTeam]||[];
   // Conteggio per linea Mantra (ruolo principale = primo ruolo)
   var _lab={Portiere:'Por',Difesa:'Dif',Centrocampo:'Cen',Trequarti:'Trq',Attacco:'Att'};
-  var _cnt=Object.keys(ROLE_GROUPS).map(function(g){return{g:g,n:pl.filter(function(p){var r=(p.primary||p.ruolo||'').split(';')[0].trim();return ROLE_GROUPS[g].indexOf(r)>-1;}).length};});
+  var _RG=_roleGroups();
+  var _cnt=Object.keys(_RG).map(function(g){return{g:g,n:pl.filter(function(p){var r=(p.primary||p.ruolo||'').split(';')[0].trim();return _RG[g].indexOf(r)>-1;}).length};});
   var st=document.getElementById('th-stats');
-  if(st)st.innerHTML=_cnt.map(function(x){return '<div class="th-stat"><span class="th-stat-v" style="color:'+ROLE_COLORS[ROLE_GROUPS[x.g][0]][1]+'">'+x.n+'</span> '+_lab[x.g]+'</div>';}).join('')+'<div class="th-stat"><span class="th-stat-v">'+pl.length+'</span> Tot</div>';
+  if(st)st.innerHTML=_cnt.map(function(x){return '<div class="th-stat"><span class="th-stat-v" style="color:'+ROLE_COLORS[_RG[x.g][0]][1]+'">'+x.n+'</span> '+_lab[x.g]+'</div>';}).join('')+'<div class="th-stat"><span class="th-stat-v">'+pl.length+'</span> Tot</div>';
 }
 function buildFilters(){
   var fr=document.getElementById('filters-row');if(!fr)return;
   if(currentTeam==='INFERMERIA'){fr.innerHTML='';return;}
   var pl=TEAMS_ROSE[currentTeam]||[];var present=[];
   pl.forEach(function(p){p.ruolo.split(';').forEach(function(r){r=r.trim();if(present.indexOf(r)<0)present.push(r);});});
-  var gRoles=ROLE_GROUPS;
-  var groups=[{id:'ALL',label:'Tutti'}].concat(Object.keys(ROLE_GROUPS).map(function(k){return{id:k,label:k};}));
+  var gRoles=_roleGroups();
+  var groups=[{id:'ALL',label:'Tutti'}].concat(Object.keys(gRoles).map(function(k){return{id:k,label:k};}));
   var html='<span style="font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3)">Filtra:</span>';
   groups.forEach(function(g){
     var show=g.id==='ALL'||!gRoles[g.id]||gRoles[g.id].some(function(r){return present.indexOf(r)>-1;});
     if(show)html+='<div class="fbtn'+(currentFilter===g.id?' active':'')+'" onclick="setFilter(this,\''+g.id+'\')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">'+g.label+'</div>';
   });
-  ALL_ROLES.filter(function(r){return present.indexOf(r)>-1;}).forEach(function(r){
+  _roles().filter(function(r){return present.indexOf(r)>-1;}).forEach(function(r){
     html+='<div class="fbtn'+(currentFilter===r?' active':'')+'" onclick="setFilter(this,\''+r+'\')" style="padding:5px 8px;border-radius:6px;font-size:10px;font-weight:800;cursor:pointer">'+(r==='Por'?'P':r.toUpperCase())+'</div>';
   });
   fr.innerHTML=html;
@@ -10899,11 +10910,11 @@ function renderTable(){
   if(currentTeam!=='INFERMERIA'&&!TEAMS_ROSE[currentTeam]){Object.keys(TEAMS_ROSE).forEach(function(k){if(k.toUpperCase()===currentTeam.toUpperCase())_tk=k;});}
   var _infR=((window.FB_INFERMERIA||{})[(window._currentTourneyKey||'')+'_'+(typeof currentLeagueKey!=='undefined'?currentLeagueKey:'')]||{giocatori:{}}).giocatori;
   var pl=currentTeam==='INFERMERIA'?INFERMERIA.map(function(p){var r=_infR[_plKey(p.nome)];return{ruolo:p.ruolo,primary:p.ruolo,nome:p.nome+(r&&r.squadra?' — '+r.squadra+(r.sostituto?' — sostituito da '+r.sostituto:''):''),squadra:p.squadra||'--',costo:0,scadenza:p.scadenza};}): (TEAMS_ROSE[_tk]||[]);
-  var gMap=ROLE_GROUPS;
+  var gMap=_roleGroups();
   if(currentFilter!=='ALL'){var al=gMap[currentFilter]||[currentFilter];pl=pl.filter(function(p){return p.ruolo.split(';').some(function(r){return al.indexOf(r.trim())>-1;});});}
   if(q)pl=pl.filter(function(p){return p.nome.toLowerCase().indexOf(q)>-1||(REAL_NAMES[p.squadra]||p.squadra||'').toLowerCase().indexOf(q)>-1;});
   if(!pl.length){if(tbody)tbody.innerHTML='';if(empty)empty.style.display='block';return;}
-  var _ro=ALL_ROLES;
+  var _ro=_roles();
   pl=pl.slice().sort(function(a,b){var ia=_ro.indexOf(a.ruolo.split(';')[0].trim()),ib=_ro.indexOf(b.ruolo.split(';')[0].trim());if(ia!==ib)return(ia>=0?ia:99)-(ib>=0?ib:99);return a.nome.localeCompare(b.nome);});
   if(empty)empty.style.display='none';
   if(tbody)tbody.innerHTML=pl.map(function(p){var col=p.costo>=50?'#ef4444':p.costo>=20?'#f59e0b':'var(--text2)';return'<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 10px">'+roleBadge(p.ruolo)+'</td><td style="padding:8px 8px;font-weight:700;font-size:13px">'+p.nome+'</td><td style="padding:8px 8px;font-size:12px;color:var(--text2)">'+(REAL_NAMES[p.squadra]||p.squadra||'--')+'</td>'+(_torneoFeat(window._currentTourneyKey,'contratti')?'<td style="padding:8px 8px;font-size:11px;text-align:center">'+(p.sostitutoDi?'<span title="Sostituto di '+p.sostitutoDi+'" style="background:rgba(59,130,246,.15);color:#3b82f6;border-radius:4px;padding:2px 5px;font-weight:700;font-size:10px;white-space:nowrap">🩹 SOSTITUTO</span>':p.scadenza?(function(){var _sc=scadenzaColor(p.scadenza)||{bg:'rgba(239,68,68,.15)',color:'#ef4444'};return '<span style="background:'+_sc.bg+';color:'+_sc.color+';border-radius:4px;padding:2px 5px;font-weight:700;font-size:10px;white-space:nowrap">'+(_sc.scaduto?'⛔ ':'⏳ ')+p.scadenza+'</span>';})():'')+'</td>':'')+'</tr>';}).join('');
