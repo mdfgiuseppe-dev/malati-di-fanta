@@ -1087,7 +1087,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
         <div class="league-info-sub"></div>
       </div>
     </div>
-    <div class="league-season">⚽ Stagione 2026/27</div>
+    <div class="league-season"></div>
   </div>
 
   <div class="nav-section">Menu</div>
@@ -5865,6 +5865,7 @@ function _updateLegaDashboard(leagueKey) {
   if (nameEl) nameEl.textContent = legaNames[leagueKey] || _dynLegaLabel || _realLK.toUpperCase();
   var nTeams = ((window.FB_SQUADRE || {})[_admTK + '_' + _realLK] || []).length || Object.keys(TEAMS_ROSE).length;
   if (subEl) subEl.textContent = nTeams + ' squadre · ' + _formatoLabel();
+  var seasonEl = document.querySelector('.league-season'); if (seasonEl) seasonEl.textContent = '⚽ Stagione ' + _stagioneAuto();
   // Trofeo: carica da Firebase
   var trophyEl = document.getElementById('lega-dash-trophy');
   if (trophyEl && _admTK && _realLK) {
@@ -6964,8 +6965,10 @@ function admSaveCoppaEl(el) {
 // ADMIN — Stagioni
 // ═══════════════════════════════════════════════════════
 
+// Stagione in corso dalla data: da luglio parte la nuova (es. ottobre 2026 → 2026/27)
+function _stagioneAuto() { var d = new Date(), y = d.getMonth() >= 6 ? d.getFullYear() : d.getFullYear() - 1; return y + '/' + String(y + 1).slice(-2); }
 function admGetStagioneCorrente(torneoKey) {
-  return localStorage.getItem('stagione_corrente_'+torneoKey) || '2025/26';
+  return localStorage.getItem('stagione_corrente_'+torneoKey) || _stagioneAuto();
 }
 
 function admGetStoricoStagioni(torneoKey) {
