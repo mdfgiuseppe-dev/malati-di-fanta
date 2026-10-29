@@ -3638,7 +3638,8 @@ function _contrTabella(t, l, squadra, admin) {
     + '<th style="'+th+'">Scadenza</th><th style="'+th+'">Giocatore</th><th style="'+th+'">Ruolo</th><th style="'+th+'">Club</th><th style="'+th+'">Squadra</th></tr></thead><tbody>';
   el.forEach(function(x, i) {
     var c = x.c, sc = scadenzaColor(c.scadenza) || { bg: 'var(--bg2)', color: 'var(--text2)' };
-    var cell = admin
+    var cell = c.stato === 'sostituto' ? '<span style="background:rgba(59,130,246,.15);color:#3b82f6;border-radius:4px;padding:2px 6px;font-weight:700;font-size:11px;white-space:nowrap">🩹 Sostituto di '+(c.sostitutoDi||'?')+'</span>'
+      : admin
       ? '<input type="text" value="'+(c.scadenza||'')+'" data-i="'+i+'" onchange="admContrSetScad(this)" placeholder="gg/mm/aaaa" style="width:92px;padding:3px 6px;border-radius:5px;border:1px solid '+sc.color+';background:'+sc.bg+';color:'+sc.color+';font-size:11px;font-weight:700;outline:none">'
       : '<span style="background:'+sc.bg+';color:'+sc.color+';border-radius:4px;padding:2px 6px;font-weight:700;font-size:11px;white-space:nowrap">'+(sc.scaduto?'⛔ ':'')+(c.scadenza||'—')+'</span>';
     var _q = _plKey(window._contrQ || ''), _nk = _plKey(c.nome);
@@ -8466,11 +8467,11 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
   var infermeria=rose['INFERMERIA']||[]; delete rose['INFERMERIA'];
   if(torneoKey!=='slim'&&torneoKey!=='tsm'){
     // Squadre del file → squadre della lega (anche con nomi simili)
-    var _teams=admGetTeams(torneoKey,legaKey),_map={},_miss=[],_apx=[],_cr={};
+    var _teams=admGetTeams(torneoKey,legaKey),_map={},_miss=[],_apx=[],_cr={},_toInf=[];
     // Infermeria scritta in altri modi (es. "INFERMERIA mao")
     Object.keys(rose).forEach(function(sq){if(sq!=='_crediti'&&/^infermeria/i.test(sq)){infermeria=infermeria.concat(rose[sq]);delete rose[sq];}});
     Object.keys(rose).forEach(function(sq){if(sq==='_crediti')return;var m=_matchTeam(sq,_teams,true);
-      if(!m){ if(rose[sq].length) _miss.push(sq+' ('+rose[sq].length+' giocatori)'); return; } // blocchi vuoti (account admin, squadre tolte): ignorati
+      if(!m){ if(rose[sq].length){ _miss.push(sq+' ('+rose[sq].length+' giocatori)'); _toInf.push(sq); } return; } // blocchi vuoti: ignorati; con giocatori (es. account admin): in infermeria
       _map[sq]=m.name;if(m.approx)_apx.push(sq+' → '+m.name);});
     var _assenti=_teams.filter(function(n){return !Object.keys(_map).some(function(k){return _map[k]===n;});});
     var _dup=Object.keys(_map).filter(function(a,i,arr){return arr.some(function(b,j){return j<i&&_map[b]===_map[a];});});
@@ -8481,6 +8482,8 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
       status.innerHTML='❌ '+(_miss.length?'Squadre del file non presenti nella lega: <b>'+_miss.join(', ')+'</b>. ':'')+(_dup.length?'Squadre abbinate due volte: <b>'+_dup.join(', ')+'</b>. ':'')+'Controlla di aver scelto la lega giusta.';
       status.style.color='#ef4444';return;
     }
+    // giocatori di squadre non della lega (es. account admin) = infermeria
+    _toInf.forEach(function(sq){ infermeria=infermeria.concat(rose[sq]); });
     var sk2={};Object.keys(_map).forEach(function(sq){sk2[_map[sq]]=rose[sq];if(rose._crediti&&rose._crediti[sq]!==undefined)_cr[_map[sq]]=rose._crediti[sq];});
     var _nomeL=((ADMIN_TORNEI.find(function(x){return x.key===torneoKey;})||{leghe:[]}).leghe.find(function(x){return x.key===legaKey;})||{}).label||legaKey;
     if(!Object.keys(sk2).length){
@@ -8495,7 +8498,7 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
     function _fill(p){var k=_known[_plKey(p.nome)];if(k){if(!p.ruolo)p.ruolo=k.ruolo||'';if(!p.squadra)p.squadra=k.squadra||'';}if(!p.ruolo)_noRuolo++;}
     Object.keys(sk2).forEach(function(s){sk2[s].forEach(_fill);}); infermeria.forEach(_fill);
     var _n=Object.values(sk2).reduce(function(a,b){return a+b.length;},0);
-    var _head='📋 '+_nomeL+': pronte <b>'+Object.keys(sk2).length+'</b> squadre ('+_n+' giocatori, infermeria '+infermeria.length+')'+(_dl?' · file del '+_dl:'')+(_apx.length?'<br>⚠️ Abbinate automaticamente: '+_apx.join(', '):'')+(_assenti.length?'<br>⚠️ Squadre della lega non presenti nel file (resteranno vuote): '+_assenti.join(', '):'')+(_miss.length?'<br>⚠️ Squadre del file non presenti nella lega, saltate (giocatori non importati): '+_miss.join(', '):'')+(_skip.length?'<br>⚠️ Righe non riconosciute (non importate): '+_skip.join(', '):'')+(_noRuolo?'<br>ℹ️ '+_noRuolo+' giocatori senza ruolo e club reale (il file non li contiene): puoi completarli in Rose Squadre':'');
+    var _head='📋 '+_nomeL+': pronte <b>'+Object.keys(sk2).length+'</b> squadre ('+_n+' giocatori, infermeria '+infermeria.length+')'+(_dl?' · file del '+_dl:'')+(_apx.length?'<br>⚠️ Abbinate automaticamente: '+_apx.join(', '):'')+(_assenti.length?'<br>⚠️ Squadre della lega non presenti nel file (resteranno vuote): '+_assenti.join(', '):'')+(_miss.length?'<br>🏥 Squadre del file non presenti nella lega (es. account admin): giocatori messi in INFERMERIA: '+_miss.join(', '):'')+(_skip.length?'<br>⚠️ Righe non riconosciute (non importate): '+_skip.join(', '):'')+(_noRuolo?'<br>ℹ️ '+_noRuolo+' giocatori senza ruolo e club reale (il file non li contiene): puoi completarli in Rose Squadre':'');
     function _show(extra){
       window._admImportPending=_pend;
       status.innerHTML=_head+(extra||'')+'<br>Clicca Conferma';status.style.color='#f59e0b';
@@ -8607,9 +8610,10 @@ function admConfirmImport(){
         var e=x.ek?reg[x.ek]:null, base={nome:x.p.nome,ruolo:x.p.ruolo,club:x.p.squadra||'',squadra:x.s,stato:'rosa'};
         if(x.p.id) base.id=x.p.id;
         if(C.primo){ base.acquisto=''; base.scadenza='30/06/'+(y0||(new Date().getFullYear()+3)); }
+        else if(e&&e.stato==='sostituto'){ base.acquisto=e.acquisto||''; base.scadenza=''; base.stato='sostituto'; base.sostitutoDi=e.sostitutoDi; if(e.scadenzaPrec)base.scadenzaPrec=e.scadenzaPrec; }
         else if(e){ base.acquisto=e.acquisto||''; base.scadenza=e.scadenza; }
         else { base.acquisto=acqIn; base.scadenza=_contrScad(acqIn); }
-        nreg[x.k]=base; x.p.scadenza=base.scadenza;
+        nreg[x.k]=base; x.p.scadenza=base.scadenza; if(base.sostitutoDi) x.p.sostitutoDi=base.sostitutoDi;
       });
       usciti.forEach(function(k){ if(nreg[k]&&nreg[k].stato!=='uscito'){ nreg[k].stato='uscito'; nreg[k].uscita=oggi; } });
       _contrGet(tk,lk).giocatori=nreg;
@@ -8762,28 +8766,52 @@ function _admInfCtx(el) {
 function admInfSetSquadra(el) { var c = _admInfCtx(el); window._admInfTmp[c.k] = { squadra: el.value, sostituto: '' }; admSocRender(); }
 function admInfSetSost(el) { var c = _admInfCtx(el); var t = window._admInfTmp[c.k] = window._admInfTmp[c.k] || {}; if (t.squadra === undefined) t.squadra = ((_infGet(c.tk, c.lk).giocatori[c.k]) || {}).squadra || ''; t.sostituto = el.value; }
 function _admInfMsg(txt, col) { var m = document.createElement('div'); m.textContent = txt; m.style.cssText = 'position:fixed;top:70px;right:20px;background:'+(col||'#10b981')+';color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999'; document.body.appendChild(m); setTimeout(function(){ m.remove(); }, 2000); }
+// Stato "sostituto": il giocatore che sostituisce un infortunato non ha contratto finché resta sostituto
+function _infSetSostituto(tk, lk, team, nome, diChi) {
+  var R = _roseGet(tk, lk).rose, pl = R[_roseKey(R, team)] || [], k = _plKey(nome);
+  var p = pl.find(function(x){ return _plKey(x.nome) === k; });
+  var reg = _contrGet(tk, lk).giocatori, ck = Object.keys(reg).find(function(x){ return reg[x].stato !== 'uscito' && _plKey(reg[x].nome) === k; });
+  if (diChi) {
+    if (p) { p.scadenza = ''; p.sostitutoDi = diChi; }
+    if (ck) { if (reg[ck].stato !== 'sostituto') reg[ck].scadenzaPrec = reg[ck].scadenza || ''; reg[ck].stato = 'sostituto'; reg[ck].sostitutoDi = diChi; reg[ck].scadenza = ''; }
+  } else {
+    // torna giocatore normale con il contratto che aveva prima (o uno nuovo da oggi)
+    var sc = ck && reg[ck].scadenzaPrec ? reg[ck].scadenzaPrec : _contrScad(_itDate(new Date().toISOString()));
+    if (p) { p.scadenza = sc; delete p.sostitutoDi; }
+    if (ck) { reg[ck].stato = 'rosa'; reg[ck].scadenza = sc; delete reg[ck].sostitutoDi; delete reg[ck].scadenzaPrec; }
+  }
+}
 function admInfSave(el) {
   var c = _admInfCtx(el), rec = _infGet(c.tk, c.lk).giocatori, old = rec[c.k] || {}, t = window._admInfTmp[c.k] || {};
   var sq = t.squadra !== undefined ? t.squadra : (old.squadra || ''), so = t.sostituto !== undefined ? t.sostituto : (old.sostituto || '');
   if (!sq) { alert('Scegli la squadra fanta'); return; }
+  // il sostituto precedente (se cambia) torna normale; il nuovo perde il contratto
+  if (old.sostituto && (old.sostituto !== so || old.squadra !== sq)) _infSetSostituto(c.tk, c.lk, old.squadra, old.sostituto, null);
+  if (so) _infSetSostituto(c.tk, c.lk, sq, so, c.nome);
   rec[c.k] = { giocatore: c.nome, squadra: sq, sostituto: so, data: old.data || _itDate(new Date().toISOString()) };
   delete window._admInfTmp[c.k];
-  _infSave(c.tk, c.lk).then(function(){ _admInfMsg('✅ Infermeria salvata'); admSocRender(); }).catch(function(e){ alert('Errore salvataggio: '+e.message); });
+  Promise.all([_infSave(c.tk, c.lk), _roseSave(c.tk, c.lk), _contrSave(c.tk, c.lk)]).then(function(){ _admInfMsg('✅ Infermeria salvata'); admSocRender(); }).catch(function(e){ alert('Errore salvataggio: '+e.message); });
 }
-// Il giocatore torna subito nella rosa della sua squadra; la riga viene tolta da Firebase
+// L'infortunato torna subito nella rosa della sua squadra; il suo sostituto lascia la squadra; la riga viene tolta da Firebase
 function admInfElimina(el) {
   var c = _admInfCtx(el), rec = _infGet(c.tk, c.lk).giocatori, r = rec[c.k] || {}, t = window._admInfTmp[c.k] || {};
   var sq = r.squadra || t.squadra || '';
   if (!sq) { alert('Scegli prima la squadra fanta in cui torna '+c.nome); return; }
-  if (!confirm(c.nome+' torna nella rosa di '+sq+'.\nLa riga dell\'infermeria viene eliminata. Continuare?')) return;
-  var R = _roseGet(c.tk, c.lk).rose, infK = _roseKey(R, 'INFERMERIA'), inf = R[infK] || [];
+  if (!confirm(c.nome+' torna nella rosa di '+sq+'.'+(r.sostituto ? '\nIl sostituto '+r.sostituto+' lascia la squadra.' : '')+'\nLa riga dell\'infermeria viene eliminata. Continuare?')) return;
+  var R = _roseGet(c.tk, c.lk).rose, infK = _roseKey(R, 'INFERMERIA'), inf = R[infK] || [], tk2 = _roseKey(R, sq), oggi = _itDate(new Date().toISOString());
   var idx = inf.findIndex(function(p){ return p.nome === c.nome; });
-  if (idx >= 0) { var p = inf.splice(idx, 1)[0]; var tk2 = _roseKey(R, sq); (R[tk2] = R[tk2] || []).push(p); }
+  if (idx >= 0) { var p = inf.splice(idx, 1)[0]; (R[tk2] = R[tk2] || []).push(p); }
+  var reg = _contrGet(c.tk, c.lk).giocatori;
+  var ck = Object.keys(reg).find(function(x){ return reg[x].stato !== 'uscito' && _plKey(reg[x].nome) === c.k; });
+  if (ck) reg[ck].squadra = sq;
+  if (r.sostituto) {
+    var ks = _plKey(r.sostituto), pl = R[tk2] || [], is = pl.findIndex(function(x){ return _plKey(x.nome) === ks; });
+    if (is >= 0) pl.splice(is, 1);
+    var cs = Object.keys(reg).find(function(x){ return reg[x].stato !== 'uscito' && _plKey(reg[x].nome) === ks; });
+    if (cs) { reg[cs].stato = 'uscito'; reg[cs].uscita = oggi; delete reg[cs].sostitutoDi; delete reg[cs].scadenzaPrec; }
+  }
   delete rec[c.k]; delete window._admInfTmp[c.k];
-  var reg = _contrGet(c.tk, c.lk).giocatori, ck = Object.keys(reg).find(function(x){ return reg[x].stato !== 'uscito' && _plKey(reg[x].nome) === c.k; });
-  var ps = [_roseSave(c.tk, c.lk), _infSave(c.tk, c.lk)];
-  if (ck) { reg[ck].squadra = sq; ps.push(_contrSave(c.tk, c.lk)); }
-  Promise.all(ps).then(function(){ _admInfMsg('✅ '+c.nome+' tornato in '+sq); admSocRender(); }).catch(function(e){ alert('Errore salvataggio: '+e.message); });
+  Promise.all([_roseSave(c.tk, c.lk), _infSave(c.tk, c.lk), _contrSave(c.tk, c.lk)]).then(function(){ _admInfMsg('✅ '+c.nome+' tornato in '+sq); admSocRender(); }).catch(function(e){ alert('Errore salvataggio: '+e.message); });
 }
 // Sposta in infermeria un giocatore di una squadra
 function admInfAggiungi() {
@@ -10804,7 +10832,7 @@ function renderTable(){
   var _ro=ALL_ROLES;
   pl=pl.slice().sort(function(a,b){var ia=_ro.indexOf(a.ruolo.split(';')[0].trim()),ib=_ro.indexOf(b.ruolo.split(';')[0].trim());if(ia!==ib)return(ia>=0?ia:99)-(ib>=0?ib:99);return a.nome.localeCompare(b.nome);});
   if(empty)empty.style.display='none';
-  if(tbody)tbody.innerHTML=pl.map(function(p){var col=p.costo>=50?'#ef4444':p.costo>=20?'#f59e0b':'var(--text2)';return'<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 10px">'+roleBadge(p.ruolo)+'</td><td style="padding:8px 8px;font-weight:700;font-size:13px">'+p.nome+'</td><td style="padding:8px 8px;font-size:12px;color:var(--text2)">'+(REAL_NAMES[p.squadra]||p.squadra||'--')+'</td>'+(_torneoFeat(window._currentTourneyKey,'contratti')?'<td style="padding:8px 8px;font-size:11px;text-align:center">'+(p.scadenza?(function(){var _sc=scadenzaColor(p.scadenza)||{bg:'rgba(239,68,68,.15)',color:'#ef4444'};return '<span style="background:'+_sc.bg+';color:'+_sc.color+';border-radius:4px;padding:2px 5px;font-weight:700;font-size:10px;white-space:nowrap">'+(_sc.scaduto?'⛔ ':'⏳ ')+p.scadenza+'</span>';})():'')+'</td>':'')+'</tr>';}).join('');
+  if(tbody)tbody.innerHTML=pl.map(function(p){var col=p.costo>=50?'#ef4444':p.costo>=20?'#f59e0b':'var(--text2)';return'<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 10px">'+roleBadge(p.ruolo)+'</td><td style="padding:8px 8px;font-weight:700;font-size:13px">'+p.nome+'</td><td style="padding:8px 8px;font-size:12px;color:var(--text2)">'+(REAL_NAMES[p.squadra]||p.squadra||'--')+'</td>'+(_torneoFeat(window._currentTourneyKey,'contratti')?'<td style="padding:8px 8px;font-size:11px;text-align:center">'+(p.sostitutoDi?'<span title="Sostituto di '+p.sostitutoDi+'" style="background:rgba(59,130,246,.15);color:#3b82f6;border-radius:4px;padding:2px 5px;font-weight:700;font-size:10px;white-space:nowrap">🩹 SOSTITUTO</span>':p.scadenza?(function(){var _sc=scadenzaColor(p.scadenza)||{bg:'rgba(239,68,68,.15)',color:'#ef4444'};return '<span style="background:'+_sc.bg+';color:'+_sc.color+';border-radius:4px;padding:2px 5px;font-weight:700;font-size:10px;white-space:nowrap">'+(_sc.scaduto?'⛔ ':'⏳ ')+p.scadenza+'</span>';})():'')+'</td>':'')+'</tr>';}).join('');
 }
 var showAllQual=false;
 function toggleAll(){showAllQual=!showAllQual;renderQualTable();}
