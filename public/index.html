@@ -8474,7 +8474,10 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
       _map[sq]=m.name;if(m.approx)_apx.push(sq+' → '+m.name);});
     var _assenti=_teams.filter(function(n){return !Object.keys(_map).some(function(k){return _map[k]===n;});});
     var _dup=Object.keys(_map).filter(function(a,i,arr){return arr.some(function(b,j){return j<i&&_map[b]===_map[a];});});
-    if(_miss.length||_dup.length){
+    // Blocca solo se il file non è di questa lega (meno di metà squadre riconosciute) o se due squadre finiscono sulla stessa;
+    // le altre squadre sconosciute (es. account admin) vengono saltate e segnalate
+    var _nMatch=Object.keys(_map).length;
+    if(_dup.length||_nMatch<Math.ceil(_teams.length/2)){
       status.innerHTML='❌ '+(_miss.length?'Squadre del file non presenti nella lega: <b>'+_miss.join(', ')+'</b>. ':'')+(_dup.length?'Squadre abbinate due volte: <b>'+_dup.join(', ')+'</b>. ':'')+'Controlla di aver scelto la lega giusta.';
       status.style.color='#ef4444';return;
     }
@@ -8492,7 +8495,7 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
     function _fill(p){var k=_known[_plKey(p.nome)];if(k){if(!p.ruolo)p.ruolo=k.ruolo||'';if(!p.squadra)p.squadra=k.squadra||'';}if(!p.ruolo)_noRuolo++;}
     Object.keys(sk2).forEach(function(s){sk2[s].forEach(_fill);}); infermeria.forEach(_fill);
     var _n=Object.values(sk2).reduce(function(a,b){return a+b.length;},0);
-    var _head='📋 '+_nomeL+': pronte <b>'+Object.keys(sk2).length+'</b> squadre ('+_n+' giocatori, infermeria '+infermeria.length+')'+(_dl?' · file del '+_dl:'')+(_apx.length?'<br>⚠️ Abbinate automaticamente: '+_apx.join(', '):'')+(_assenti.length?'<br>⚠️ Squadre della lega non presenti nel file (resteranno vuote): '+_assenti.join(', '):'')+(_skip.length?'<br>⚠️ Righe non riconosciute (non importate): '+_skip.join(', '):'')+(_noRuolo?'<br>ℹ️ '+_noRuolo+' giocatori senza ruolo e club reale (il file non li contiene): puoi completarli in Rose Squadre':'');
+    var _head='📋 '+_nomeL+': pronte <b>'+Object.keys(sk2).length+'</b> squadre ('+_n+' giocatori, infermeria '+infermeria.length+')'+(_dl?' · file del '+_dl:'')+(_apx.length?'<br>⚠️ Abbinate automaticamente: '+_apx.join(', '):'')+(_assenti.length?'<br>⚠️ Squadre della lega non presenti nel file (resteranno vuote): '+_assenti.join(', '):'')+(_miss.length?'<br>⚠️ Squadre del file non presenti nella lega, saltate (giocatori non importati): '+_miss.join(', '):'')+(_skip.length?'<br>⚠️ Righe non riconosciute (non importate): '+_skip.join(', '):'')+(_noRuolo?'<br>ℹ️ '+_noRuolo+' giocatori senza ruolo e club reale (il file non li contiene): puoi completarli in Rose Squadre':'');
     function _show(extra){
       window._admImportPending=_pend;
       status.innerHTML=_head+(extra||'')+'<br>Clicca Conferma';status.style.color='#f59e0b';
