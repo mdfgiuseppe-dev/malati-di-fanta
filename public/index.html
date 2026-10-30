@@ -8506,7 +8506,7 @@ function admLoadCalBody() {
       var _editG=window['_admCalEditG_'+torneoKey+'_'+legaKey]||null;
       h = '<div style="display:flex;flex-direction:column;gap:6px">';
       for (var g=1; g<=giornate; g++) {
-        var matches=_schGiornate[String(g)]||[];
+        var matches=(_schGiornate[String(g)]||[]).slice().sort(function(a,b){return String(a.h||'').localeCompare(String(b.h||''));}); // in ordine alfabetico della squadra di casa
         var gio=cal[String(g)]||{};
         var hasD=Object.values(gio).some(function(v){return v;});
         var _isEdit=(g===_editG);
@@ -10137,7 +10137,7 @@ function calRenderGeneric(t, l, bodyId, nG, teams, callbackFn) {
       h += '<div style="padding:30px;text-align:center;color:var(--text3);font-size:13px">📅 Calendario non ancora importato.<br><span style="font-size:11px">Importa il file xlsx dalla sezione Admin → Calendario.</span></div>';
     } else {
       for (var g=1; g<=nG; g++) {
-        var matches = sch[String(g)] || [];
+        var matches = (sch[String(g)] || []).slice().sort(function(a,b){return String(a.h||'').localeCompare(String(b.h||''));}); // in ordine alfabetico della squadra di casa
         var gio = cal[String(g)] || {};
         var hasData = Object.values(gio).some(function(v){return v;});
         h += '<div style="margin-bottom:8px"><div style="font-family:\'Bebas Neue\';font-size:13px;letter-spacing:1px;color:var(--text2);padding:6px 10px;background:var(--bg2);border-radius:8px 8px 0 0;border:1px solid var(--border);border-bottom:none;display:flex;justify-content:space-between"><span>Giornata '+g+'</span>'+(hasData?'<span style="color:var(--green);font-size:10px">✓ Completata</span>':'<span style="color:var(--text3);font-size:10px">Da giocare</span>')+'</div>';
