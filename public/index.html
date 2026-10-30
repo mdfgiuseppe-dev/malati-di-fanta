@@ -9989,10 +9989,9 @@ function buildFilters(){
   var groups=[{id:'ALL',label:'Tutti'}].concat(Object.keys(gRoles).map(function(k){return{id:k,label:k};}));
   var html='<span style="font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3)">Filtra:</span>';
   groups.forEach(function(g){
-    var show=g.id==='ALL'||!gRoles[g.id]||gRoles[g.id].some(function(r){return present.indexOf(r)>-1;});
-    if(show)html+='<div class="fbtn'+(currentFilter===g.id?' active':'')+'" onclick="setFilter(this,\''+g.id+'\')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">'+g.label+'</div>';
+    html+='<div class="fbtn'+(currentFilter===g.id?' active':'')+'" onclick="setFilter(this,\''+g.id+'\')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">'+g.label+'</div>';
   });
-  _roles().filter(function(r){return present.indexOf(r)>-1;}).forEach(function(r){
+  _roles().forEach(function(r){ // tutti i ruoli del formato, anche se la squadra non ne ha
     html+='<div class="fbtn'+(currentFilter===r?' active':'')+'" onclick="setFilter(this,\''+r+'\')" style="padding:5px 8px;border-radius:6px;font-size:10px;font-weight:800;cursor:pointer">'+r.toUpperCase()+'</div>';
   });
   fr.innerHTML=html;
