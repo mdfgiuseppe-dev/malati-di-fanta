@@ -12,6 +12,8 @@ for (var i = 0; i < localStorage.length; i++) {
   }
 }
 keysToRemove.forEach(function(key) { localStorage.removeItem(key); });
+// Tema scelto dall'utente su questo dispositivo (preferenza personale, come il login)
+try { if (localStorage.getItem('mdf_tema') === 'light') document.documentElement.setAttribute('data-theme', 'light'); } catch(e) {}
 </script>
 <!-- Firebase SDK (Compat) -->
 <script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-app-compat.js"></script>
@@ -4503,10 +4505,15 @@ function toggleTheme(){
   var h=document.documentElement;
   var newTheme=h.getAttribute('data-theme')==='dark'?'light':'dark';
   h.setAttribute('data-theme',newTheme);
-  var btn=document.getElementById('sp-theme-btn');
-  // luna = siamo in chiaro, click porta al buio | sole = siamo in scuro, click porta al chiaro
-  if(btn) btn.textContent=newTheme==='dark'?'☀️':'🌙';
+  try{localStorage.setItem('mdf_tema',newTheme);}catch(e){}
+  _themeIcons();
 }
+// luna = siamo in chiaro, click porta al buio | sole = siamo in scuro, click porta al chiaro
+function _themeIcons(){
+  var ic=document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙';
+  document.querySelectorAll('div[onclick="toggleTheme()"]').forEach(function(b){b.textContent=ic;});
+}
+document.addEventListener('DOMContentLoaded',_themeIcons);
 // Dati leghe per torneo
 var LEAGUES_DATA = {};
 
