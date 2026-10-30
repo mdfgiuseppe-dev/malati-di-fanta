@@ -2683,22 +2683,22 @@ function _contrTabella(t, l, squadra, admin) {
     + '<input type="search" placeholder="🔍 Cerca giocatore…" value="'+(window._contrQ||'').replace(/"/g,'&quot;')+'" oninput="_contrFiltra(this)" style="'+fSel+';flex:1 1 160px;min-width:0">'
     + '<span style="font-size:11px;color:var(--text3)"><span class="contr-n">'+el.filter(function(x){ var q=_plKey(window._contrQ||''); return !q || _plKey(x.c.nome).indexOf(q)>=0; }).length+'</span> giocatori · <span style="color:#ef4444">■</span> scaduto · <span style="color:#f59e0b">■</span> scade a fine stagione · <span style="color:#10b981">■</span> oltre</span></div>';
   if (!el.length) return h + '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nessun contratto. I contratti si creano con l\'import delle rose.</div>';
-  var th = 'padding:7px 8px;text-align:left;font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3)';
-  h += '<div class="card" style="padding:0;overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:340px"><thead><tr style="background:var(--bg2)">'
+  var th = 'padding:6px 5px;text-align:left;font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3)';
+  h += '<div class="card" style="padding:0;overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr style="background:var(--bg2)">'
     + '<th style="'+th+'">Scadenza</th><th style="'+th+'">Giocatore</th><th style="'+th+'">Ruolo</th><th style="'+th+'">Club</th><th style="'+th+'">Squadra</th></tr></thead><tbody>';
   el.forEach(function(x, i) {
     var c = x.c, sc = scadenzaColor(c.scadenza) || { bg: 'var(--bg2)', color: 'var(--text2)' };
-    var cell = c.stato === 'sostituto' ? '<span style="background:rgba(59,130,246,.15);color:#3b82f6;border-radius:4px;padding:2px 6px;font-weight:700;font-size:11px;white-space:nowrap">🩹 Sostituto di '+(c.sostitutoDi||'?')+'</span>'
+    var cell = c.stato === 'sostituto' ? '<span style="display:inline-block;background:rgba(59,130,246,.15);color:#3b82f6;border-radius:4px;padding:2px 5px;font-weight:700;font-size:10px;white-space:nowrap">🩹 SOSTITUTO</span><div style="font-size:9px;color:var(--text3);margin-top:2px">di '+(c.sostitutoDi||'?')+'</div>'
       : admin
-      ? '<input type="text" value="'+(c.scadenza||'')+'" data-i="'+i+'" onchange="admContrSetScad(this)" placeholder="gg/mm/aaaa" style="width:92px;padding:3px 6px;border-radius:5px;border:1px solid '+sc.color+';background:'+sc.bg+';color:'+sc.color+';font-size:11px;font-weight:700;outline:none">'
-      : '<span style="background:'+sc.bg+';color:'+sc.color+';border-radius:4px;padding:2px 6px;font-weight:700;font-size:11px;white-space:nowrap">'+(sc.scaduto?'⛔ ':'')+(c.scadenza||'—')+'</span>';
+      ? '<input type="text" value="'+(c.scadenza||'')+'" data-i="'+i+'" onchange="admContrSetScad(this)" placeholder="gg/mm/aaaa" style="width:84px;padding:3px 4px;border-radius:5px;border:1px solid '+sc.color+';background:'+sc.bg+';color:'+sc.color+';font-size:11px;font-weight:700;outline:none">'
+      : '<span style="background:'+sc.bg+';color:'+sc.color+';border-radius:4px;padding:2px 4px;font-weight:700;font-size:10px;white-space:nowrap">'+(sc.scaduto?'⛔ ':'')+(c.scadenza||'—')+'</span>';
     var _q = _plKey(window._contrQ || ''), _nk = _plKey(c.nome);
     h += '<tr data-n="'+_nk.replace(/"/g,'&quot;')+'" style="border-bottom:1px solid var(--border)'+(sc.scaduto?';background:rgba(239,68,68,.06)':'')+(_q && _nk.indexOf(_q) < 0 ? ';display:none' : '')+'">'
-      + '<td style="padding:7px 8px">'+cell+'</td>'
-      + '<td style="padding:7px 8px;font-weight:700;font-size:12px">'+c.nome+'</td>'
-      + '<td style="padding:7px 8px">'+(c.ruolo&&typeof roleBadge==='function'?roleBadge(c.ruolo):(c.ruolo||''))+'</td>'
-      + '<td style="padding:7px 8px;font-size:11px;color:var(--text2)">'+(c.club||'')+'</td>'
-      + '<td style="padding:7px 8px;font-size:11px;font-weight:700">'+(c.squadra||'')+'</td></tr>';
+      + '<td style="padding:6px 5px">'+cell+'</td>'
+      + '<td style="padding:6px 5px;font-weight:700;font-size:11px">'+c.nome+'</td>'
+      + '<td style="padding:6px 5px">'+(c.ruolo&&typeof roleBadge==='function'?roleBadge(c.ruolo):(c.ruolo||''))+'</td>'
+      + '<td style="padding:6px 5px;font-size:10px;color:var(--text2)">'+(c.club||'')+'</td>'
+      + '<td style="padding:6px 5px;font-size:10px;font-weight:700">'+(c.squadra||'')+'</td></tr>';
   });
   return h + '</tbody></table></div>';
 }
