@@ -7628,12 +7628,10 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
       if(!m){ if(rose[sq].length) _nomatch.push(sq); return; } // blocchi vuoti: ignorati
       _map[sq]=m.name;if(m.approx)_apx.push(sq+' → '+m.name);});
     // Secondo giro: nome contenuto nell'altro (es. "Sporting Braga" → BRAGA, "Guimaraes" → VITORIA GUIMARAES), solo tra squadre rimaste libere e se l'abbinamento è unico
-    var _libere=_teams.filter(function(n){return !Object.keys(_map).some(function(k){return _map[k]===n;});});
-    var _wd=function(s){return _teamNorm(s).split(' ').filter(Boolean);};
-    var _cont=function(a,b){var A=_wd(a),B=_wd(b);if(!A.length||!B.length)return false;var S=A.length<=B.length?A:B,L=S===A?B:A;return S.every(function(w){return L.indexOf(w)>=0;});};
+    var _cm=_matchTeamsContain(_nomatch,_teams,Object.keys(_map).map(function(k){return _map[k];}));
     _nomatch.forEach(function(sq){
-      var c=_libere.filter(function(n){return _cont(sq,n);});
-      if(c.length===1&&_nomatch.filter(function(o){return _cont(o,c[0]);}).length===1){_map[sq]=c[0];_apx.push(sq+' → '+c[0]);}
+      var c=_cm[sq.trim().toUpperCase()];
+      if(c){_map[sq]=c;_apx.push(sq+' → '+c);}
       else{ _miss.push(sq+' ('+rose[sq].length+' giocatori)'); _toInf.push(sq); } // con giocatori (es. account admin): in infermeria
     });
     var _assenti=_teams.filter(function(n){return !Object.keys(_map).some(function(k){return _map[k]===n;});});
@@ -8714,6 +8712,18 @@ function _matchTeam(name, teams, fuzzy) {
   });
   return (best && bs >= 0.8 && bs - second >= 0.1) ? { name: best, approx: true } : null;
 }
+// Secondo giro per i nomi non riconosciuti: nome contenuto nell'altro (es. "Sporting Braga" → BRAGA, "Guimaraes" → VITORIA GUIMARAES),
+// solo tra le squadre non ancora abbinate e se l'abbinamento è unico in entrambe le direzioni. Ritorna { NOME_FILE_MAIUSCOLO: squadra }
+function _matchTeamsContain(names, teams, taken) {
+  var wd = function(s){ return _teamNorm(s).split(' ').filter(Boolean); };
+  var cont = function(a, b){ var A = wd(a), B = wd(b); if (!A.length || !B.length) return false; var S = A.length <= B.length ? A : B, L = S === A ? B : A; return S.every(function(w){ return L.indexOf(w) >= 0; }); };
+  var free = teams.filter(function(n){ return (taken || []).indexOf(n) < 0; }), out = {};
+  names.forEach(function(nm){
+    var c = free.filter(function(n){ return cont(nm, n); });
+    if (c.length === 1 && names.filter(function(o){ return cont(o, c[0]); }).length === 1) out[String(nm).trim().toUpperCase()] = c[0];
+  });
+  return out;
+}
 function _calSchRaw(t,l){ var s=window.FB_SCHEDULE&&window.FB_SCHEDULE[t+'_'+l]; return s?JSON.stringify(s):null; }
 function _calSchSave(t,l,str){ window.FB_SCHEDULE=window.FB_SCHEDULE||{}; window.FB_SCHEDULE[t+'_'+l]=JSON.parse(str); fbDB.ref('data/calendario_schedule/'+t+'_'+l).set(str); }
 function _calScRaw(t,l){ var s=window.FB_PUNTEGGI&&window.FB_PUNTEGGI[t+'_'+l]; return s?JSON.stringify(s):null; }
@@ -8855,10 +8865,16 @@ function admProcessCalScheduleXlsx(input){
       });
       var nG=Object.keys(schedule).length;
       if(!nG){alert('Nessuna giornata trovata. Verifica il formato file (atteso: "Nª Giornata" in col A o G).');input.value='';return;}
+      // nomi non riconosciuti: secondo giro "nome contenuto" tra le squadre rimaste libere
+      if(Object.keys(_miss).length){
+        var _cmC=_matchTeamsContain(Object.keys(_miss),_teamsC,Object.keys(_apx).map(function(k){return _apx[k];}).concat(_teamsC.filter(function(n){return Object.keys(schedule).some(function(g){return schedule[g].some(function(m){return m.h===n||m.a===n;});});})));
+        Object.keys(_cmC).forEach(function(k){delete _miss[k];_apx[k]=_cmC[k];});
+        Object.keys(schedule).forEach(function(g){schedule[g].forEach(function(m){if(_cmC[m.h])m.h=_cmC[m.h];if(_cmC[m.a])m.a=_cmC[m.a];});});
+      }
       var _apxK=Object.keys(_apx),_missK=Object.keys(_miss);
       if((_apxK.length||_missK.length)&&!confirm((_apxK.length?'Nomi abbinati automaticamente:\n'+_apxK.map(function(k){return '⚠️ '+k+' → '+_apx[k];}).join('\n')+'\n\n':'')+(_missK.length?'❌ Nomi NON riconosciuti (salvati come nel file):\n'+_missK.join('\n')+'\n\n':'')+'Continuare?')){input.value='';return;}
       var existing=_calSchRaw(t,l);
-      if(existing){var exP=JSON.parse(existing);var exN=Object.keys(exP.giornate||exP).length;if(!confirm('Schedule già presente ('+exN+' giornate). Sovrascrivere?')){input.value='';return;}}
+      if(existing){var exP=JSON.parse(existing);var exN=Object.keys(exP.giornate||exP).filter(function(k){return /^\d+$/.test(k);}).length;if(exN&&!confirm('Schedule già presente ('+exN+' giornate). Sovrascrivere?')){input.value='';return;}}
       var ar=parseInt((document.getElementById('adm-cal-ar')||{}).value)||0;
       var ne=parseInt((document.getElementById('adm-cal-ne')||{}).value)||0;
       var toStore={giornate:schedule,andata_ritorno:ar,neutre:ne};
@@ -8881,11 +8897,13 @@ function admProcessGiornataXlsx(input){
   var g=selG?parseInt(selG.value):0;
   var neutral=document.getElementById('adm-cal-neutral')?document.getElementById('adm-cal-neutral').checked:false;
   if(!t||!l||!g){alert('Seleziona torneo, lega e numero giornata prima');input.value='';return;}
+  var _schChk=window.FB_SCHEDULE&&window.FB_SCHEDULE[t+'_'+l];
+  if(!_schChk||!Object.keys(_schChk.giornate||_schChk).some(function(k){return /^\d+$/.test(k);})){alert('⚠️ Calendario non ancora importato per questa lega.\n\nPrima importa il calendario con il pulsante 📥 Importa Cal., poi le giornate.');input.value='';return;}
   var file=input.files[0];if(!file)return;
   var teams=admGetTeams(t,l);
   function _doProc(){
-  var _apxG={};
-  function _findT(name,fuzzy){var r=_matchTeam(name,teams,fuzzy);if(!r)return undefined;if(r.approx)_apxG[String(name).trim().toUpperCase()]=r.name;return r.name;}
+  var _apxG={},_cmG={};
+  function _findT(name,fuzzy){var _u=String(name||'').trim().toUpperCase();if(_cmG[_u]){_apxG[_u]=_cmG[_u];return _cmG[_u];}var r=_matchTeam(name,teams,fuzzy);if(!r)return undefined;if(r.approx)_apxG[String(name).trim().toUpperCase()]=r.name;return r.name;}
   function _isAllCaps(s){return s.length>1&&s===s.toUpperCase()&&/[A-Z]/.test(s);}
   var reader=new FileReader();
   reader.onload=function(e){
@@ -8893,6 +8911,13 @@ function admProcessGiornataXlsx(input){
       var wb=XLSX.read(e.target.result,{type:'array'});
       var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
       if(_xlsTipo(rows)==='calendario'){alert('⚠️ Questo sembra il file del CALENDARIO (contiene le intestazioni delle giornate).\n\nPer caricarlo usa il pulsante 📥 Importa Cal.\nCon ⚽ Importa Giornata va caricato il file dei risultati di una giornata.');input.value='';return;}
+      // nomi in maiuscolo non riconosciuti: secondo giro "nome contenuto" tra le squadre non presenti nel file con il loro nome
+      (function(){var unk={},tk=[];rows.forEach(function(row){for(var ci=0;ci<row.length&&ci<=20;ci++){var c=(row[ci]||'').toString().trim();if(!_isAllCaps(c)||/TOTALE/i.test(c))continue;var r=_matchTeam(c,teams,false);if(r){if(tk.indexOf(r.name)<0)tk.push(r.name);}else unk[c]=1;}});
+        _cmG=_matchTeamsContain(Object.keys(unk),teams,tk);
+        // poi nomi simili (es. ESTRELLA → ESTRELA), solo tra le squadre ancora libere e se l'abbinamento è unico
+        var used=tk.concat(Object.keys(_cmG).map(function(k){return _cmG[k];})),free=teams.filter(function(n){return used.indexOf(n)<0;}),fz={};
+        Object.keys(unk).forEach(function(c){if(_cmG[c])return;var r=_matchTeam(c,free,true);if(r)fz[c]=r.name;});
+        Object.keys(fz).forEach(function(c){if(Object.keys(fz).filter(function(o){return fz[o]===fz[c];}).length===1)_cmG[c]=fz[c];});})();
       var aTeams=[],aTotals=[],kTeams=[],kTotals=[];
       function _parseTot(s){var m=s.match(/(\d+[,.]\d+|\d+)/);return m?parseFloat(m[1].replace(',','.')):null;}
       rows.forEach(function(row,ri){
