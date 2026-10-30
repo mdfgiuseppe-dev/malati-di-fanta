@@ -2277,9 +2277,11 @@ function renderModulistica(torneoKey, containerId) {
     if (st.indexOf('abilitato') >= 0) return '';
     return st.indexOf('usato') >= 0 ? 'Gettone già utilizzato in questa fase' : 'Disponibile dopo l\'acquisto del gettone';
   }
-  // Rilegge gettoni e allenatori aggiornati da Firebase e ridisegna (una volta per apertura)
-  if (_gNeed && _gt && !renderModulistica._fresh) {
-    Promise.all([fbDB.ref('data/gettoni/'+_gt+'_'+_gl).once('value'), fbDB.ref('data/tornei/'+_gt+'/'+_gl+'/allenatori').once('value'), fbDB.ref('data/tornei_config/'+_gt).once('value')]).then(function(r) {
+  // Rilegge moduli (aperto/chiuso), gettoni e allenatori aggiornati da Firebase e ridisegna (una volta per apertura)
+  if (_gt && !renderModulistica._fresh) {
+    Promise.all([fbDB.ref('data/gettoni/'+_gt+'_'+_gl).once('value'), fbDB.ref('data/tornei/'+_gt+'/'+_gl+'/allenatori').once('value'), fbDB.ref('data/tornei_config/'+_gt).once('value'), fbDB.ref('data/form/'+_gt).once('value')]).then(function(r) {
+      var _fv = r[3].val(); if (typeof _fv === 'string') { try { _fv = JSON.parse(_fv); } catch(e) { _fv = null; } }
+      if (_fv && _fv.moduli) MODULISTICA_DATA[_gt] = _fv;
       window.FB_GETTONI = window.FB_GETTONI || {}; window.FB_GETTONI[_gt+'_'+_gl] = r[0].val() || {};
       window.FB_ALLENATORI = window.FB_ALLENATORI || {}; window.FB_ALLENATORI[_gt+'_'+_gl] = r[1].val() || {};
       window.TORNEI_CONFIG = window.TORNEI_CONFIG || {}; window.TORNEI_CONFIG[_gt] = r[2].val() || {};
@@ -2287,7 +2289,7 @@ function renderModulistica(torneoKey, containerId) {
     }).catch(function(){});
   }
   el.innerHTML = data.moduli.map(function(m) {
-    var lock = _gLock(m);
+    var lock = m.chiuso ? 'Al momento chiuso' : _gLock(m);
     if (lock) {
       return '<div style="background:var(--card);border:2px dashed var(--border);border-radius:16px;padding:20px;display:flex;align-items:flex-start;gap:14px;opacity:.7">'
         + '<div style="flex:1">'
@@ -4093,6 +4095,10 @@ function admModRenderBody() {
       +'data-key="'+key+'" data-mi="'+mi+'" onchange="admUpdateModuloImgEl(this)" '
       +'style="width:100%;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;outline:none;box-sizing:border-box">'
       +'</div>'
+      // Aperto / chiuso (es. Scambi solo a mercato aperto): si salva subito
+      +'<div onclick="admToggleModuloChiuso(\''+key+'\','+mi+')" style="display:inline-flex;align-items:center;gap:6px;margin:8px 12px 0 0;cursor:pointer;padding:3px 10px 3px 4px;border-radius:14px;border:1px solid '+(m.chiuso?'rgba(239,68,68,.3)':'rgba(16,185,129,.3)')+'">'
+      +'<div style="width:30px;height:17px;border-radius:9px;background:'+(m.chiuso?'#6b7280':'#10b981')+';position:relative"><div style="position:absolute;top:2px;left:'+(m.chiuso?'2px':'15px')+';width:13px;height:13px;border-radius:50%;background:#fff"></div></div>'
+      +'<span style="font-size:11px;font-weight:700;color:'+(m.chiuso?'#ef4444':'#10b981')+'">'+(m.chiuso?'🔒 Chiuso':'🔓 Aperto')+'</span></div>'
       +'<label style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:11px;font-weight:700;color:'+(m.gettone?'#f59e0b':'var(--text2)')+';cursor:pointer">'
       +'<input type="checkbox"'+(m.gettone?' checked':'')+' data-key="'+key+'" data-mi="'+mi+'" onchange="admUpdateModuloGettoneEl(this)" style="width:15px;height:15px;cursor:pointer">'
       +'🎫 Richiede gettone</label>'
@@ -4115,6 +4121,15 @@ function admUpdateModuloImgEl(el) {
 function _gettoneId(titolo) {
   return String(titolo || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
     .replace(/^utilizzo\s+(gettone\s+)?/, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'gettone';
+}
+// Apre/chiude un modulo per gli utenti e salva subito su Firebase
+function admToggleModuloChiuso(key, mi) {
+  var m = MODULISTICA_DATA[key] && MODULISTICA_DATA[key].moduli[mi]; if (!m) return;
+  m.chiuso = !m.chiuso;
+  fbDB.ref('data/form/' + key).set(JSON.stringify(MODULISTICA_DATA[key])).then(function() {
+    _admInfMsg(m.chiuso ? '🔒 "' + m.titolo + '" chiuso' : '🔓 "' + m.titolo + '" aperto', m.chiuso ? '#ef4444' : '#10b981');
+  }).catch(function(e) { alert('Errore salvataggio: ' + e.message); });
+  admModRenderBody();
 }
 function admUpdateModuloGettoneEl(el) {
   var m = MODULISTICA_DATA[el.dataset.key] && MODULISTICA_DATA[el.dataset.key].moduli[+el.dataset.mi];
