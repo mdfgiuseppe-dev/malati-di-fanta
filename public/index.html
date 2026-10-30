@@ -8739,6 +8739,15 @@ function admAzzeraRisultatiCal(){
   var msg=document.createElement('div');msg.textContent='🗑 Risultati azzerati';msg.style.cssText='position:fixed;top:70px;right:20px;background:#ef4444;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999';document.body.appendChild(msg);setTimeout(function(){msg.remove();},2500);
   admLoadCalBody();
 }
+// Riconosce il tipo di file Excel di Leghe FC: calendario (tante intestazioni "Nª Giornata") o risultati di una giornata (righe "Totale")
+function _xlsTipo(rows){
+  var g={},tot=0;
+  rows.forEach(function(r){(r||[]).forEach(function(c){var s=String(c).trim(),m=s.match(/^(\d+)\s*[ªa°]?\s*giornata/i);if(m)g[m[1]]=1;if(/^totale\b/i.test(s))tot++;});});
+  var ng=Object.keys(g).length;
+  if(ng>=3&&tot===0)return 'calendario';
+  if(tot>=2&&ng<3)return 'giornata';
+  return '';
+}
 function admProcessCalScheduleXlsx(input){
   var t=document.getElementById('adm-cal-torneo').value;
   var l=document.getElementById('adm-cal-lega').value;
@@ -8750,6 +8759,7 @@ function admProcessCalScheduleXlsx(input){
     try{
       var wb=XLSX.read(e.target.result,{type:'array'});
       var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+      if(_xlsTipo(rows)==='giornata'){alert('⚠️ Questo sembra il file dei RISULTATI di una giornata (contiene i Totali delle formazioni).\n\nPer caricarlo usa il pulsante ⚽ Importa Giornata.\nCon 📥 Importa Cal. va caricato il file del calendario.');input.value='';return;}
       var schedule={},leftG=null,rightG=null;
       var _teamsC=admGetTeams(t,l),_apx={},_miss={};
       function _mt(n){var r=_matchTeam(n,_teamsC,true);if(!r){_miss[n.toUpperCase()]=1;return n.toUpperCase();}if(r.approx)_apx[n.toUpperCase()]=r.name;return r.name;}
@@ -8800,6 +8810,7 @@ function admProcessGiornataXlsx(input){
     try{
       var wb=XLSX.read(e.target.result,{type:'array'});
       var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+      if(_xlsTipo(rows)==='calendario'){alert('⚠️ Questo sembra il file del CALENDARIO (contiene le intestazioni delle giornate).\n\nPer caricarlo usa il pulsante 📥 Importa Cal.\nCon ⚽ Importa Giornata va caricato il file dei risultati di una giornata.');input.value='';return;}
       var aTeams=[],aTotals=[],kTeams=[],kTotals=[];
       function _parseTot(s){var m=s.match(/(\d+[,.]\d+|\d+)/);return m?parseFloat(m[1].replace(',','.')):null;}
       rows.forEach(function(row,ri){
