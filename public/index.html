@@ -8198,6 +8198,66 @@ function admCsRenameKey(obj,oldKey,newKey){
   });
   return res;
 }
+// ── Rinomina completa di una squadra in una lega: aggiorna TUTTI i dati su Firebase ──
+// squadre, allenatori, rose e crediti, contratti, infermeria, gettoni, multe, calendario, schedule, punteggi, totali, stadio, logo, qualificazioni
+function _rnVal(v) { if (typeof v === 'string') { try { return { v: JSON.parse(v), s: true }; } catch(e) { return { v: v, s: true }; } } return { v: v, s: false }; }
+function _rnKeys(obj, o, n) { // rinomina la chiave della squadra (maiuscole/minuscole indifferenti) in un oggetto
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+  var out = {};
+  Object.keys(obj).forEach(function(k) { out[k.toUpperCase() === o ? n : k] = obj[k]; });
+  return out;
+}
+function admRenameTeamFull(t, l, oldName, newName) {
+  var O = String(oldName).toUpperCase(), N = String(newName).toUpperCase(), fk = t + '_' + l, sO = _fbSafeKey(O), sN = _fbSafeKey(N);
+  var P = {
+    squadre: 'data/tornei/' + t + '/' + l + '/squadre', allen: 'data/tornei/' + t + '/' + l + '/allenatori',
+    rose: 'data/rose/' + fk, contr: 'data/contratti/' + fk, inf: 'data/infermeria/' + fk, gett: 'data/gettoni/' + fk, multe: 'data/multe/' + fk,
+    cal: 'data/calendario/' + fk, sch: 'data/calendario_schedule/' + fk, pun: 'data/punteggi/' + fk, tot: 'data/totali/' + fk, sta: 'data/stadio/' + fk,
+    logo: 'data/images/loghi/squadre/' + t + '/' + l, qual: 'data/qualificazioni/' + t
+  };
+  var keys = Object.keys(P);
+  return Promise.all(keys.map(function(k) { return fbDB.ref(P[k]).once('value'); })).then(function(snaps) {
+    var D = {}, W = [];
+    keys.forEach(function(k, i) { D[k] = _rnVal(snaps[i].val()); });
+    function put(k, v) { W.push(fbDB.ref(P[k]).set(v === null || v === undefined ? null : (D[k].s ? JSON.stringify(v) : v))); }
+    // squadre della lega { CHIAVE: NOME }
+    var sq = D.squadre.v || {}, nsq = {};
+    Object.keys(sq).forEach(function(k) { var nm = String(typeof sq[k] === 'string' ? sq[k] : k).toUpperCase(); if (nm === O) nsq[sN] = N; else nsq[k] = sq[k]; });
+    put('squadre', nsq);
+    // allenatori e gettoni (chiave sicura)
+    if (D.allen.v) { var al = D.allen.v; if (al[sO] !== undefined) { al[sN] = al[sO]; delete al[sO]; put('allen', al); } }
+    if (D.gett.v) { var g = D.gett.v; if (g[sO] !== undefined) { g[sN] = g[sO]; delete g[sO]; put('gett', g); } }
+    // logo
+    if (D.logo.v && D.logo.v[sO] !== undefined) { W.push(fbDB.ref(P.logo + '/' + sN).set(D.logo.v[sO])); W.push(fbDB.ref(P.logo + '/' + sO).remove()); }
+    // rose e crediti
+    if (D.rose.v) { var R = _roseNorm(D.rose.v); R.rose = _rnKeys(R.rose, O, N); R.crediti = _rnKeys(R.crediti, O, N); D.rose.s = true; put('rose', R); }
+    // contratti e infermeria: campo squadra
+    if (D.contr.v && D.contr.v.giocatori) { var G = D.contr.v.giocatori; Object.keys(G).forEach(function(k) { if (String(G[k].squadra || '').toUpperCase() === O) G[k].squadra = N; }); put('contr', D.contr.v); }
+    if (D.inf.v && D.inf.v.giocatori) { var I = D.inf.v.giocatori; Object.keys(I).forEach(function(k) { if (String(I[k].squadra || '').toUpperCase() === O) I[k].squadra = N; }); put('inf', D.inf.v); }
+    // multe, stadio: chiave squadra
+    if (D.multe.v) put('multe', _rnKeys(D.multe.v, O, N));
+    if (D.sta.v) put('sta', _rnKeys(D.sta.v, O, N));
+    // calendario, punteggi, totali: { giornata: { SQUADRA: ... } }
+    ['cal', 'pun', 'tot'].forEach(function(k) { if (D[k].v && typeof D[k].v === 'object') { var X = {}; Object.keys(D[k].v).forEach(function(gg) { X[gg] = _rnKeys(D[k].v[gg], O, N); }); D[k].s = true; put(k, X); } });
+    // schedule: { giornate: { g: [ {h, a} ] } }
+    if (D.sch.v && typeof D.sch.v === 'object') {
+      var S = D.sch.v, GG = S.giornate || S;
+      Object.keys(GG).forEach(function(gg) { (GG[gg] || []).forEach(function(m) { if (String(m.h || '').toUpperCase() === O) m.h = N; if (String(m.a || '').toUpperCase() === O) m.a = N; }); });
+      D.sch.s = true; put('sch', S);
+    }
+    // qualificazioni del torneo: chiavi "lega|SQUADRA"
+    if (D.qual.v && D.qual.v.dati) {
+      var qo = l + '|' + O, qn = l + '|' + N, ch = false;
+      Object.keys(D.qual.v.dati).forEach(function(id) {
+        var dd = D.qual.v.dati[id];
+        Object.keys(dd.giornate || {}).forEach(function(gg) { var x = dd.giornate[gg]; Object.keys(x).forEach(function(k) { if (k.toUpperCase() === qo.toUpperCase()) { x[qn] = x[k]; delete x[k]; ch = true; } }); });
+        (dd.ordine || []).forEach(function(k, i) { if (k.toUpperCase() === qo.toUpperCase()) { dd.ordine[i] = qn; ch = true; } });
+      });
+      if (ch) { D.qual.s = true; put('qual', D.qual.v); }
+    }
+    return Promise.all(W);
+  });
+}
 function admCsConfirm() {
   var torneoKey=document.getElementById('adm-cs-torneo').value;
   var legaKey=document.getElementById('adm-cs-lega').value;
@@ -8205,38 +8265,50 @@ function admCsConfirm() {
   var changes=[];
   teams.forEach(function(team){
     var ki=team.replace(/\s+/g,'_');
-    var nN=((document.getElementById('adm-cs-new-'+ki)||{}).value||'').trim();
+    var nN=((document.getElementById('adm-cs-new-'+ki)||{}).value||'').trim().toUpperCase();
     var nL=_logoImgUrl((document.getElementById('adm-cs-logo-'+ki)||{}).value||'');
     if((nN&&nN!==team)||nL) changes.push({old:team,newName:nN||team,newLogo:nL});
   });
   if(!changes.length) return;
-  changes.forEach(function(c){
-    var o=c.old, n=c.newName;
-    var rk='adm_rose_'+torneoKey+'_'+legaKey;
-    var rr=localStorage.getItem(rk);
-    if(rr){try{var r=admCsRenameKey(JSON.parse(rr),o,n);localStorage.setItem(rk,JSON.stringify(r));}catch(e){}}
-    if(torneoKey==='slim'&&legaKey==='it'&&typeof TEAMS_ROSE!=='undefined') TEAMS_ROSE=admCsRenameKey(TEAMS_ROSE,o,n);
-    var ck=(legaKey==='it')?'slim_calendar':'slim_calendar_'+legaKey;
-    if(torneoKey==='tsm') ck='tsm_calendar_'+legaKey;
-    var cr=localStorage.getItem(ck)||localStorage.getItem('adm_cal_'+torneoKey+'_'+legaKey);
-    if(cr){try{var cal=JSON.parse(cr);var nc={};Object.keys(cal).forEach(function(g){nc[g]=admCsRenameKey(admCsRenameKey(cal[g],o.toUpperCase(),n.toUpperCase()),o,n);});localStorage.setItem(ck,JSON.stringify(nc));localStorage.setItem('adm_cal_'+torneoKey+'_'+legaKey,JSON.stringify(nc));}catch(e){}}
-    var sk=(legaKey==='it')?'slim_stadio':'slim_stadio_'+legaKey;
-    var sr=localStorage.getItem(sk)||localStorage.getItem('adm_stadio_'+torneoKey+'_'+legaKey);
-    if(sr){try{var sta=admCsRenameKey(admCsRenameKey(JSON.parse(sr),o.toUpperCase(),n.toUpperCase()),o,n);localStorage.setItem(sk,JSON.stringify(sta));localStorage.setItem('adm_stadio_'+torneoKey+'_'+legaKey,JSON.stringify(sta));}catch(e){}}
-    if(c.newLogo){
-      fbDB.ref('data/images/loghi/squadre/'+torneoKey+'/'+legaKey+'/'+_fbSafeKey(o)).set(c.newLogo);
-      window.FB_LOGHI_SQUADRE = window.FB_LOGHI_SQUADRE || {};
-      window.FB_LOGHI_SQUADRE[torneoKey] = window.FB_LOGHI_SQUADRE[torneoKey] || {};
-      window.FB_LOGHI_SQUADRE[torneoKey][legaKey] = window.FB_LOGHI_SQUADRE[torneoKey][legaKey] || {};
-      window.FB_LOGHI_SQUADRE[torneoKey][legaKey][_fbSafeKey(o)] = c.newLogo;
-    }
-    if(c.newLogo){localStorage.setItem('adm_logo_'+torneoKey+'_'+legaKey+'_'+n,c.newLogo);if(typeof FANTASY_LOGOS!=='undefined'){FANTASY_LOGOS[n]=c.newLogo;FANTASY_LOGOS[n.toUpperCase()]=c.newLogo;delete FANTASY_LOGOS[o];delete FANTASY_LOGOS[o.toUpperCase()];}}
-    if(torneoKey==='slim'&&legaKey==='it'&&typeof SLIM_TEAMS_IT!=='undefined'){var i=SLIM_TEAMS_IT.indexOf(o);if(i>=0)SLIM_TEAMS_IT[i]=n;}
-    if(typeof SLIM_TEAMS!=='undefined'){var i2=SLIM_TEAMS.indexOf(o);if(i2>=0)SLIM_TEAMS[i2]=n;}
-  });
+  // controlli: nessun nome doppio
+  var finali=teams.filter(function(x){return x!=='INFERMERIA';}).map(function(x){var c=changes.find(function(y){return y.old===x;});return c?c.newName:x;});
+  var dup=finali.filter(function(x,i){return finali.indexOf(x)!==i;});
+  if(dup.length){alert('Nomi doppi nella lega: '+dup.join(', '));return;}
+  if(changes.some(function(c){return c.old==='INFERMERIA'&&c.newName!=='INFERMERIA';})){alert('L\'infermeria non si può rinominare (solo il logo).');return;}
+  var ren=changes.filter(function(c){return c.newName!==c.old;});
+  if(ren.length&&!confirm('Rinominare '+ren.map(function(c){return c.old+' → '+c.newName;}).join(', ')+'?\n\nVerranno aggiornati tutti i dati della lega su Firebase (rose, contratti, calendario, risultati, stadio, allenatori, gettoni, infermeria, multe, logo, qualificazioni).')) return;
   var el=document.getElementById('adm-cs-preview');
-  el.innerHTML='<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:14px;color:#10b981;font-size:13px;font-weight:700">✅ Cambio squadre completato!</div>';
-  setTimeout(admCsLoadSquadre,500);
+  el.innerHTML='<div style="padding:14px;color:var(--text2);font-size:13px;font-weight:700">⏳ Aggiornamento in corso…</div>';
+  // una rinomina alla volta (ognuna legge i dati aggiornati dalla precedente)
+  var chain=Promise.resolve();
+  ren.forEach(function(c){ chain=chain.then(function(){ return admRenameTeamFull(torneoKey,legaKey,c.old,c.newName); }); });
+  chain.then(function(){
+    // loghi nuovi, salvati sotto il nome definitivo
+    return Promise.all(changes.filter(function(c){return c.newLogo;}).map(function(c){
+      var k=_fbSafeKey(c.newName);
+      window.FB_LOGHI_SQUADRE=window.FB_LOGHI_SQUADRE||{};window.FB_LOGHI_SQUADRE[torneoKey]=window.FB_LOGHI_SQUADRE[torneoKey]||{};window.FB_LOGHI_SQUADRE[torneoKey][legaKey]=window.FB_LOGHI_SQUADRE[torneoKey][legaKey]||{};
+      window.FB_LOGHI_SQUADRE[torneoKey][legaKey][k]=c.newLogo;
+      return fbDB.ref('data/images/loghi/squadre/'+torneoKey+'/'+legaKey+'/'+k).set(c.newLogo);
+    }));
+  }).then(function(){
+    // dati in memoria riletti da Firebase
+    return Promise.all([fbDB.ref('data/tornei/'+torneoKey+'/'+legaKey).once('value'),fbDB.ref('data/images/loghi/squadre/'+torneoKey+'/'+legaKey).once('value')]).then(function(r){
+      var v=r[0].val()||{},sq=v.squadre||{};
+      window.FB_SQUADRE[torneoKey+'_'+legaKey]=Object.keys(sq).map(function(k){return String(typeof sq[k]==='string'?sq[k]:k).toUpperCase();}).sort();
+      window.FB_ALLENATORI=window.FB_ALLENATORI||{};window.FB_ALLENATORI[torneoKey+'_'+legaKey]=v.allenatori||{};
+      window.FB_LOGHI_SQUADRE[torneoKey][legaKey]=r[1].val()||{};
+      var fk=torneoKey+'_'+legaKey;
+      ['FB_ROSE','FB_CONTRATTI','FB_INFERMERIA','FB_GETTONI','FB_MULTE','FB_CALENDARIO','FB_SCHEDULE','FB_PUNTEGGI','FB_TOTALI','FB_STADIO'].forEach(function(n){ if(window[n]) delete window[n][fk]; });
+      return Promise.all([['rose','FB_ROSE',_roseNorm],['contratti','FB_CONTRATTI',_contrNorm],['infermeria','FB_INFERMERIA',_infNorm],['multe','FB_MULTE',_multeNorm],['gettoni','FB_GETTONI',null],['calendario','FB_CALENDARIO','json'],['calendario_schedule','FB_SCHEDULE','json'],['punteggi','FB_PUNTEGGI','json'],['totali','FB_TOTALI','json'],['stadio','FB_STADIO','json']].map(function(x){
+        return fbDB.ref('data/'+x[0]+'/'+fk).once('value').then(function(s){ var val=s.val(); if(val===null) return; window[x[1]]=window[x[1]]||{};
+          if(typeof x[2]==='function') window[x[1]][fk]=x[2](val); else if(x[2]==='json') window[x[1]][fk]=typeof val==='string'?JSON.parse(val):val; else window[x[1]][fk]=val; });
+      }));
+    });
+  }).then(function(){
+    el.innerHTML='<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:14px;color:#10b981;font-size:13px;font-weight:700">✅ Cambio squadre completato e salvato su Firebase!</div>';
+    if(typeof updateDashboardCounters==='function') updateDashboardCounters();
+    setTimeout(admCsLoadSquadre,800);
+  }).catch(function(e){ el.innerHTML='<div style="color:#ef4444;font-size:13px;font-weight:700;padding:14px">❌ Errore: '+e.message+'</div>'; });
 }
 function admGetTeams(torneoKey, legaKey) {
   if (window.FB_SQUADRE && window.FB_SQUADRE[torneoKey+'_'+legaKey]) return window.FB_SQUADRE[torneoKey+'_'+legaKey];
