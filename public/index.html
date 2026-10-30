@@ -9888,18 +9888,18 @@ function _svincHtml(t, l, admin) {
   var lst = (_roseGet(t, l).svincolati || []).slice(), roles = _roles(t), RG = _roleGroups(t);
   if (!lst.length) return '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nessun elenco svincolati: si aggiorna importando la Lista calciatori della lega.</div>';
   var q = _plKey(window._svQ || ''), f = window._svF || 'ALL';
+  if (f !== 'ALL' && roles.indexOf(f) < 0) f = 'ALL'; // filtro per singolo ruolo del formato del torneo
   var ord = function(p) { var i = roles.indexOf(String(p.ruolo || '').split(';')[0].trim()); return i < 0 ? 99 : i; };
   lst.sort(function(a, b) { return (ord(a) - ord(b)) || String(a.nome).localeCompare(String(b.nome)); });
   var vis = lst.filter(function(p) {
     if (q && _plKey(p.nome).indexOf(q) < 0) return false;
     if (f === 'ALL') return true;
-    var al = RG[f] || [f];
-    return String(p.ruolo || '').split(';').some(function(r) { return al.indexOf(r.trim()) > -1; });
+    return String(p.ruolo || '').split(';').some(function(r) { return r.trim() === f; });
   });
   var fb = function(on) { return 'padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid ' + (on ? 'rgba(16,185,129,.5)' : 'var(--border)') + ';background:' + (on ? 'rgba(16,185,129,.15)' : 'var(--bg2)') + ';color:' + (on ? '#10b981' : 'var(--text2)'); };
   var rr = admin ? 'admSocRender()' : 'renderSvincolati()';
   var h = '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">'
-    + ['ALL'].concat(Object.keys(RG)).map(function(g) { return '<button onclick="window._svF=\'' + g + '\';' + rr + '" style="' + fb(f === g) + '">' + (g === 'ALL' ? 'Tutti' : g) + '</button>'; }).join('') + '</div>'
+    + ['ALL'].concat(roles).map(function(g) { return '<button onclick="window._svF=\'' + g + '\';' + rr + '" style="' + fb(f === g) + ';min-width:34px">' + (g === 'ALL' ? 'Tutti' : (g === 'Por' ? 'P' : g.toUpperCase())) + '</button>'; }).join('') + '</div>'
     + '<input type="search" placeholder="🔍 Cerca giocatore…" value="' + _regEsc(window._svQ || '') + '" oninput="window._svQ=this.value;clearTimeout(window._svT);window._svT=setTimeout(function(){' + rr + ';var i=document.querySelector(\'' + (admin ? '#adm-soc-body' : '#u-svinc-body') + ' input[type=search]\');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},250)" style="width:100%;box-sizing:border-box;padding:7px 10px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none">'
     + '<div style="font-size:10px;color:var(--text3);margin-bottom:6px">' + vis.length + ' giocatori' + (_roseGet(t, l).aggiornato ? ' · aggiornato al ' + _roseGet(t, l).aggiornato : '') + '</div>';
   var th = 'padding:6px 8px;text-align:left;font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3)';
