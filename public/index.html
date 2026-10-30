@@ -9914,7 +9914,7 @@ function _svincHtml(t, l, admin) {
   var fb = function(on) { return 'padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid ' + (on ? 'rgba(16,185,129,.5)' : 'var(--border)') + ';background:' + (on ? 'rgba(16,185,129,.15)' : 'var(--bg2)') + ';color:' + (on ? '#10b981' : 'var(--text2)'); };
   var rr = admin ? 'admSocRender()' : 'renderSvincolati()';
   var h = '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">'
-    + ['ALL'].concat(roles).map(function(g) { return '<button onclick="window._svF=\'' + g + '\';' + rr + '" style="' + fb(f === g) + ';min-width:34px">' + (g === 'ALL' ? 'Tutti' : (g === 'Por' ? 'P' : g.toUpperCase())) + '</button>'; }).join('') + '</div>'
+    + ['ALL'].concat(roles).map(function(g) { return '<button onclick="window._svF=\'' + g + '\';' + rr + '" style="' + fb(f === g) + ';min-width:34px">' + (g === 'ALL' ? 'Tutti' : g.toUpperCase()) + '</button>'; }).join('') + '</div>'
     + '<input type="search" placeholder="🔍 Cerca giocatore…" value="' + _regEsc(window._svQ || '') + '" oninput="window._svQ=this.value;clearTimeout(window._svT);window._svT=setTimeout(function(){' + rr + ';var i=document.querySelector(\'' + (admin ? '#adm-soc-body' : '#u-svinc-body') + ' input[type=search]\');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},250)" style="width:100%;box-sizing:border-box;padding:7px 10px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none">'
     + '<div style="font-size:10px;color:var(--text3);margin-bottom:6px">' + vis.length + ' giocatori' + (_roseGet(t, l).aggiornato ? ' · aggiornato al ' + _roseGet(t, l).aggiornato : '') + '</div>';
   var th = 'padding:6px 8px;text-align:left;font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3)';
@@ -9993,7 +9993,7 @@ function buildFilters(){
     if(show)html+='<div class="fbtn'+(currentFilter===g.id?' active':'')+'" onclick="setFilter(this,\''+g.id+'\')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">'+g.label+'</div>';
   });
   _roles().filter(function(r){return present.indexOf(r)>-1;}).forEach(function(r){
-    html+='<div class="fbtn'+(currentFilter===r?' active':'')+'" onclick="setFilter(this,\''+r+'\')" style="padding:5px 8px;border-radius:6px;font-size:10px;font-weight:800;cursor:pointer">'+(r==='Por'?'P':r.toUpperCase())+'</div>';
+    html+='<div class="fbtn'+(currentFilter===r?' active':'')+'" onclick="setFilter(this,\''+r+'\')" style="padding:5px 8px;border-radius:6px;font-size:10px;font-weight:800;cursor:pointer">'+r.toUpperCase()+'</div>';
   });
   fr.innerHTML=html;
 }
