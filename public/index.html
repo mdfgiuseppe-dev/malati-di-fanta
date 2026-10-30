@@ -7565,7 +7565,7 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
       var pp={ruolo:ru,nome:nm,squadra:String(cSq>=0?rw[cSq]:'').trim(),costo:parseInt(cCo>=0?rw[cCo]:0)||0};
       if(cId>=0&&String(rw[cId]).trim()) pp.id=String(rw[cId]).trim();
       if(cFl>=0&&String(rw[cFl]).trim()) pp.fuori=true;
-      if(!fs){ (_svinc=_svinc||[]).push({ruolo:pp.ruolo,nome:pp.nome,squadra:pp.squadra,id:pp.id,fuori:pp.fuori}); continue; } // svincolato
+      if(!fs){ _svinc=_svinc||[]; if(!pp.fuori) _svinc.push({ruolo:pp.ruolo,nome:pp.nome,squadra:pp.squadra,id:pp.id}); continue; } // svincolato (esclusi gli asteriscati: non più in Serie A)
       (rose[fs]=rose[fs]||[]).push(pp);
     }
   }
