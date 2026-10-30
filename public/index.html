@@ -1068,10 +1068,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <div class="mnav-btn" onclick="showSection('calendario',this)">📅 Calendario</div>
   <div class="mnav-btn" onclick="showSection('classifica',this)">🏆 Classifica</div>
   <div class="mnav-btn" onclick="showSection('coppe',this)">🏆 Coppe</div>
-  <div class="mnav-btn" onclick="showSection('svincolati',this)">🆓 Svincolati</div>
   <div class="mnav-btn" onclick="showSection('stadio',this)">🏟️ Stadio</div>
   <div class="mnav-btn" data-feat="sponsor" style="display:none" onclick="showSection('sponsor',this)">🤝 Sponsor</div>
   <div class="mnav-btn" data-feat="contratti" style="display:none" onclick="showSection('contratti',this)">📝 Contratti</div>
+  <div class="mnav-btn" onclick="showSection('svincolati',this)">🆓 Svincolati</div>
   <div class="mnav-btn" onclick="showSection('multe',this)">⚠️ Multe &amp; Sanzioni</div>
   <div class="mnav-btn" onclick="showSection('modulistica',this)">📑 Moduli</div>
 </div>
@@ -1112,10 +1112,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/><path d="M12 15v6M8 21h8"/></svg>
     Coppe
   </div>
-  <div class="nav-item" onclick="showSection('svincolati',this)">
-    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0112 0v1"/><path d="M17 11l2 2 4-4"/></svg>
-    Calciatori svincolati
-  </div>
   <div class="nav-section">Gestione</div>
   <div class="nav-item" onclick="showSection('stadio',this)">
     <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11"/></svg>
@@ -1128,6 +1124,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <div class="nav-item" data-feat="contratti" style="display:none" onclick="showSection('contratti',this)">
     <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
     Contratti
+  </div>
+  <div class="nav-item" onclick="showSection('svincolati',this)">
+    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0112 0v1"/><path d="M17 11l2 2 4-4"/></svg>
+    Calciatori svincolati
   </div>
   <div class="nav-item" onclick="showSection('multe',this)">
     <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
