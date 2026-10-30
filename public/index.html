@@ -1068,6 +1068,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <div class="mnav-btn" onclick="showSection('calendario',this)">📅 Calendario</div>
   <div class="mnav-btn" onclick="showSection('classifica',this)">🏆 Classifica</div>
   <div class="mnav-btn" onclick="showSection('coppe',this)">🏆 Coppe</div>
+  <div class="mnav-btn" onclick="showSection('svincolati',this)">🆓 Svincolati</div>
   <div class="mnav-btn" onclick="showSection('stadio',this)">🏟️ Stadio</div>
   <div class="mnav-btn" data-feat="sponsor" style="display:none" onclick="showSection('sponsor',this)">🤝 Sponsor</div>
   <div class="mnav-btn" data-feat="contratti" style="display:none" onclick="showSection('contratti',this)">📝 Contratti</div>
@@ -1110,6 +1111,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <div class="nav-item" onclick="showSection('coppe',this)">
     <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/><path d="M12 15v6M8 21h8"/></svg>
     Coppe
+  </div>
+  <div class="nav-item" onclick="showSection('svincolati',this)">
+    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0112 0v1"/><path d="M17 11l2 2 4-4"/></svg>
+    Calciatori svincolati
   </div>
   <div class="nav-section">Gestione</div>
   <div class="nav-item" onclick="showSection('stadio',this)">
@@ -1273,6 +1278,13 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <div id="s-sponsor" class="section">
     <div style="padding:40px 20px;text-align:center;color:var(--text3);font-size:13px">🤝 Sezione Sponsor in preparazione.</div>
   </div><!-- /s-sponsor -->
+
+  <!-- ===== CALCIATORI SVINCOLATI ===== -->
+  <div id="s-svincolati" class="section">
+    <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:6px">🆓 <span style="color:#10b981">Calciatori svincolati</span></div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:16px">Giocatori di Serie A non presenti in nessuna rosa della lega</div>
+    <div id="u-svinc-body"></div>
+  </div><!-- /s-svincolati -->
 
   <!-- ===== CONTRATTI ===== -->
   <div id="s-contratti" class="section">
@@ -7522,7 +7534,7 @@ function admImportRoseExcel() {
   reader.readAsText(file,'UTF-8');
 }
 function admParseRoseRows(rows,torneoKey,legaKey,status){
-  var rose={},currentLeft=null,currentRight=null,_skip=[];
+  var rose={},currentLeft=null,currentRight=null,_skip=[],_svinc=null;
   // Formato "Lista calciatori": # | Nome | Fuori lista | Sq. | ... | R.MANTRA | ... | FantaSquadra | Costo (una riga per giocatore)
   var _h0=(rows[0]||[]).map(function(x){return String(x).trim().toLowerCase();});
   var _cFs=_h0.indexOf('fantasquadra');
@@ -7532,12 +7544,13 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
     var _ci=function(n){return _h0.indexOf(n);},cId=_ci('#'),cNo=_ci('nome'),cFl=_ci('fuori lista'),cSq=_ci('sq.'),cR=_ci('r.'),cRm=_ci('r.mantra'),cCo=_ci('costo');
     for(var lr=1;lr<rows.length;lr++){
       var rw=rows[lr]||[],fs=String(rw[_cFs]||'').trim(),nm=String(rw[cNo]||'').trim();
-      if(!fs||!nm) continue; // svincolati
+      if(!nm) continue;
       var _cls=_formato(torneoKey)==='classic';
       var ru=String((_cls?(cR>=0?rw[cR]:''):(cRm>=0?rw[cRm]:''))||(cR>=0?rw[cR]:'')||'').trim().replace(/\//g,';');
       var pp={ruolo:ru,nome:nm,squadra:String(cSq>=0?rw[cSq]:'').trim(),costo:parseInt(cCo>=0?rw[cCo]:0)||0};
       if(cId>=0&&String(rw[cId]).trim()) pp.id=String(rw[cId]).trim();
       if(cFl>=0&&String(rw[cFl]).trim()) pp.fuori=true;
+      if(!fs){ (_svinc=_svinc||[]).push({ruolo:pp.ruolo,nome:pp.nome,squadra:pp.squadra,id:pp.id,fuori:pp.fuori}); continue; } // svincolato
       (rose[fs]=rose[fs]||[]).push(pp);
     }
   }
@@ -7615,7 +7628,7 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
       status.innerHTML='❌ Nel file non ho trovato nessuna squadra (righe "Nome squadra" seguite da "Ruolo | Calciatore | Squadra | Costo"). Il formato del file non è quello atteso: niente è stato importato.'+(_skip.length?'<br>Righe lette: '+_skip.slice(0,8).join(', '):'');
       status.style.color='#ef4444';return;
     }
-    var _pend={savedKeys:sk2,infermeria:infermeria,torneoKey:torneoKey,legaKey:legaKey,crediti:_cr,download:_dl};
+    var _pend={savedKeys:sk2,infermeria:infermeria,torneoKey:torneoKey,legaKey:legaKey,crediti:_cr,download:_dl,svincolati:_svinc};
     // Ruolo e club mancanti (formato "rosters"): recuperati da rose e contratti già salvati
     var _known={},_R0=_roseGet(torneoKey,legaKey).rose,_G0=_contrGet(torneoKey,legaKey).giocatori,_noRuolo=0;
     Object.keys(_R0).forEach(function(s){(_R0[s]||[]).forEach(function(p){if(p.ruolo||p.squadra)_known[_plKey(p.nome)]={ruolo:p.ruolo,squadra:p.squadra};});});
@@ -7748,6 +7761,7 @@ function admConfirmImport(){
     R.rose={}; Object.keys(sk).forEach(function(s){R.rose[s]=sk[s];}); R.rose.INFERMERIA=inf||[];
     if(p.crediti&&Object.keys(p.crediti).length) R.crediti=p.crediti; // il formato "rosters" non ha i crediti: restano quelli salvati
     R.aggiornato=oggi; if(p.download) R.download=p.download;
+    if(p.svincolati) R.svincolati=p.svincolati; // solo il file "Lista calciatori" contiene gli svincolati
     var stI=document.getElementById('adm-import-status');
     Promise.all([_roseSave(tk,lk),_cSave,_iSave]).then(function(){
       var n=Object.values(sk).reduce(function(a,b){return a+b.length;},0);
@@ -7786,7 +7800,7 @@ function admConfirmImport(){
   if(cT&&cT.value===tk&&cL&&cL.value===lk) admLoadRoseSquadre();
 }
 // ADMIN — Gestione Società (schede per squadra: Allenatori; in futuro Gettoni, Quote)
-var ADM_SOC_TABS = [{ key: 'allenatori', label: '👔 Allenatori' }, { key: 'gettoni', label: '🎫 Gettoni' }, { key: 'infermeria', label: '🏥 Infermeria' }, { key: 'contratti', label: '📝 Contratti' }, { key: 'utenti', label: '👤 Utenti' }];
+var ADM_SOC_TABS = [{ key: 'allenatori', label: '👔 Allenatori' }, { key: 'gettoni', label: '🎫 Gettoni' }, { key: 'infermeria', label: '🏥 Infermeria' }, { key: 'contratti', label: '📝 Contratti' }, { key: 'svincolati', label: '🆓 Svincolati' }, { key: 'utenti', label: '👤 Utenti' }];
 window._admSocTab = 'allenatori';
 function admSocInit() {
   var sel = document.getElementById('adm-soc-torneo'); if (!sel) return;
@@ -7822,6 +7836,7 @@ function admSocRender() {
   if (window._admSocTab === 'gettoni') admSocRenderGettoni(tk, lk, body);
   if (window._admSocTab === 'infermeria') admSocRenderInfermeria(tk, lk, body);
   if (window._admSocTab === 'contratti') admSocRenderContratti(tk, lk, body);
+  if (window._admSocTab === 'svincolati') body.innerHTML = _svincHtml(tk, lk, true);
 }
 function admSocRenderContratti(tk, lk, body) {
   if (!_torneoFeat(tk, 'contratti')) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Contratti non abilitati per questo torneo (Tornei &amp; Leghe → 📝 Contratti abilitati).</div>'; return; }
@@ -7931,7 +7946,7 @@ function admInfElimina(el) {
   if (ck) reg[ck].squadra = sq;
   if (r.sostituto) {
     var ks = _plKey(r.sostituto), pl = R[tk2] || [], is = pl.findIndex(function(x){ return _plKey(x.nome) === ks; });
-    if (is >= 0) pl.splice(is, 1);
+    if (is >= 0) { var _ex = pl.splice(is, 1)[0]; var _RR = _roseGet(c.tk, c.lk); _RR.svincolati = _RR.svincolati || []; if (!_RR.svincolati.some(function(x){ return _plKey(x.nome) === ks; })) _RR.svincolati.push({ ruolo: _ex.ruolo, nome: _ex.nome, squadra: _ex.squadra, id: _ex.id }); }
     var cs = Object.keys(reg).find(function(x){ return reg[x].stato !== 'uscito' && _plKey(reg[x].nome) === ks; });
     if (cs) { reg[cs].stato = 'uscito'; reg[cs].uscita = oggi; delete reg[cs].sostitutoDi; delete reg[cs].scadenzaPrec; }
   }
@@ -9868,6 +9883,42 @@ function renderContratti(fresh) {
     window.FB_CONTRATTI = window.FB_CONTRATTI || {}; window.FB_CONTRATTI[t+'_'+l] = _contrNorm(s.val()); renderContratti(true);
   }).catch(function(){});
 }
+// ── Calciatori svincolati della lega (dal file "Lista calciatori"): data/rose/{t_l} → svincolati ──
+function _svincHtml(t, l, admin) {
+  var lst = (_roseGet(t, l).svincolati || []).slice(), roles = _roles(t), RG = _roleGroups(t);
+  if (!lst.length) return '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nessun elenco svincolati: si aggiorna importando la Lista calciatori della lega.</div>';
+  var q = _plKey(window._svQ || ''), f = window._svF || 'ALL';
+  var ord = function(p) { var i = roles.indexOf(String(p.ruolo || '').split(';')[0].trim()); return i < 0 ? 99 : i; };
+  lst.sort(function(a, b) { return (ord(a) - ord(b)) || String(a.nome).localeCompare(String(b.nome)); });
+  var vis = lst.filter(function(p) {
+    if (q && _plKey(p.nome).indexOf(q) < 0) return false;
+    if (f === 'ALL') return true;
+    var al = RG[f] || [f];
+    return String(p.ruolo || '').split(';').some(function(r) { return al.indexOf(r.trim()) > -1; });
+  });
+  var fb = function(on) { return 'padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid ' + (on ? 'rgba(16,185,129,.5)' : 'var(--border)') + ';background:' + (on ? 'rgba(16,185,129,.15)' : 'var(--bg2)') + ';color:' + (on ? '#10b981' : 'var(--text2)'); };
+  var rr = admin ? 'admSocRender()' : 'renderSvincolati()';
+  var h = '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">'
+    + ['ALL'].concat(Object.keys(RG)).map(function(g) { return '<button onclick="window._svF=\'' + g + '\';' + rr + '" style="' + fb(f === g) + '">' + (g === 'ALL' ? 'Tutti' : g) + '</button>'; }).join('') + '</div>'
+    + '<input type="search" placeholder="🔍 Cerca giocatore…" value="' + _regEsc(window._svQ || '') + '" oninput="window._svQ=this.value;clearTimeout(window._svT);window._svT=setTimeout(function(){' + rr + ';var i=document.querySelector(\'' + (admin ? '#adm-soc-body' : '#u-svinc-body') + ' input[type=search]\');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},250)" style="width:100%;box-sizing:border-box;padding:7px 10px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none">'
+    + '<div style="font-size:10px;color:var(--text3);margin-bottom:6px">' + vis.length + ' giocatori' + (_roseGet(t, l).aggiornato ? ' · aggiornato al ' + _roseGet(t, l).aggiornato : '') + '</div>';
+  var th = 'padding:6px 8px;text-align:left;font-size:9px;font-weight:800;text-transform:uppercase;color:var(--text3)';
+  h += '<div class="card" style="padding:0;overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr style="background:var(--bg2)"><th style="' + th + '">Ruolo</th><th style="' + th + '">Giocatore</th><th style="' + th + '">Club</th></tr></thead><tbody>'
+    + vis.map(function(p) {
+      return '<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 8px">' + (p.ruolo ? roleBadge(p.ruolo) : '') + '</td>'
+        + '<td style="padding:6px 8px;font-weight:700;font-size:12px">' + p.nome + (p.fuori ? ' <span title="Non più in Serie A" style="color:var(--text3);font-weight:400">*</span>' : '') + '</td>'
+        + '<td style="padding:6px 8px;font-size:11px;color:var(--text2)">' + (p.squadra || '') + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+  return h;
+}
+function renderSvincolati(fresh) {
+  var el = document.getElementById('u-svinc-body'); if (!el) return;
+  var t = window._currentTourneyKey, l = (typeof currentLeagueKey !== 'undefined' && currentLeagueKey) ? currentLeagueKey : 'it';
+  el.innerHTML = _svincHtml(t, l, false);
+  if (!fresh) fbDB.ref('data/rose/' + t + '_' + l).once('value').then(function(s) {
+    window.FB_ROSE = window.FB_ROSE || {}; window.FB_ROSE[t + '_' + l] = _roseNorm(s.val()); renderSvincolati(true);
+  }).catch(function() {});
+}
 function showSection(id,el){
   document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
   var sec=document.getElementById('s-'+id);if(sec)sec.classList.add('active');
@@ -9881,6 +9932,7 @@ function showSection(id,el){
   else if(id==='multe')renderMulte();
   else if(id==='coppe'){initCoppaLogos();if(window._uQ)window._uQ.open=null;closeBracket();renderQualifUtente();}
   else if(id==='contratti') renderContratti();
+  else if(id==='svincolati') renderSvincolati();
   else if(id==='modulistica'){ renderModulistica(_modKey(window._currentTourneyKey||'slim', window.currentLeagueKey||'it'), 'slim-modulistica-body'); }
 }
 var currentTeam='SALERNITANA',currentFilter='ALL';
