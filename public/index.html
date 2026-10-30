@@ -7623,9 +7623,19 @@ function admParseRoseRows(rows,torneoKey,legaKey,status){
     var _teams=admGetTeams(torneoKey,legaKey),_map={},_miss=[],_apx=[],_cr={},_toInf=[];
     // Infermeria scritta in altri modi (es. "INFERMERIA mao")
     Object.keys(rose).forEach(function(sq){if(sq!=='_crediti'&&/^infermeria/i.test(sq)){infermeria=infermeria.concat(rose[sq]);delete rose[sq];}});
+    var _nomatch=[];
     Object.keys(rose).forEach(function(sq){if(sq==='_crediti')return;var m=_matchTeam(sq,_teams,true);
-      if(!m){ if(rose[sq].length){ _miss.push(sq+' ('+rose[sq].length+' giocatori)'); _toInf.push(sq); } return; } // blocchi vuoti: ignorati; con giocatori (es. account admin): in infermeria
+      if(!m){ if(rose[sq].length) _nomatch.push(sq); return; } // blocchi vuoti: ignorati
       _map[sq]=m.name;if(m.approx)_apx.push(sq+' → '+m.name);});
+    // Secondo giro: nome contenuto nell'altro (es. "Sporting Braga" → BRAGA, "Guimaraes" → VITORIA GUIMARAES), solo tra squadre rimaste libere e se l'abbinamento è unico
+    var _libere=_teams.filter(function(n){return !Object.keys(_map).some(function(k){return _map[k]===n;});});
+    var _wd=function(s){return _teamNorm(s).split(' ').filter(Boolean);};
+    var _cont=function(a,b){var A=_wd(a),B=_wd(b);if(!A.length||!B.length)return false;var S=A.length<=B.length?A:B,L=S===A?B:A;return S.every(function(w){return L.indexOf(w)>=0;});};
+    _nomatch.forEach(function(sq){
+      var c=_libere.filter(function(n){return _cont(sq,n);});
+      if(c.length===1&&_nomatch.filter(function(o){return _cont(o,c[0]);}).length===1){_map[sq]=c[0];_apx.push(sq+' → '+c[0]);}
+      else{ _miss.push(sq+' ('+rose[sq].length+' giocatori)'); _toInf.push(sq); } // con giocatori (es. account admin): in infermeria
+    });
     var _assenti=_teams.filter(function(n){return !Object.keys(_map).some(function(k){return _map[k]===n;});});
     var _dup=Object.keys(_map).filter(function(a,i,arr){return arr.some(function(b,j){return j<i&&_map[b]===_map[a];});});
     // Blocca solo se il file non è di questa lega (meno di metà squadre riconosciute) o se due squadre finiscono sulla stessa;
