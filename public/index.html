@@ -9951,7 +9951,7 @@ function showSection(id,el){
   else if(id==='modulistica'){ renderModulistica(_modKey(window._currentTourneyKey||'slim', window.currentLeagueKey||'it'), 'slim-modulistica-body'); }
 }
 var currentTeam='SALERNITANA',currentFilter='ALL';
-function roleBadge(r){var roles=r.split(';').map(function(x){return x.trim();}).filter(function(x){return x;});return roles.map(function(x){var c=ROLE_COLORS[x]||['rgba(107,114,128,.15)','#6b7280'];return'<span style="display:inline-block;min-width:18px;text-align:center;font-size:9px;font-weight:800;padding:2px 4px;border-radius:4px;background:'+c[1]+';color:#fff;margin:1px">'+(x==='Por'?'P':x.toUpperCase())+'</span>';}).join('');}
+function roleBadge(r){var roles=r.split(';').map(function(x){return x.trim();}).filter(function(x){return x;});return roles.map(function(x){var c=ROLE_COLORS[x]||['rgba(107,114,128,.15)','#6b7280'];return'<span style="display:inline-block;min-width:18px;text-align:center;font-size:9px;font-weight:800;padding:2px 4px;border-radius:4px;background:'+c[1]+';color:#fff;margin:1px">'+x.toUpperCase()+'</span>';}).join('');}
 function buildTeamsGrid(){var g=document.getElementById('rose-teams-grid');if(!g)return;var list=Object.keys(TEAMS_ROSE).sort().concat(['INFERMERIA']);g.innerHTML=list.map(function(n){var a=n===currentTeam;var label=n.toUpperCase();return'<div class="tbtn'+(a?' active':'')+'" onclick="selectTeam(this,\''+n+'\')" style="padding:8px 4px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;font-weight:700;flex-direction:column">'+_uLogo(n,28,true)+label+'</div>';}).join('');}
 function selectTeam(el,name){currentTeam=name;currentFilter='ALL';buildTeamsGrid();updateHeader();buildFilters();renderTable();}
 function updateHeader(){
