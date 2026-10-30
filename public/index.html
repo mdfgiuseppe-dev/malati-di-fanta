@@ -8912,7 +8912,11 @@ function admProcessGiornataXlsx(input){
       var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
       if(_xlsTipo(rows)==='calendario'){alert('⚠️ Questo sembra il file del CALENDARIO (contiene le intestazioni delle giornate).\n\nPer caricarlo usa il pulsante 📥 Importa Cal.\nCon ⚽ Importa Giornata va caricato il file dei risultati di una giornata.');input.value='';return;}
       // nomi in maiuscolo non riconosciuti: secondo giro "nome contenuto" tra le squadre non presenti nel file con il loro nome
-      (function(){var unk={},tk=[];rows.forEach(function(row){for(var ci=0;ci<row.length&&ci<=20;ci++){var c=(row[ci]||'').toString().trim();if(!_isAllCaps(c)||/TOTALE/i.test(c))continue;var r=_matchTeam(c,teams,false);if(r){if(tk.indexOf(r.name)<0)tk.push(r.name);}else unk[c]=1;}});
+      (function(){var unk={},tk=[];rows.forEach(function(row){
+          // celle candidate: tutte maiuscole, oppure squadre di una riga partita (col A e cella dopo il risultato "N-N")
+          var cand=[],sc=-1;for(var c0=1;c0<row.length;c0++){if(/^\d+-\d+$/.test((row[c0]||'').toString().trim())){sc=c0;break;}}
+          if(sc>0)cand.push(0,sc+1);
+          for(var ci=0;ci<row.length&&ci<=20;ci++){var c=(row[ci]||'').toString().trim();if(!c||/TOTALE/i.test(c)||(!_isAllCaps(c)&&cand.indexOf(ci)<0))continue;var u=c.toUpperCase();var r=_matchTeam(c,teams,cand.indexOf(ci)>=0);if(r){if(tk.indexOf(r.name)<0)tk.push(r.name);}else unk[u]=1;}});
         _cmG=_matchTeamsContain(Object.keys(unk),teams,tk);
         // poi nomi simili (es. ESTRELLA → ESTRELA), solo tra le squadre ancora libere e se l'abbinamento è unico
         var used=tk.concat(Object.keys(_cmG).map(function(k){return _cmG[k];})),free=teams.filter(function(n){return used.indexOf(n)<0;}),fz={};
