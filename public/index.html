@@ -1767,14 +1767,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
               <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Colore Card</div>
               <input id="wz-color" type="color" value="#3b82f6" style="width:100%;height:40px;padding:4px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;cursor:pointer">
             </div>
-          <div style="grid-column:1/-1">
-            <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">URL Logo Torneo (opzionale)</div>
-            <input id="wz-logo" type="text" placeholder="https://..." style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">
-          </div>
-          <div style="grid-column:1/-1">
-            <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">URL Trofeo (opzionale)</div>
-            <input id="wz-trofeo" type="text" placeholder="https://..." style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">
-          </div>
           </div>
           <div style="display:flex;justify-content:flex-end">
             <button onclick="admWizardStep(2)" style="padding:8px 20px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">Avanti →</button>
@@ -6469,8 +6461,6 @@ function admWizardStep(n) {
     _wzData.formato = document.getElementById('wz-formato').value;
     _wzData.giornate = parseInt(document.getElementById('wz-giornate').value)||34;
     _wzData.nSquadre = parseInt(document.getElementById('wz-squadre').value)||10;
-    _wzData.trofeoUrl = (document.getElementById('wz-trofeo')||{}).value||'';
-    _wzData.logoUrl = ((document.getElementById('wz-logo')||{}).value||'').trim();
     _wzData.color = (document.getElementById('wz-color')||{}).value||'#3b82f6';
     if (!/^[a-z0-9_-]+$/.test(_wzData.key)) { alert('Chiave non valida: usa solo lettere minuscole, numeri, - e _'); return; }
     if (TORNEI_METADATA[_wzData.key] || ADMIN_TORNEI.some(function(t){ return t.key === _wzData.key; })) { alert('Esiste già un torneo con chiave "'+_wzData.key+'"'); return; }
@@ -6570,17 +6560,12 @@ function admWizardConfirm() {
   if (!k || !label) { alert('Compila chiave e nome torneo'); return; }
   if (TORNEI_METADATA[k]) { alert('Esiste già un torneo con chiave "'+k+'"'); return; }
   var meta = { label: label, formato: _wzData.formato, color: _wzData.color, giornate: _wzData.giornate, nSquadre: _wzData.nSquadre };
-  var logo = _wzData.logoUrl ? _normalizeImgUrl(_wzData.logoUrl) : '';
-  // trofeo del torneo: stessa cartella dei trofei di lega (images/trofei), chiave = torneo; vale per le leghe senza trofeo proprio
-  var trofeo = String(_wzData.trofeoUrl || '').trim() ? _normalizeImgUrl(String(_wzData.trofeoUrl).trim()) : '';
   fbDB.ref('data/tornei_meta/' + k).set(meta).then(function() {
-    return Promise.all([logo ? fbDB.ref('data/images/loghi/tornei/' + k).set(logo) : null, trofeo ? fbDB.ref('data/images/trofei/' + k).set(trofeo) : null]);
-  }).then(function() {
     TORNEI_METADATA[k] = meta;
     ADMIN_TORNEI.push({ key: k, label: label, formato: meta.formato, color: meta.color, leghe: [] });
     _wzData = { key:'', label:'', formato:'classic', giornate:34, nSquadre:10, color:'#3b82f6', leghe:[], squadrePerLega:{} };
     admWizardStep(1);
-    ['wz-key','wz-label','wz-logo','wz-trofeo'].forEach(function(id){ var e = document.getElementById(id); if (e) e.value = ''; });
+    ['wz-key','wz-label'].forEach(function(id){ var e = document.getElementById(id); if (e) e.value = ''; });
     var wc = document.getElementById('wz-color'); if (wc) wc.value = '#3b82f6';
     admRenderTornei();
     admReopenTorneo(ADMIN_TORNEI.findIndex(function(t){ return t.key === k; }));
