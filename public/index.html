@@ -2294,7 +2294,7 @@ function renderModulistica(torneoKey, containerId) {
   el.innerHTML = data.moduli.map(function(m) {
     var lock = m.chiuso ? 'Al momento chiuso' : _gLock(m);
     // admin (anche in "visualizza come utente"): link sempre aperto per poterlo provare, con l'avviso dello stato per gli utenti
-    var admNote = (lock && (_cu.ruolo === 'admin' || window._adminPreviewMode)) ? '<div style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:2px 8px;border-radius:20px;background:rgba(245,158,11,.12);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#f59e0b">🔒 Per gli utenti: '+lock+' · aperto solo per admin</div><br>' : '';
+    var admNote = (lock && (_cu.ruolo === 'admin' || window._adminPreviewMode)) ? '<div style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:2px 8px;border-radius:20px;background:rgba(245,158,11,.12);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#f59e0b">🔒 '+lock+'</div><br>' : '';
     if (admNote) lock = '';
     if (lock) {
       return '<div style="background:var(--card);border:2px dashed var(--border);border-radius:16px;padding:20px;display:flex;align-items:flex-start;gap:14px;opacity:.7">'
