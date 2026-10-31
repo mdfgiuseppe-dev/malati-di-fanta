@@ -2141,6 +2141,8 @@ function _roleGroups(t){ return _formato(t)==='classic'?ROLE_GROUPS_CLASSIC:ROLE
 function _formatoLabel(t){ return _formato(t)==='classic'?'Classic':'Mantra'; }
 // Link PDF di regolamento e albo d'oro: su Firebase in tornei_meta/{torneo}/pdf_regolamento e pdf_albo (inseriti dall'admin)
 // Link Google Drive (condivisione, view, open?id=...) → link di anteprima incorporabile
+// Coppa standard (quando non è inserito nessun trofeo, né dal wizard né dalla maschera lega)
+var _TROFEO_STD = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset=".5" stop-color="#f59e0b"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs><path d="M18 8h28v14a14 14 0 0 1-28 0z" fill="url(#g)"/><path d="M18 12H9a9 9 0 0 0 10 12M46 12h9a9 9 0 0 1-10 12" fill="none" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/><rect x="29" y="35" width="6" height="11" fill="url(#g)"/><path d="M22 46h20l3 8H19z" fill="url(#g)"/><rect x="16" y="54" width="32" height="5" rx="1.5" fill="#92400e"/><path d="M25 12v10a7 7 0 0 0 4 6" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="2.5" stroke-linecap="round"/></svg>');
 function _drivePreview(u) {
   u = String(u || '').trim(); if (!u) return '';
   var m = u.match(/\/file\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/);
@@ -4954,15 +4956,13 @@ function _updateLegaDashboard(leagueKey) {
   if (trophyEl && _admTK && _realLK) {
     trophyEl.src = '';
     var fbPath = 'data/images/trofei/'+_admTK+'_'+_realLK;
-    fbDB.ref(fbPath).once('value', function(snapshot) {
-      var fbTrophy = snapshot.val();
+    // trofeo della lega, altrimenti quello del torneo (inserito dal wizard)
+    Promise.all([fbDB.ref(fbPath).once('value'), fbDB.ref('data/images/trofei/'+_admTK).once('value')]).then(function(_tr) {
+      var fbTrophy = _tr[0].val() || _tr[1].val();
       if (fbTrophy) {
         fbTrophy = _normalizeImgUrl(fbTrophy);
         trophyEl.src = fbTrophy;
-      } else if (typeof TROPHY_MAP !== 'undefined') {
-        var trophyName = trophyMap[_realLK];
-        if (trophyName && TROPHY_MAP[trophyName]) trophyEl.src = TROPHY_MAP[trophyName];
-      }
+      } else trophyEl.src = _TROFEO_STD; // nessun trofeo né di lega né di torneo: coppa standard
     });
   }
   // Titolo dashboard
@@ -6571,10 +6571,12 @@ function admWizardConfirm() {
   var k = _wzData.key, label = String(_wzData.label || '').toUpperCase();
   if (!k || !label) { alert('Compila chiave e nome torneo'); return; }
   if (TORNEI_METADATA[k]) { alert('Esiste già un torneo con chiave "'+k+'"'); return; }
-  var meta = { label: label, formato: _wzData.formato, color: _wzData.color, giornate: _wzData.giornate, nSquadre: _wzData.nSquadre, trofeo: _wzData.trofeoUrl || '' };
+  var meta = { label: label, formato: _wzData.formato, color: _wzData.color, giornate: _wzData.giornate, nSquadre: _wzData.nSquadre };
   var logo = _wzData.logoUrl ? _normalizeImgUrl(_wzData.logoUrl) : '';
+  // trofeo del torneo: stessa cartella dei trofei di lega (images/trofei), chiave = torneo; vale per le leghe senza trofeo proprio
+  var trofeo = String(_wzData.trofeoUrl || '').trim() ? _normalizeImgUrl(String(_wzData.trofeoUrl).trim()) : '';
   fbDB.ref('data/tornei_meta/' + k).set(meta).then(function() {
-    return logo ? fbDB.ref('data/images/loghi/tornei/' + k).set(logo) : null;
+    return Promise.all([logo ? fbDB.ref('data/images/loghi/tornei/' + k).set(logo) : null, trofeo ? fbDB.ref('data/images/trofei/' + k).set(trofeo) : null]);
   }).then(function() {
     TORNEI_METADATA[k] = meta;
     ADMIN_TORNEI.push({ key: k, label: label, formato: meta.formato, color: meta.color, leghe: [] });
@@ -6803,7 +6805,7 @@ function admRemoveTorneo(ti) {
     ops.push(fbDB.ref('data/images/loghi/leghe/'+fk).remove());
     ['FB_SQUADRE','FB_CALENDARIO','FB_SCHEDULE','FB_PUNTEGGI','FB_TOTALI','FB_STADIO','FB_GETTONI','FB_ALLENATORI','FB_ROSE','FB_CONTRATTI','FB_INFERMERIA','FB_MULTE'].forEach(function(v){ if (window[v]) delete window[v][fk]; });
   });
-  ['tornei','tornei_meta','tornei_config','qualificazioni','images/loghi/squadre','images/loghi/tornei','images/loghi/qualificazioni'].forEach(function(n){ ops.push(fbDB.ref('data/'+n+'/'+tk).remove()); });
+  ['tornei','tornei_meta','tornei_config','qualificazioni','images/loghi/squadre','images/loghi/tornei','images/loghi/qualificazioni','images/trofei'].forEach(function(n){ ops.push(fbDB.ref('data/'+n+'/'+tk).remove()); });
   Promise.all(ops).then(function() {
     delete TORNEI_METADATA[tk];
     ADMIN_TORNEI.splice(ti, 1);
