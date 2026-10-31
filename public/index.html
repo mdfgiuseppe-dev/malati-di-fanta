@@ -2135,8 +2135,13 @@ function _formato(t){ var m=(typeof _torneoMeta==='function')?_torneoMeta(t||win
 function _roles(t){ return _formato(t)==='classic'?ALL_ROLES_CLASSIC:ALL_ROLES; }
 function _roleGroups(t){ return _formato(t)==='classic'?ROLE_GROUPS_CLASSIC:ROLE_GROUPS; }
 function _formatoLabel(t){ return _formato(t)==='classic'?'Classic':'Mantra'; }
-var PDF_MAP_REG={"ilc": "https://drive.google.com/file/d/1ysbwce7AvJnmANjKiB-1K1RuVINZiyyi/preview", "ilm": "https://drive.google.com/file/d/1p3sAwyaZL4wS_4seHsFeKRASKNZ3Z44U/preview", "slim": "https://drive.google.com/file/d/1JZngqv7dBpm6paCfH94NB79Mq4rVpsvy/preview", "tdm": "https://drive.google.com/file/d/1Gel57VaxoUl2VndxJSSHbKEVkrkJtOMq/preview", "tsm": "https://drive.google.com/file/d/1rIaxQoYkfslCeKMkHj6Ty2USu_A-KkkT/preview"};
-var ALBO_PDF_MAP={"ilc": "https://drive.google.com/file/d/1t7hoZHxDPk3Uc-Uhc2AqWTvir1Se2yvF/preview", "ilm": "https://drive.google.com/file/d/1GssqxUF3aVpt0iKHTjSRe9jMUsrCgiui/preview", "slim": "https://drive.google.com/file/d/1icb0q5h-pfzz7y8tMOBVqp_vYjkEOzVj/preview", "tsm": "https://drive.google.com/file/d/1mGVdIjqYq8-g1s5MIeWc31b3W_Jb3fjQ/preview", "tdm": "https://drive.google.com/file/d/1IwzQjAUxm9AsxZcCCWDG5qlB4gut-soA/preview"};
+// Link PDF di regolamento e albo d'oro: su Firebase in tornei_meta/{torneo}/pdf_regolamento e pdf_albo (inseriti dall'admin)
+// Link Google Drive (condivisione, view, open?id=...) → link di anteprima incorporabile
+function _drivePreview(u) {
+  u = String(u || '').trim(); if (!u) return '';
+  var m = u.match(/\/file\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/);
+  return m ? 'https://drive.google.com/file/d/' + m[1] + '/preview' : u;
+}
 var SLIM_CONFIG={"n_leghe": 8, "n_club": 80, "leghe": ["Italia", "Inghilterra", "Germania", "Spagna", "Francia", "Portogallo", "Olanda", "Turchia"]};
 var COPPA_TROPHIES={"cl": "", "el": "", "conf": "", "sc": ""};
 var COPPA_HUB_LOGOS={"cl": "", "el": "", "conf": "", "sc": ""};
@@ -6389,6 +6394,13 @@ function admUpdateTorneoColor(ti, color) {
   }, 50);
 }
 
+function admSetTorneoPdf(tk, campo, inp) {
+  var u = _drivePreview(inp.value); inp.value = u;
+  TORNEI_METADATA[tk] = TORNEI_METADATA[tk] || {}; TORNEI_METADATA[tk][campo] = u || null;
+  fbDB.ref('data/tornei_meta/' + tk + '/' + campo).set(u || null).then(function() {
+    inp.style.borderColor = '#10b981'; setTimeout(function() { inp.style.borderColor = ''; }, 1500);
+  }).catch(function(e) { alert('Errore salvataggio: ' + e.message); });
+}
 function admSelectTorneoDetail(val) {
   var det = document.getElementById('adm-tornei-detail');
   if (!det) return;
@@ -6424,6 +6436,10 @@ function admSelectTorneoDetail(val) {
     +'<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg2);border-radius:6px;margin-bottom:10px;font-size:12px;font-weight:700;cursor:pointer">'
     +'<input type="checkbox"'+(_torneoFeat(t.key,'contratti')?' checked':'')+' onchange="admSetTorneoFeat(\''+t.key+'\',\'contratti\',this.checked)" style="width:16px;height:16px;cursor:pointer">'
     +'📝 Contratti abilitati<span style="font-weight:400;font-size:10px;color:var(--text3);margin-left:auto">scadenze assegnate all\'import delle rose</span></label>'
+    +[['pdf_regolamento','📋 Link Regolamento (PDF)'],['pdf_albo','🏆 Link Albo d\'Oro (PDF)']].map(function(f){
+      return '<div style="padding:8px 10px;background:var(--bg2);border-radius:6px;margin-bottom:10px"><div style="font-size:12px;font-weight:700;margin-bottom:5px">'+f[1]+'<span style="font-weight:400;font-size:10px;color:var(--text3);margin-left:6px">link di condivisione Google Drive</span></div>'
+        +'<input type="text" value="'+_regEsc(_torneoMeta(t.key)[f[0]]||'')+'" placeholder="https://drive.google.com/file/d/…" onchange="admSetTorneoPdf(\''+t.key+'\',\''+f[0]+'\',this)" style="width:100%;box-sizing:border-box;padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none"></div>';
+    }).join('')
     +'<div style="margin-bottom:10px">'+leghe+'</div>'
     +'<div style="display:flex;gap:8px">'
     +'<input id="adm-new-lega-label-'+ti+'" type="text" placeholder="Nome lega (es. Francia)" style="flex:1;padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none">'
@@ -10152,11 +10168,11 @@ function openRegModal(key,title){
   if(!modal)return;
   document.getElementById('reg-modal-title').textContent='Regolamento '+(title||key);
   document.getElementById('reg-modal-sub').textContent=title||key;
+  var url=_torneoMeta(key).pdf_regolamento;
+  if(!url){alert('📋 Regolamento non ancora caricato.');return;}
   modal.style.display='flex';
   document.body.style.overflow='hidden';
   var iframe=document.getElementById('reg-iframe');
-  var url=PDF_MAP_REG[key];
-  if(!url){alert('Regolamento non disponibile');return;}
   iframe.src=url;
   // Pulsante download visibile per regolamenti
   var btn=document.getElementById('reg-dl-btn');
@@ -10171,29 +10187,18 @@ function closeRegModal(){var modal=document.getElementById('reg-modal');var ifra
 function openAlboPdf(key, title) {
   var modal = document.getElementById('reg-modal');
   if (!modal) return;
-  var url = ALBO_PDF_MAP[key];
-  if (!url) {
-    openAlboTab(key);
-    return;
-  }
+  var url = _torneoMeta(key).pdf_albo;
+  if (!url) { alert('🏆 Albo d\'Oro non ancora caricato.'); return; }
   document.getElementById('reg-modal-title').textContent = 'Albo d\'Oro — ' + (title || key);
   document.getElementById('reg-modal-sub').textContent = title || key;
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
   var iframe = document.getElementById('reg-iframe');
   iframe.src = url;
-  // Nascondi pulsante download per albi d'oro
   var btn = document.getElementById('reg-dl-btn');
-  if (btn) btn.style.display = 'none';
+  if (btn) { btn.style.display = 'flex'; btn.href = url.replace('/preview', '/view'); btn.target = '_blank'; btn.removeAttribute('download'); }
 }
-function openAlboBtn(key, title) {
-  // Prima mostra il PDF se disponibile, altrimenti il modale interattivo
-  if (ALBO_PDF_MAP && ALBO_PDF_MAP[key]) {
-    openAlboPdf(key, title);
-  } else {
-    openAlboTab(key);
-  }
-}
+function openAlboBtn(key, title) { openAlboPdf(key, title); }
 function closeAlboModal(){var modal=document.getElementById('albo-modal');if(modal)modal.style.display='none';document.body.style.overflow='';document.querySelectorAll('.albo-btn').forEach(function(b){b.style.display='block';});}
 function openAlboTab(key){document.querySelectorAll('.albo-btn').forEach(function(b){b.style.display=b.getAttribute('data-key')===key?'block':'none';});openAlboModal();setTimeout(function(){var btn=document.querySelector('.albo-btn[data-key="'+key+'"]');if(btn)alboTab(btn,key);},50);}
 function alboTab(el,key){var dati=ALBO_DATA[key];if(!dati)return;var ac=document.getElementById('albo-content');if(!ac)return;if(key==='slim'){var html='<div>';html+='<div style="font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Leghe Nazionali</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">';SLIM_GROUPS.nazioni.forEach(function(n){html+='<div class="slim-nation-btn" onclick="showSlimAlbo(this,\''+n.key+'\')" style="background:transparent;border:none;border-radius:10px;padding:10px 6px;cursor:pointer;text-align:center;transition:all .2s"><img src="'+n.logo+'" style="width:36px;height:36px;object-fit:contain;display:block;margin:0 auto 6px"><div style="font-size:9px;font-weight:700;color:var(--text2)">'+n.label+'</div></div>';});html+='</div><div style="font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Coppe Europee</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">';SLIM_GROUPS.coppe.forEach(function(n){html+='<div class="slim-nation-btn" onclick="showSlimAlbo(this,\''+n.key+'\')" style="background:transparent;border:none;border-radius:10px;padding:10px 6px;cursor:pointer;text-align:center;transition:all .2s"><img src="'+n.logo+'" style="width:36px;height:36px;object-fit:contain;display:block;margin:0 auto 6px"><div style="font-size:9px;font-weight:700;color:var(--text2)">'+n.label+'</div></div>';});html+='</div><div id="slim-albo-panel" style="display:none"></div></div>';ac.innerHTML=html;}else if(key==='tdm'){renderTdmAlbo(ac);}else{var content='';dati.sezioni.forEach(function(s){var rows=s.s.map(function(r){var win=r[1]!=='--';return'<tr><td style="padding:7px 12px;font-size:11px;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;width:80px;font-family:monospace">'+r[0]+'</td><td style="padding:7px 12px;font-size:12px;font-weight:'+(win?700:400)+';color:'+(win?dati.colore:'var(--text3)')+';border-bottom:1px solid var(--border)">'+(win?'<span style="margin-right:6px">&#x1f3c6;</span>':'<span style="margin-right:6px;opacity:.2">--</span>')+r[1]+'</td></tr>';}).join('');var trophy=TROPHY_MAP[s.t]?'<img src="'+TROPHY_MAP[s.t]+'" style="width:28px;height:28px;object-fit:contain;margin-right:8px;vertical-align:middle">':'';content+='<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px"><div style="padding:9px 12px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--text2);display:flex;align-items:center">'+trophy+s.t+'</div><table style="width:100%;min-width:320px;border-collapse:collapse;table-layout:auto">'+rows+'</table></div>';});ac.innerHTML=content;}document.querySelectorAll('.albo-btn').forEach(function(b){b.style.background='var(--bg3)';b.style.color='var(--text2)';});if(el){el.style.background=dati.colore;el.style.color='#fff';}}
