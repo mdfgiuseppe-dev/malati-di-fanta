@@ -4122,7 +4122,15 @@ function admModRenderBody() {
 function admUpdateModuloImgEl(el) {
   var key = el.dataset.key, mi = +el.dataset.mi;
   if (MODULISTICA_DATA[key] && MODULISTICA_DATA[key].moduli[mi]) MODULISTICA_DATA[key].moduli[mi].immagine = _logoImgUrl(el.value);
+  _admModSaveNow(key, '🖼 Immagine salvata');
   admModRenderBody();
+}
+// Salva subito la scheda moduli del torneo su Firebase (immagine, link, gettone: come il toggle aperto/chiuso)
+function _admModSaveNow(key, txt) {
+  if (!key || !MODULISTICA_DATA[key]) return;
+  fbDB.ref('data/form/' + key).set(JSON.stringify(MODULISTICA_DATA[key])).then(function() {
+    _admInfMsg('✅ ' + txt, '#10b981');
+  }).catch(function(e) { alert('Errore salvataggio: ' + e.message); });
 }
 // Modulo disponibile solo con gettone: gid = identificativo stabile del gettone (non cambia se rinomini il modulo)
 function _gettoneId(titolo) {
@@ -4143,10 +4151,12 @@ function admUpdateModuloGettoneEl(el) {
   if (!m) return;
   m.gettone = !!el.checked;
   if (m.gettone && !m.gid) m.gid = _gettoneId(m.titolo);
+  _admModSaveNow(el.dataset.key, m.gettone ? '🎫 Gettone richiesto' : '🎫 Gettone non richiesto');
   admModRenderBody();
 }
 function admUpdateModuloLinkEl(el) {
-  admUpdateModuloLink(el.dataset.key, +el.dataset.mi, el.value);
+  admUpdateModuloLink(el.dataset.key, +el.dataset.mi, el.value.trim() || '#');
+  _admModSaveNow(el.dataset.key, '🔗 Link salvato');
 }
 function admUpdateModuloLink(key, mi, val) {
   if (MODULISTICA_DATA[key]&&MODULISTICA_DATA[key].moduli[mi]) MODULISTICA_DATA[key].moduli[mi].link=val;
