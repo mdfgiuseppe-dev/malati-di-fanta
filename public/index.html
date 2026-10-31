@@ -6389,6 +6389,15 @@ function admUpdateTorneoColor(ti, color) {
   }, 50);
 }
 
+function admSetTorneoNum(tk, campo, inp, min, max) {
+  var n = parseInt(inp.value, 10), prev = +_torneoMeta(tk)[campo] || '';
+  if (isNaN(n) || n < min || n > max) { alert('Valore non valido (da ' + min + ' a ' + max + ').'); inp.value = prev; return; }
+  TORNEI_METADATA[tk] = TORNEI_METADATA[tk] || {}; TORNEI_METADATA[tk][campo] = n;
+  fbDB.ref('data/tornei_meta/' + tk + '/' + campo).set(n).then(function() {
+    inp.style.borderColor = '#10b981'; setTimeout(function() { inp.style.borderColor = ''; }, 1500);
+    if (typeof updateDashboardCounters === 'function') updateDashboardCounters();
+  }).catch(function(e) { alert('Errore salvataggio: ' + e.message); });
+}
 function admSetTorneoPdf(tk, campo, inp) {
   var u = _drivePreview(inp.value); inp.value = u;
   TORNEI_METADATA[tk] = TORNEI_METADATA[tk] || {}; TORNEI_METADATA[tk][campo] = u || null;
@@ -6431,6 +6440,11 @@ function admSelectTorneoDetail(val) {
     +'<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg2);border-radius:6px;margin-bottom:10px;font-size:12px;font-weight:700;cursor:pointer">'
     +'<input type="checkbox"'+(_torneoFeat(t.key,'contratti')?' checked':'')+' onchange="admSetTorneoFeat(\''+t.key+'\',\'contratti\',this.checked)" style="width:16px;height:16px;cursor:pointer">'
     +'📝 Contratti abilitati<span style="font-weight:400;font-size:10px;color:var(--text3);margin-left:auto">scadenze assegnate all\'import delle rose</span></label>'
+    +'<div style="display:flex;gap:8px;margin-bottom:10px">'+[['nSquadre','👥 Squadre per lega',4,40],['giornate','📅 Giornate',1,80]].map(function(f){
+      return '<div style="flex:1;padding:8px 10px;background:var(--bg2);border-radius:6px"><div style="font-size:12px;font-weight:700;margin-bottom:5px">'+f[1]+'</div>'
+        +'<input type="number" min="'+f[2]+'" max="'+f[3]+'" value="'+(+_torneoMeta(t.key)[f[0]]||'')+'" onchange="admSetTorneoNum(\''+t.key+'\',\''+f[0]+'\',this,'+f[2]+','+f[3]+')" style="width:100%;box-sizing:border-box;padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;font-weight:700;outline:none"></div>';
+    }).join('')+'</div>'
+    +'<div style="font-size:10px;color:var(--text3);margin:-4px 0 10px 2px">Valori di partenza per le nuove leghe. Le squadre di una lega esistente si aggiungono o tolgono da Cambio Squadre; le giornate reali vengono dal calendario importato.</div>'
     +[['pdf_regolamento','📋 Link Regolamento (PDF)'],['pdf_albo','🏆 Link Albo d\'Oro (PDF)']].map(function(f){
       return '<div style="padding:8px 10px;background:var(--bg2);border-radius:6px;margin-bottom:10px"><div style="font-size:12px;font-weight:700;margin-bottom:5px">'+f[1]+'<span style="font-weight:400;font-size:10px;color:var(--text3);margin-left:6px">link di condivisione Google Drive</span></div>'
         +'<input type="text" value="'+_regEsc(_torneoMeta(t.key)[f[0]]||'')+'" placeholder="https://drive.google.com/file/d/…" onchange="admSetTorneoPdf(\''+t.key+'\',\''+f[0]+'\',this)" style="width:100%;box-sizing:border-box;padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none"></div>';
@@ -8166,6 +8180,7 @@ function admCsLoadSquadre() {
       +'<input type="text" id="adm-cs-new-'+ki+'" placeholder="'+team+'" style="width:100%;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-weight:700;outline:none"></div>'
       +'<div style="flex:1;min-width:0"><div style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:3px">URL Logo</div>'
       +'<input type="text" id="adm-cs-logo-'+ki+'" placeholder="'+(logoUrl||'https://... (URL immagine logo)')+'" style="width:100%;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:10px;outline:none"></div>'
+      +'<button data-team="'+_regEsc(team)+'" onclick="admCsRemoveTeam(this)" title="Rimuovi squadra dalla lega" style="flex-shrink:0;align-self:flex-end;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#ef4444;border-radius:6px;padding:5px 8px;font-size:12px;cursor:pointer">🗑</button>'
       +'</div>';
   });
   var infLogo=getTeamLogo(torneoKey,legaKey,'INFERMERIA');
@@ -8176,6 +8191,10 @@ function admCsLoadSquadre() {
     +'<input type="text" id="adm-cs-logo-INFERMERIA" placeholder="'+(infLogo||'https://... (URL immagine logo)')+'" style="width:100%;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:10px;outline:none"></div>'
     +'</div>';
   h+='</div></div>'
+    +'<div class="card" style="padding:12px 14px;margin-bottom:16px">'
+    +'<div style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--text2);margin-bottom:8px">➕ Aggiungi squadra <span style="font-weight:400;text-transform:none;color:var(--text3)">· ora '+teams.length+' squadre</span></div>'
+    +'<div style="display:flex;gap:8px"><input type="text" id="adm-cs-add-name" placeholder="Nome nuova squadra" style="flex:1;min-width:0;padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-weight:700;outline:none">'
+    +'<button onclick="admCsAddTeam()" style="padding:6px 14px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">➕ Aggiungi</button></div></div>'
     +'<div style="display:flex;gap:10px">'
     +'<button onclick="admCsPreview()" style="padding:8px 20px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#f59e0b;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">👁 Anteprima Modifiche</button>'
     +'</div>'
@@ -8316,24 +8335,121 @@ function admCsConfirm() {
       return fbDB.ref('data/images/loghi/squadre/'+torneoKey+'/'+legaKey+'/'+k).set(c.newLogo);
     }));
   }).then(function(){
-    // dati in memoria riletti da Firebase
-    return Promise.all([fbDB.ref('data/tornei/'+torneoKey+'/'+legaKey).once('value'),fbDB.ref('data/images/loghi/squadre/'+torneoKey+'/'+legaKey).once('value')]).then(function(r){
-      var v=r[0].val()||{},sq=v.squadre||{};
-      window.FB_SQUADRE[torneoKey+'_'+legaKey]=Object.keys(sq).map(function(k){return String(typeof sq[k]==='string'?sq[k]:k).toUpperCase();}).sort();
-      window.FB_ALLENATORI=window.FB_ALLENATORI||{};window.FB_ALLENATORI[torneoKey+'_'+legaKey]=v.allenatori||{};
-      window.FB_LOGHI_SQUADRE[torneoKey][legaKey]=r[1].val()||{};
-      var fk=torneoKey+'_'+legaKey;
-      ['FB_ROSE','FB_CONTRATTI','FB_INFERMERIA','FB_GETTONI','FB_MULTE','FB_CALENDARIO','FB_SCHEDULE','FB_PUNTEGGI','FB_TOTALI','FB_STADIO'].forEach(function(n){ if(window[n]) delete window[n][fk]; });
-      return Promise.all([['rose','FB_ROSE',_roseNorm],['contratti','FB_CONTRATTI',_contrNorm],['infermeria','FB_INFERMERIA',_infNorm],['multe','FB_MULTE',_multeNorm],['gettoni','FB_GETTONI',null],['calendario','FB_CALENDARIO','json'],['calendario_schedule','FB_SCHEDULE','json'],['punteggi','FB_PUNTEGGI','json'],['totali','FB_TOTALI','json'],['stadio','FB_STADIO','json']].map(function(x){
-        return fbDB.ref('data/'+x[0]+'/'+fk).once('value').then(function(s){ var val=s.val(); if(val===null) return; window[x[1]]=window[x[1]]||{};
-          if(typeof x[2]==='function') window[x[1]][fk]=x[2](val); else if(x[2]==='json') window[x[1]][fk]=typeof val==='string'?JSON.parse(val):val; else window[x[1]][fk]=val; });
-      }));
-    });
+    return _admCsReload(torneoKey,legaKey);
   }).then(function(){
     el.innerHTML='<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:14px;color:#10b981;font-size:13px;font-weight:700">✅ Cambio squadre completato e salvato su Firebase!</div>';
     if(typeof updateDashboardCounters==='function') updateDashboardCounters();
     setTimeout(admCsLoadSquadre,800);
   }).catch(function(e){ el.innerHTML='<div style="color:#ef4444;font-size:13px;font-weight:700;padding:14px">❌ Errore: '+e.message+'</div>'; });
+}
+// Dati della lega in memoria riletti da Firebase (dopo rinomina, aggiunta o rimozione di squadre)
+function _admCsReload(torneoKey, legaKey) {
+  return Promise.all([fbDB.ref('data/tornei/'+torneoKey+'/'+legaKey).once('value'),fbDB.ref('data/images/loghi/squadre/'+torneoKey+'/'+legaKey).once('value')]).then(function(r){
+    var v=r[0].val()||{},sq=v.squadre||{};
+    window.FB_SQUADRE=window.FB_SQUADRE||{};
+    window.FB_SQUADRE[torneoKey+'_'+legaKey]=Object.keys(sq).map(function(k){return String(typeof sq[k]==='string'?sq[k]:k).toUpperCase();}).sort();
+    window.FB_ALLENATORI=window.FB_ALLENATORI||{};window.FB_ALLENATORI[torneoKey+'_'+legaKey]=v.allenatori||{};
+    window.FB_LOGHI_SQUADRE=window.FB_LOGHI_SQUADRE||{};window.FB_LOGHI_SQUADRE[torneoKey]=window.FB_LOGHI_SQUADRE[torneoKey]||{};
+    window.FB_LOGHI_SQUADRE[torneoKey][legaKey]=r[1].val()||{};
+    var fk=torneoKey+'_'+legaKey;
+    ['FB_ROSE','FB_CONTRATTI','FB_INFERMERIA','FB_GETTONI','FB_MULTE','FB_CALENDARIO','FB_SCHEDULE','FB_PUNTEGGI','FB_TOTALI','FB_STADIO'].forEach(function(n){ if(window[n]) delete window[n][fk]; });
+    return Promise.all([['rose','FB_ROSE',_roseNorm],['contratti','FB_CONTRATTI',_contrNorm],['infermeria','FB_INFERMERIA',_infNorm],['multe','FB_MULTE',_multeNorm],['gettoni','FB_GETTONI',null],['calendario','FB_CALENDARIO','json'],['calendario_schedule','FB_SCHEDULE','json'],['punteggi','FB_PUNTEGGI','json'],['totali','FB_TOTALI','json'],['stadio','FB_STADIO','json']].map(function(x){
+      return fbDB.ref('data/'+x[0]+'/'+fk).once('value').then(function(s){ var val=s.val(); if(val===null) return; window[x[1]]=window[x[1]]||{};
+        if(typeof x[2]==='function') window[x[1]][fk]=x[2](val); else if(x[2]==='json') window[x[1]][fk]=typeof val==='string'?JSON.parse(val):val; else window[x[1]][fk]=val; });
+    }));
+  });
+}
+function _admCsMsg(ok, txt) {
+  var el=document.getElementById('adm-cs-preview'); if(!el) return;
+  el.innerHTML='<div style="'+(ok?'background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:#10b981':'background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);color:#ef4444')+';border-radius:8px;padding:14px;font-size:13px;font-weight:700;white-space:pre-line">'+txt+'</div>';
+}
+// ── Aggiungi squadra alla lega: parte vuota (niente giocatori, punti, crediti, stadio) ──
+function admCsAddTeam() {
+  var t=document.getElementById('adm-cs-torneo').value, l=document.getElementById('adm-cs-lega').value;
+  var inp=document.getElementById('adm-cs-add-name'), N=String((inp||{}).value||'').trim().toUpperCase();
+  if(!t||!l) return;
+  if(!N){alert('Scrivi il nome della nuova squadra');return;}
+  if(N==='INFERMERIA'||/^INFERMERIA/.test(N)){alert('"INFERMERIA" è riservato.');return;}
+  var teams=admGetTeams(t,l);
+  if(teams.some(function(x){return x.toUpperCase()===N||_fbSafeKey(x)===_fbSafeKey(N);})){alert('Nella lega esiste già la squadra '+N+'.');return;}
+  if(!confirm('Aggiungere la squadra '+N+' alla lega?\n\nLa lega passerà da '+teams.length+' a '+(teams.length+1)+' squadre.\nRicorda di reimportare il calendario con il nuovo numero di squadre.')) return;
+  _admCsMsg(true,'⏳ Aggiunta in corso…');
+  fbDB.ref('data/tornei/'+t+'/'+l+'/squadre/'+_fbSafeKey(N)).set(N).then(function(){ return _admCsReload(t,l); }).then(function(){
+    if(typeof updateDashboardCounters==='function') updateDashboardCounters();
+    admCsLoadSquadre(); _admCsMsg(true,'✅ Squadra '+N+' aggiunta. Ora la lega ha '+admGetTeams(t,l).length+' squadre.');
+  }).catch(function(e){ _admCsMsg(false,'❌ Errore: '+e.message); });
+}
+// ── Rimuovi squadra dalla lega: solo se la stagione non ha risultati; i calciatori vanno negli svincolati ──
+function admRemoveTeamFull(t, l, name) {
+  var O = String(name).toUpperCase(), fk = t + '_' + l, sO = _fbSafeKey(O), oggi = _itDate(new Date().toISOString());
+  var P = {
+    squadre: 'data/tornei/' + t + '/' + l + '/squadre', allen: 'data/tornei/' + t + '/' + l + '/allenatori',
+    rose: 'data/rose/' + fk, contr: 'data/contratti/' + fk, inf: 'data/infermeria/' + fk, gett: 'data/gettoni/' + fk, multe: 'data/multe/' + fk,
+    cal: 'data/calendario/' + fk, sch: 'data/calendario_schedule/' + fk, pun: 'data/punteggi/' + fk, tot: 'data/totali/' + fk, sta: 'data/stadio/' + fk,
+    logo: 'data/images/loghi/squadre/' + t + '/' + l
+  };
+  var keys = Object.keys(P);
+  return Promise.all(keys.map(function(k) { return fbDB.ref(P[k]).once('value'); })).then(function(snaps) {
+    var D = {}, W = [], info = { svinc: 0, contratti: 0, calendario: false };
+    keys.forEach(function(k, i) { D[k] = _rnVal(snaps[i].val()); });
+    // stagione con risultati: rimozione bloccata
+    var conRis = ['cal', 'pun', 'tot'].some(function(k) { var X = D[k].v; return X && typeof X === 'object' && Object.keys(X).some(function(gg) { var G = X[gg]; return G && typeof G === 'object' && Object.keys(G).some(function(s) { var v = G[s]; return v !== '' && v !== null && v !== undefined && v !== 0; }); }); });
+    if (conRis) { var e = new Error('La stagione in corso ha già dei risultati: la squadra si può rimuovere solo a inizio stagione (calendario senza risultati).'); e.bloccato = true; throw e; }
+    function put(k, v) { W.push(fbDB.ref(P[k]).set(v === null || v === undefined ? null : (D[k].s ? JSON.stringify(v) : v))); }
+    function delKey(obj) { var out = {}; Object.keys(obj || {}).forEach(function(k) { if (k.toUpperCase() !== O) out[k] = obj[k]; }); return out; }
+    // squadre della lega
+    var sq = D.squadre.v || {}, nsq = {};
+    Object.keys(sq).forEach(function(k) { if (String(typeof sq[k] === 'string' ? sq[k] : k).toUpperCase() !== O) nsq[k] = sq[k]; });
+    put('squadre', nsq);
+    // allenatori, gettoni (chiave sicura), multe, stadio (chiave squadra), logo
+    if (D.allen.v && D.allen.v[sO] !== undefined) { delete D.allen.v[sO]; put('allen', D.allen.v); }
+    if (D.gett.v && D.gett.v[sO] !== undefined) { delete D.gett.v[sO]; put('gett', D.gett.v); }
+    if (D.multe.v) put('multe', delKey(D.multe.v));
+    if (D.sta.v) put('sta', delKey(D.sta.v));
+    if (D.logo.v && D.logo.v[sO] !== undefined) W.push(fbDB.ref(P.logo + '/' + sO).remove());
+    // rose: calciatori della squadra (e suoi infortunati) negli svincolati; via rosa e crediti
+    if (D.rose.v) {
+      var R = _roseNorm(D.rose.v); R.svincolati = R.svincolati || [];
+      var addSv = function(p) { var k = _plKey(p.nome); if (!R.svincolati.some(function(x) { return _plKey(x.nome) === k; })) { R.svincolati.push({ ruolo: p.ruolo, nome: p.nome, squadra: p.squadra, id: p.id }); info.svinc++; } };
+      Object.keys(R.rose).forEach(function(k) { if (k.toUpperCase() === O) { (R.rose[k] || []).forEach(addSv); delete R.rose[k]; } });
+      R.crediti = delKey(R.crediti);
+      if (D.inf.v && D.inf.v.giocatori) {
+        var I = D.inf.v.giocatori, infK = Object.keys(R.rose).find(function(k) { return k.toUpperCase() === 'INFERMERIA'; });
+        Object.keys(I).forEach(function(k) {
+          if (String(I[k].squadra || '').toUpperCase() !== O) return;
+          if (infK) { var ki = _plKey(I[k].giocatore), ix = (R.rose[infK] || []).findIndex(function(p) { return _plKey(p.nome) === ki; }); if (ix >= 0) addSv(R.rose[infK].splice(ix, 1)[0]); }
+          delete I[k];
+        });
+        put('inf', D.inf.v);
+      }
+      D.rose.s = true; put('rose', R);
+    }
+    // contratti: chiusi (stato "uscito")
+    if (D.contr.v && D.contr.v.giocatori) {
+      var G = D.contr.v.giocatori;
+      Object.keys(G).forEach(function(k) { if (String(G[k].squadra || '').toUpperCase() === O && G[k].stato !== 'uscito') { G[k].stato = 'uscito'; G[k].uscita = oggi; delete G[k].sostitutoDi; delete G[k].scadenzaPrec; info.contratti++; } });
+      put('contr', D.contr.v);
+    }
+    // calendario, punteggi, totali (vuoti): via la squadra
+    ['cal', 'pun', 'tot'].forEach(function(k) { if (D[k].v && typeof D[k].v === 'object') { var X = {}; Object.keys(D[k].v).forEach(function(gg) { X[gg] = delKey(D[k].v[gg]); }); D[k].s = true; put(k, X); } });
+    // calendario importato con la squadra: va reimportato
+    if (D.sch.v && typeof D.sch.v === 'object') { var GG = D.sch.v.giornate || D.sch.v; info.calendario = Object.keys(GG).some(function(gg) { return Array.isArray(GG[gg]) && GG[gg].some(function(m) { return String(m.h || '').toUpperCase() === O || String(m.a || '').toUpperCase() === O; }); }); }
+    return Promise.all(W).then(function() { return info; });
+  });
+}
+function admCsRemoveTeam(btn) {
+  var t=document.getElementById('adm-cs-torneo').value, l=document.getElementById('adm-cs-lega').value, team=btn.getAttribute('data-team');
+  if(!t||!l||!team) return;
+  var n=admGetTeams(t,l).length;
+  if(!confirm('Rimuovere la squadra '+team+' dalla lega?\n\n• i suoi calciatori vanno negli SVINCOLATI e i contratti vengono chiusi\n• vengono cancellati rosa, crediti, stadio, allenatori, gettoni, multe e logo della squadra\n• la lega passerà da '+n+' a '+(n-1)+' squadre\n\nSi può fare solo se la stagione non ha ancora risultati.')) return;
+  _admCsMsg(true,'⏳ Rimozione in corso…');
+  admRemoveTeamFull(t,l,team).then(function(info){
+    return _admCsReload(t,l).then(function(){ return info; });
+  }).then(function(info){
+    if(typeof updateDashboardCounters==='function') updateDashboardCounters();
+    admCsLoadSquadre();
+    _admCsMsg(true,'✅ Squadra '+team+' rimossa. Ora la lega ha '+admGetTeams(t,l).length+' squadre.\n'+info.svinc+' calciatori negli svincolati'+(info.contratti?' · '+info.contratti+' contratti chiusi':'')+(info.calendario?'\n⚠️ Il calendario importato contiene ancora '+team+': reimportalo con il nuovo numero di squadre.':''));
+  }).catch(function(e){ _admCsMsg(false,(e.bloccato?'⛔ ':'❌ Errore: ')+e.message); });
 }
 function admGetTeams(torneoKey, legaKey) {
   if (window.FB_SQUADRE && window.FB_SQUADRE[torneoKey+'_'+legaKey]) return window.FB_SQUADRE[torneoKey+'_'+legaKey];
