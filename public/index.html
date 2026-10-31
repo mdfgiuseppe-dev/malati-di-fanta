@@ -9790,10 +9790,8 @@ function enterLeague(tournament, leagueKey) {
       }
     }, 500);
   } catch(e) {}
-  // ILM e ILC non ancora disponibili lato utente
-  if (tournament === 'ilm' || tournament === 'ilc') return;
-  // Tornei non-slim/non-tsm (es. TDM): usano page-lega con chiavi proprie
-  if (tournament && tournament !== 'slim' && tournament !== 'tsm' && tournament !== 'ilm' && tournament !== 'ilc') {
+  // Tornei non-slim/non-tsm (tutti quelli creati su Firebase): usano page-lega con chiavi proprie
+  if (tournament && tournament !== 'slim' && tournament !== 'tsm') {
     currentLeagueKey = leagueKey || 'it';
     _userApplyRose(tournament, currentLeagueKey);
     SLIM_TEAMS = Object.keys(TEAMS_ROSE).sort();
