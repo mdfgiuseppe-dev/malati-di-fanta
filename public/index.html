@@ -2141,8 +2141,6 @@ function _roleGroups(t){ return _formato(t)==='classic'?ROLE_GROUPS_CLASSIC:ROLE
 function _formatoLabel(t){ return _formato(t)==='classic'?'Classic':'Mantra'; }
 // Link PDF di regolamento e albo d'oro: su Firebase in tornei_meta/{torneo}/pdf_regolamento e pdf_albo (inseriti dall'admin)
 // Link Google Drive (condivisione, view, open?id=...) → link di anteprima incorporabile
-// Coppa standard (quando non è inserito nessun trofeo, né dal wizard né dalla maschera lega)
-var _TROFEO_STD = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset=".5" stop-color="#f59e0b"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs><path d="M18 8h28v14a14 14 0 0 1-28 0z" fill="url(#g)"/><path d="M18 12H9a9 9 0 0 0 10 12M46 12h9a9 9 0 0 1-10 12" fill="none" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/><rect x="29" y="35" width="6" height="11" fill="url(#g)"/><path d="M22 46h20l3 8H19z" fill="url(#g)"/><rect x="16" y="54" width="32" height="5" rx="1.5" fill="#92400e"/><path d="M25 12v10a7 7 0 0 0 4 6" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="2.5" stroke-linecap="round"/></svg>');
 function _drivePreview(u) {
   u = String(u || '').trim(); if (!u) return '';
   var m = u.match(/\/file\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/);
@@ -4962,7 +4960,7 @@ function _updateLegaDashboard(leagueKey) {
       if (fbTrophy) {
         fbTrophy = _normalizeImgUrl(fbTrophy);
         trophyEl.src = fbTrophy;
-      } else trophyEl.src = _TROFEO_STD; // nessun trofeo né di lega né di torneo: coppa standard
+      }
     });
   }
   // Titolo dashboard
